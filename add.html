@@ -81,7 +81,7 @@
   }
   .panel h2 { margin: 0 0 14px; font-size: 16px; color: var(--navy); }
 
-  .form-fields { max-width: 560px; }
+  .form-fields { width: 100%; }
 
   .status {
     font-size: 13.5px;
@@ -211,14 +211,17 @@
 
   input[type=file] { margin-top: 6px; }
   .count-line { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  table.preview td.row-actions-cell { padding: 0; }
   .row-actions {
+    height: 100%;
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
-    gap: 4px;
-    white-space: nowrap;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 8px 10px;
+    box-sizing: border-box;
   }
-  .row-actions button { flex: none; padding: 4px 8px; font-size: 11px; }
+  .row-actions button { flex: none; padding: 2px 6px; font-size: 10.5px; white-space: nowrap; }
   .row-actions .badge-new, .row-actions .badge-edited { margin-right: 2px; }
 </style>
 </head>
@@ -303,7 +306,7 @@
   const HEADERS = ["프로그램명", "뱃지", "제작교사", "설명", "바로가기유형", "바로가기값", "매뉴얼파일명"];
   // 표에 쓸 각 열의 너비(%) - 합이 100이 되도록 해서 가로 스크롤 없이 항상 화면에 맞춤
   // [프로그램명, 뱃지, 제작교사, 설명, 바로가기유형, 바로가기값, 매뉴얼파일명]
-  const COL_WIDTHS = [11, 6, 8, 36, 6, 11, 11]; // 나머지 11%는 #(3%)+관리(8%)
+  const COL_WIDTHS = [11, 6, 8, 35, 6, 11, 11]; // 나머지 12%는 #(3%)+관리(9%, 수정/삭제 버튼 너비만큼만)
 
   let rows = [];          // 화면에 보이는 전체 행 (기존 불러온 것 + 새로 추가한 것)
   let editingIndex = null; // 지금 수정 중인 행의 인덱스 (없으면 null)
@@ -366,7 +369,7 @@
     }
 
     let html = `<div class="table-scroll"><table class="preview"><colgroup>
-      <col style="width:3%">${COL_WIDTHS.map(w => `<col style="width:${w}%">`).join("")}<col style="width:8%">
+      <col style="width:3%">${COL_WIDTHS.map(w => `<col style="width:${w}%">`).join("")}<col style="width:9%">
       </colgroup><tr><th>#</th>${HEADERS.map(h => `<th>${h}</th>`).join("")}<th>관리</th></tr>`;
 
     rows.forEach((r, i) => {
@@ -376,10 +379,10 @@
         : (r._edited ? `<span class="badge-edited">수정됨</span>` : "");
       html += `<tr class="${rowClass}"><td class="num">${i + 1}</td>` +
         HEADERS.map(h => `<td>${(r[h] || "").toString().replace(/</g, "&lt;")}</td>`).join("") +
-        `<td class="row-actions">${badge}
+        `<td class="row-actions-cell"><div class="row-actions">${badge}
           <button class="secondary" onclick="startEdit(${i})">수정</button>
           <button class="danger" onclick="deleteRow(${i})">삭제</button>
-        </td></tr>`;
+        </div></td></tr>`;
     });
     html += `</table></div>`;
     wrap.innerHTML = html;
