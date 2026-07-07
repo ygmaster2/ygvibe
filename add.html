@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프로그램 추가 - YG 바이브 코딩 누리집</title>
+<script>
+  // 테마 깜빡임 방지: 기본값은 다크모드, 사용자가 라이트모드를 선택한 적 있으면 그걸 따름
+  if (localStorage.getItem("theme") !== "light") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+</script>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --navy-dark: #163a5c;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --card-bg: #FFFFFF;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+    --btn-bg: #1F4E78;
+    --btn-bg-hover: #163a5c;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --navy: #7FC1F2;
+    --navy-dark: #5FA8DE;
+    --accent: #7FC1F2;
+    --bg: #14171C;
+    --card-bg: #1D2128;
+    --text: #E7E9EC;
+    --muted: #98A2AF;
+    --border: #2B313A;
+    --btn-bg: #2E75B6;
+    --btn-bg-hover: #3A86C8;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background .15s ease, color .15s ease;
+  }
+  header {
+    position: relative;
+    background: linear-gradient(135deg, #1F4E78, #163a5c);
+    color: #fff;
+    padding: 36px 32px 30px;
+  }
+  header a { color: #cfe0ee; font-size: 13px; text-decoration: none; }
+  header a:hover { text-decoration: underline; }
+  header h1 { margin: 10px 0 6px; font-size: 24px; }
+  header p { margin: 0; color: #cfe0ee; font-size: 13.5px; }
+  .theme-toggle {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,0.22); }
+
+  main { max-width: 1300px; margin: 0 auto; padding: 32px; }
+
+  .panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .panel h2 { margin: 0 0 14px; font-size: 16px; color: var(--navy); }
+
+  .form-fields { max-width: 560px; }
+
+  .status {
+    font-size: 13.5px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .status.warn { background: #FFF8E6; color: #8a6d1a; }
+  html[data-theme="dark"] .status.warn { background: #4a3d15; color: #F0DFA8; }
+
+  label { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .hint { font-size: 12px; color: var(--muted); margin: -4px 0 10px; }
+  input[type=text], textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    margin-bottom: 16px;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+
+  button.primary {
+    background: var(--btn-bg);
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.primary:hover { background: var(--btn-bg-hover); }
+  button.primary:disabled { background: #B7C3CE; cursor: not-allowed; }
+  button.secondary {
+    background: var(--card-bg);
+    color: var(--navy);
+    border: 1px solid var(--navy);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.secondary:hover { background: var(--bg); }
+  button.danger {
+    background: var(--card-bg);
+    color: #B3261E;
+    border: 1px solid #B3261E;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.danger:hover { background: #FCEBEA; }
+  html[data-theme="dark"] button.danger:hover { background: #3a2020; }
+
+  .steps {
+    background: #FFF8E6;
+    border: 1px solid #F0DFA8;
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 13.5px;
+    line-height: 1.8;
+    margin-bottom: 18px;
+  }
+  html[data-theme="dark"] .steps { background: #3a3115; border-color: #5a4a1f; color: #F0DFA8; }
+  .steps b { color: var(--navy); }
+  .download-row a {
+    display: block;
+    text-align: center;
+    background: var(--btn-bg);
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 0;
+    border-radius: 7px;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .download-row a:hover { background: var(--btn-bg-hover); }
+
+  .error { color: #B3261E; font-size: 13px; margin-bottom: 12px; display: none; }
+  html[data-theme="dark"] .error { color: #FF8A80; }
+
+  .editing-note {
+    display: none;
+    background: var(--bg);
+    border: 1px solid var(--navy);
+    color: var(--navy);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .editing-note.show { display: block; }
+
+  table.preview { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; table-layout: fixed; }
+  table.preview th, table.preview td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  table.preview th { background: var(--bg); color: var(--navy); }
+  table.preview td.num { color: var(--muted); text-align: center; }
+
+  .table-scroll { overflow-x: auto; margin-top: 14px; }
+  .row-new td { background: rgba(255, 224, 130, 0.12); }
+  .row-edited td { background: rgba(126, 193, 242, 0.10); }
+  .badge-new, .badge-edited {
+    display: inline-block; font-size: 10.5px;
+    padding: 1px 7px; border-radius: 100px; margin-left: 0;
+  }
+  .badge-new { color: #8a6d1a; background: #FFF3CC; }
+  .badge-edited { color: #1F4E78; background: #DCEBF9; }
+  html[data-theme="dark"] .badge-new { color: #F0DFA8; background: #4a3d15; }
+  html[data-theme="dark"] .badge-edited { color: #7FC1F2; background: #223A50; }
+
+  input[type=file] { margin-top: 6px; }
+  .count-line { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .row-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .row-actions button { flex: none; padding: 4px 8px; font-size: 11px; }
+  .row-actions .badge-new, .row-actions .badge-edited { margin-right: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="theme-toggle" class="theme-toggle" type="button">🌙 다크모드</button>
+  <a href="index.html">← 대시보드로 돌아가기</a>
+  <h1>프로그램 추가</h1>
+  <p>새 프로그램을 입력해 목록에 추가하고, 다 끝나면 한 번에 programs.csv로 내려받습니다.</p>
+</header>
+
+<main>
+  <div class="panel">
+    <h2>1. 현재 데이터 불러오기</h2>
+    <div id="load-status" class="status">불러오는 중입니다...</div>
+    <div id="load-fallback" style="display:none;">
+      <p class="hint">같은 폴더의 programs.csv를 자동으로 불러오지 못했습니다. 아래에서 직접 선택해주세요.</p>
+      <input type="file" id="load-file-input" accept=".csv">
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>2. 프로그램 정보</h2>
+    <div id="editing-note" class="editing-note">지금 기존 항목을 수정하고 있습니다. 아래 "목록에 반영" 버튼을 누르면 그 항목이 수정됩니다.</div>
+    <div class="form-fields">
+      <label>프로그램명 *</label>
+      <input type="text" id="f-name" placeholder="예) 출석부 자동 정리 프로그램">
+
+      <label>뱃지 (선택)</label>
+      <div class="hint">카드 상단에 표시할 짧은 태그. 비워두면 표시 안 됨</div>
+      <input type="text" id="f-badge" placeholder="예) 신규">
+
+      <label>제작교사 (선택)</label>
+      <input type="text" id="f-author" placeholder="예) 수학과 · 김OO 교사">
+
+      <label>설명 *</label>
+      <div class="hint">카드에 그대로 보여지는 2~3문장 설명</div>
+      <textarea id="f-desc" placeholder="이 프로그램이 무엇을 하는지, 왜 만들었는지 설명해주세요."></textarea>
+
+      <label>바로가기유형 *</label>
+      <select id="f-type">
+        <option value="폴더">폴더 (programs 폴더 안 파일 열기)</option>
+        <option value="URL">URL (외부 링크로 연결)</option>
+      </select>
+
+      <label id="f-value-label">바로가기값 *</label>
+      <div class="hint" id="f-value-hint">programs 폴더 안 파일명만 입력 (예: 내프로그램.html)</div>
+      <input type="text" id="f-value" placeholder="내프로그램.html">
+
+      <label>매뉴얼파일명 (선택)</label>
+      <div class="hint">manuals 폴더 안에 있는 매뉴얼 html 파일명만 입력</div>
+      <input type="text" id="f-manual" placeholder="내프로그램.html">
+    </div>
+
+    <div class="error" id="error-box"></div>
+    <button class="primary" id="add-row-btn">+ 목록에 추가</button>
+    <button class="secondary" id="cancel-edit-btn" style="display:none; margin-left:8px;">편집 취소</button>
+  </div>
+
+  <div class="panel">
+    <h2>3. 전체 목록 <span id="list-count" class="count-line"></span></h2>
+    <p class="hint">각 행의 "수정"을 누르면 위 폼에 내용이 채워집니다. "삭제"는 바로 목록에서 빠집니다. 아직 저장 전이며, 최종 다운로드 전까지는 언제든 되돌릴 수 있어요.</p>
+    <div id="all-table-wrap"></div>
+  </div>
+
+  <div class="panel">
+    <h2>4. 파일 다운로드</h2>
+    <div class="steps">
+      <b>①</b> 아래 버튼으로 programs.csv 다운로드<br>
+      <b>②</b> GitHub 저장소에서 기존 programs.csv를 이 파일로 덮어쓰기(업로드)<br>
+      <b>③</b> 잠시 후 대시보드를 새로고침하면 반영되어 있습니다
+    </div>
+    <div class="download-row">
+      <a id="dl-csv" download="programs.csv">programs.csv 다운로드 (총 <span id="dl-count">0</span>개 행)</a>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  const HEADERS = ["프로그램명", "뱃지", "제작교사", "설명", "바로가기유형", "바로가기값", "매뉴얼파일명"];
+  // 표에 쓸 각 열의 너비(%) - 합이 100이 되도록 해서 가로 스크롤 없이 항상 화면에 맞춤
+  // [프로그램명, 뱃지, 제작교사, 설명, 바로가기유형, 바로가기값, 매뉴얼파일명]
+  const COL_WIDTHS = [11, 6, 8, 36, 6, 11, 11]; // 나머지 11%는 #(3%)+관리(8%)
+
+  let rows = [];          // 화면에 보이는 전체 행 (기존 불러온 것 + 새로 추가한 것)
+  let editingIndex = null; // 지금 수정 중인 행의 인덱스 (없으면 null)
+
+  function decodeBestEffort(buffer) {
+    const utf8Text = new TextDecoder("utf-8").decode(buffer);
+    if (utf8Text.includes("프로그램명")) return utf8Text;
+    try {
+      const euckrText = new TextDecoder("euc-kr").decode(buffer);
+      if (euckrText.includes("프로그램명")) return euckrText;
+    } catch (e) {}
+    return utf8Text;
+  }
+
+  function normalizeRow(r) {
+    const o = {};
+    HEADERS.forEach(h => { o[h] = (r[h] || "").toString(); });
+    return o;
+  }
+
+  function parseCsvText(text) {
+    const workbook = XLSX.read(text, { type: "string" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const parsed = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    return parsed
+      .filter(r => (r["프로그램명"] || "").toString().trim() !== "")
+      .map(normalizeRow);
+  }
+
+  function toPlainRow(r) {
+    // CSV로 내보낼 때는 표시용 플래그(_new, _edited)를 뺀 값만 사용
+    const o = {};
+    HEADERS.forEach(h => { o[h] = r[h] || ""; });
+    return o;
+  }
+
+  function updateDownloadLink() {
+    const plain = rows.map(toPlainRow);
+    const sheet = XLSX.utils.json_to_sheet(plain, { header: HEADERS });
+    const csvBody = XLSX.utils.sheet_to_csv(sheet);
+    const csvWithBom = "﻿" + csvBody;
+    const blob = new Blob([csvWithBom], { type: "text/csv" });
+    document.getElementById("dl-csv").href = URL.createObjectURL(blob);
+  }
+
+  function renderAllTable() {
+    const wrap = document.getElementById("all-table-wrap");
+    const newCount = rows.filter(r => r._new).length;
+    const editedCount = rows.filter(r => r._edited && !r._new).length;
+
+    document.getElementById("list-count").textContent =
+      `(총 ${rows.length}개 · 새 항목 ${newCount}개, 수정됨 ${editedCount}개)`;
+    document.getElementById("dl-count").textContent = rows.length;
+    updateDownloadLink();
+
+    if (rows.length === 0) {
+      wrap.innerHTML = `<p class="hint" style="margin-top:12px;">표시할 행이 없습니다.</p>`;
+      return;
+    }
+
+    let html = `<div class="table-scroll"><table class="preview"><colgroup>
+      <col style="width:3%">${COL_WIDTHS.map(w => `<col style="width:${w}%">`).join("")}<col style="width:8%">
+      </colgroup><tr><th>#</th>${HEADERS.map(h => `<th>${h}</th>`).join("")}<th>관리</th></tr>`;
+
+    rows.forEach((r, i) => {
+      const rowClass = r._new ? "row-new" : (r._edited ? "row-edited" : "");
+      const badge = r._new
+        ? `<span class="badge-new">NEW</span>`
+        : (r._edited ? `<span class="badge-edited">수정됨</span>` : "");
+      html += `<tr class="${rowClass}"><td class="num">${i + 1}</td>` +
+        HEADERS.map(h => `<td>${(r[h] || "").toString().replace(/</g, "&lt;")}</td>`).join("") +
+        `<td class="row-actions">${badge}
+          <button class="secondary" onclick="startEdit(${i})">수정</button>
+          <button class="danger" onclick="deleteRow(${i})">삭제</button>
+        </td></tr>`;
+    });
+    html += `</table></div>`;
+    wrap.innerHTML = html;
+  }
+
+  function deleteRow(idx) {
+    if (editingIndex === idx) {
+      cancelEdit();
+    } else if (editingIndex !== null && idx < editingIndex) {
+      editingIndex -= 1; // 편집 중인 행보다 앞의 행이 삭제되면 인덱스 보정
+    }
+    rows.splice(idx, 1);
+    renderAllTable();
+  }
+
+  function clearForm() {
+    document.getElementById("f-name").value = "";
+    document.getElementById("f-badge").value = "";
+    document.getElementById("f-author").value = "";
+    document.getElementById("f-desc").value = "";
+    typeSelectRef.value = "폴더";
+    typeSelectRef.dispatchEvent(new Event("change"));
+    valueInputRef.value = "";
+    document.getElementById("f-manual").value = "";
+  }
+
+  function startEdit(idx) {
+    const r = rows[idx];
+    document.getElementById("f-name").value = r["프로그램명"] || "";
+    document.getElementById("f-badge").value = r["뱃지"] || "";
+    document.getElementById("f-author").value = r["제작교사"] || "";
+    document.getElementById("f-desc").value = r["설명"] || "";
+    typeSelectRef.value = r["바로가기유형"] === "URL" ? "URL" : "폴더";
+    typeSelectRef.dispatchEvent(new Event("change"));
+    valueInputRef.value = r["바로가기값"] || "";
+    document.getElementById("f-manual").value = r["매뉴얼파일명"] || "";
+
+    editingIndex = idx;
+    document.getElementById("editing-note").classList.add("show");
+    document.getElementById("cancel-edit-btn").style.display = "inline-block";
+    document.getElementById("add-row-btn").textContent = "목록에 반영";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    editingIndex = null;
+    document.getElementById("editing-note").classList.remove("show");
+    document.getElementById("cancel-edit-btn").style.display = "none";
+    document.getElementById("add-row-btn").textContent = "+ 목록에 추가";
+    clearForm();
+    clearError();
+  }
+
+  function setLoadStatus(loadedRows, note) {
+    rows = loadedRows.map(r => Object.assign({}, r, { _new: false, _edited: false }));
+    const box = document.getElementById("load-status");
+    box.className = "status";
+    box.textContent = `현재 ${loadedRows.length}개 행을 불러왔습니다.${note ? " " + note : ""}`;
+    renderAllTable();
+  }
+
+  function showLoadFallback() {
+    const box = document.getElementById("load-status");
+    box.className = "status warn";
+    box.textContent = "programs.csv를 자동으로 불러오지 못했습니다.";
+    document.getElementById("load-fallback").style.display = "block";
+    renderAllTable();
+  }
+
+  document.getElementById("load-file-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      const text = decodeBestEffort(buffer);
+      setLoadStatus(parseCsvText(text), "(직접 선택한 파일)");
+    } catch (err) {
+      document.getElementById("load-status").textContent = "파일을 읽는 중 오류: " + err.message;
+    }
+  });
+
+  async function loadCurrentCsv() {
+    try {
+      const res = await fetch("programs.csv");
+      if (!res.ok) throw new Error("fetch failed");
+      const buffer = await res.arrayBuffer();
+      const text = decodeBestEffort(buffer);
+      setLoadStatus(parseCsvText(text));
+    } catch (err) {
+      showLoadFallback();
+    }
+  }
+
+  const typeSelectRef = document.getElementById("f-type");
+  const valueLabelRef = document.getElementById("f-value-label");
+  const valueHintRef = document.getElementById("f-value-hint");
+  const valueInputRef = document.getElementById("f-value");
+  typeSelectRef.addEventListener("change", () => {
+    if (typeSelectRef.value === "URL") {
+      valueLabelRef.textContent = "바로가기값 (URL) *";
+      valueHintRef.textContent = "외부 사이트 전체 주소를 입력 (예: https://...)";
+      valueInputRef.placeholder = "https://...";
+    } else {
+      valueLabelRef.textContent = "바로가기값 *";
+      valueHintRef.textContent = "programs 폴더 안 파일명만 입력 (예: 내프로그램.html)";
+      valueInputRef.placeholder = "내프로그램.html";
+    }
+  });
+
+  function showError(msg) {
+    const box = document.getElementById("error-box");
+    box.textContent = msg;
+    box.style.display = "block";
+  }
+  function clearError() {
+    document.getElementById("error-box").style.display = "none";
+  }
+
+  document.getElementById("cancel-edit-btn").addEventListener("click", cancelEdit);
+
+  document.getElementById("add-row-btn").addEventListener("click", () => {
+    clearError();
+    const name = document.getElementById("f-name").value.trim();
+    const badge = document.getElementById("f-badge").value.trim();
+    const author = document.getElementById("f-author").value.trim();
+    const desc = document.getElementById("f-desc").value.trim();
+    const type = typeSelectRef.value;
+    const value = valueInputRef.value.trim();
+    const manual = document.getElementById("f-manual").value.trim();
+
+    if (!name) return showError("프로그램명을 입력해주세요.");
+    if (!desc) return showError("설명을 입력해주세요.");
+    if (!value) return showError("바로가기값을 입력해주세요.");
+
+    const data = normalizeRow({
+      "프로그램명": name,
+      "뱃지": badge,
+      "제작교사": author,
+      "설명": desc,
+      "바로가기유형": type,
+      "바로가기값": value,
+      "매뉴얼파일명": manual,
+    });
+
+    if (editingIndex !== null) {
+      const wasNew = rows[editingIndex]._new;
+      rows[editingIndex] = Object.assign({}, data, { _new: wasNew, _edited: !wasNew });
+      editingIndex = null;
+      document.getElementById("editing-note").classList.remove("show");
+      document.getElementById("cancel-edit-btn").style.display = "none";
+      document.getElementById("add-row-btn").textContent = "+ 목록에 추가";
+    } else {
+      rows.push(Object.assign({}, data, { _new: true, _edited: false }));
+    }
+
+    clearForm();
+    renderAllTable();
+    document.getElementById("f-name").focus();
+  });
+
+  loadCurrentCsv();
+
+  // ── 다크모드 토글 ──────────────────────────────────────────
+  const themeToggleBtn = document.getElementById("theme-toggle");
+  function updateToggleLabel() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    themeToggleBtn.textContent = isDark ? "☀️ 라이트모드" : "🌙 다크모드";
+  }
+  themeToggleBtn.addEventListener("click", () => {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    }
+    updateToggleLabel();
+  });
+  updateToggleLabel();
+</script>
+
+</body>
+</html>

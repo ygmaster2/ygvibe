@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YG 바이브 코딩 누리집</title>
+<script>
+  // 테마 깜빡임 방지: 기본값은 다크모드, 사용자가 라이트모드를 선택한 적 있으면 그걸 따름
+  if (localStorage.getItem("theme") !== "light") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+</script>
 <style>
   :root {
     --navy: #1F4E78;
@@ -14,6 +20,28 @@
     --text: #2A2E33;
     --muted: #6B7280;
     --border: #E3E7ED;
+    --badge-bg: #E8F1FA;
+    --hover-bg: #EEF4FA;
+    --btn-bg: #1F4E78;
+    --btn-bg-hover: #163a5c;
+    --card-shadow: rgba(31,78,120,0.12);
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --navy: #7FC1F2;
+    --navy-dark: #5FA8DE;
+    --accent: #7FC1F2;
+    --bg: #14171C;
+    --card-bg: #1D2128;
+    --text: #E7E9EC;
+    --muted: #98A2AF;
+    --border: #2B313A;
+    --badge-bg: #1F3A52;
+    --hover-bg: #223A50;
+    --btn-bg: #2E75B6;
+    --btn-bg-hover: #3A86C8;
+    --card-shadow: rgba(0,0,0,0.35);
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body {
@@ -21,9 +49,11 @@
     font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
     background: var(--bg);
     color: var(--text);
+    transition: background .15s ease, color .15s ease;
   }
   header {
-    background: linear-gradient(135deg, var(--navy), var(--navy-dark));
+    position: relative;
+    background: linear-gradient(135deg, #1F4E78, #163a5c);
     color: #fff;
     padding: 44px 32px 36px;
   }
@@ -37,6 +67,20 @@
     color: #cfe0ee;
   }
   .stats span b { color: #fff; font-size: 16px; }
+  .theme-toggle {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,0.22); }
   main { max-width: 1200px; margin: 0 auto; padding: 32px; }
   .toolbar {
     display: flex;
@@ -52,7 +96,8 @@
     border-radius: 8px;
     width: 260px;
     font-size: 14px;
-    background: #fff;
+    background: var(--card-bg);
+    color: var(--text);
   }
   .empty {
     text-align: center;
@@ -74,12 +119,12 @@
     flex-direction: column;
     transition: box-shadow .15s ease, transform .15s ease;
   }
-  .card:hover { box-shadow: 0 6px 18px rgba(31,78,120,0.12); transform: translateY(-2px); }
+  .card:hover { box-shadow: 0 6px 18px var(--card-shadow); transform: translateY(-2px); }
   .card-badge {
     display: inline-block;
     font-size: 11px;
     color: var(--accent);
-    background: #E8F1FA;
+    background: var(--badge-bg);
     padding: 3px 9px;
     border-radius: 100px;
     margin-bottom: 10px;
@@ -109,10 +154,10 @@
     border-radius: 7px;
     font-weight: 600;
   }
-  .btn-primary { background: var(--navy); color: #fff; }
-  .btn-primary:hover { background: var(--navy-dark); }
-  .btn-secondary { background: #fff; color: var(--navy); border: 1px solid var(--navy); }
-  .btn-secondary:hover { background: #EEF4FA; }
+  .btn-primary { background: var(--btn-bg); color: #fff; }
+  .btn-primary:hover { background: var(--btn-bg-hover); }
+  .btn-secondary { background: var(--card-bg); color: var(--navy); border: 1px solid var(--navy); }
+  .btn-secondary:hover { background: var(--hover-bg); }
   footer {
     text-align: center;
     color: var(--muted);
@@ -124,6 +169,7 @@
 <body>
 
 <header>
+  <button id="theme-toggle" class="theme-toggle" type="button">🌙 다크모드</button>
   <h1>YG 바이브 코딩 누리집</h1>
   <p>선생님들이 바이브 코딩으로 만든 프로그램을 한 곳에 모아봅니다.</p>
   <div class="stats">
@@ -134,7 +180,6 @@
 <main>
   <div class="toolbar">
     <input id="search" type="text" placeholder="프로그램 이름으로 검색...">
-    <span style="font-size:12.5px; color:var(--muted);">programs.csv에 행을 추가하고 업로드하면 카드가 늘어납니다</span>
   </div>
   <div id="grid" class="grid"></div>
   <div id="empty" class="empty" style="display:none;">
@@ -293,6 +338,25 @@
   }
 
   loadPrograms();
+
+  // ── 다크모드 토글 ──────────────────────────────────────────
+  const themeToggleBtn = document.getElementById("theme-toggle");
+  function updateToggleLabel() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    themeToggleBtn.textContent = isDark ? "☀️ 라이트모드" : "🌙 다크모드";
+  }
+  themeToggleBtn.addEventListener("click", () => {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    }
+    updateToggleLabel();
+  });
+  updateToggleLabel();
 </script>
 
 </body>
