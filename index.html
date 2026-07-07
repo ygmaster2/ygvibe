@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YG 바이브 코딩 누리집</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --navy-dark: #163a5c;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --card-bg: #FFFFFF;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--navy-dark));
+    color: #fff;
+    padding: 44px 32px 36px;
+  }
+  header h1 { margin: 0 0 8px; font-size: 28px; }
+  header p { margin: 0; color: #cfe0ee; font-size: 14px; }
+  .stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #cfe0ee;
+  }
+  .stats span b { color: #fff; font-size: 16px; }
+  main { max-width: 1200px; margin: 0 auto; padding: 32px; }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .toolbar input {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 260px;
+    font-size: 14px;
+    background: #fff;
+  }
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+  }
+  .empty b { color: var(--navy); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .15s ease, transform .15s ease;
+  }
+  .card:hover { box-shadow: 0 6px 18px rgba(31,78,120,0.12); transform: translateY(-2px); }
+  .card-badge {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--accent);
+    background: #E8F1FA;
+    padding: 3px 9px;
+    border-radius: 100px;
+    margin-bottom: 10px;
+    width: fit-content;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 17px; color: var(--navy); }
+  .card .meta { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .card .desc {
+    font-size: 13.5px;
+    color: var(--text);
+    line-height: 1.6;
+    flex-grow: 1;
+    margin-bottom: 18px;
+  }
+  .card .actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .card .actions a {
+    flex: 1;
+    text-align: center;
+    text-decoration: none;
+    font-size: 13px;
+    padding: 9px 0;
+    border-radius: 7px;
+    font-weight: 600;
+  }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-primary:hover { background: var(--navy-dark); }
+  .btn-secondary { background: #fff; color: var(--navy); border: 1px solid var(--navy); }
+  .btn-secondary:hover { background: #EEF4FA; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>YG 바이브 코딩 누리집</h1>
+  <p>선생님들이 바이브 코딩으로 만든 프로그램을 한 곳에 모아봅니다.</p>
+  <div class="stats">
+    <span>등록된 프로그램 <b id="stat-count">0</b>개</span>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <input id="search" type="text" placeholder="프로그램 이름으로 검색...">
+    <span style="font-size:12.5px; color:var(--muted);">programs.csv에 행을 추가하고 업로드하면 카드가 늘어납니다</span>
+  </div>
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="empty" style="display:none;">
+    <p><b>불러오는 중입니다...</b></p>
+  </div>
+</main>
+
+<footer>바이브 코딩 결과물 모음 · programs.csv에 행을 추가하면 이 페이지에 카드가 늘어납니다</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  // 카드 데이터는 같은 폴더의 programs.csv 에서 읽어옵니다.
+  // (여기 아래 렌더링 로직은 프로그램이 추가돼도 수정할 필요가 없습니다)
+
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("empty");
+  const searchInput = document.getElementById("search");
+  let programs = [];
+
+  function render(list) {
+    grid.innerHTML = "";
+    if (list.length === 0) {
+      empty.style.display = "block";
+      grid.style.display = "none";
+      return;
+    }
+    empty.style.display = "none";
+    grid.style.display = "grid";
+    list.forEach(p => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        ${p.badge ? `<span class="card-badge">${p.badge}</span>` : ""}
+        <h3>${p.name}</h3>
+        ${p.author ? `<div class="meta">${p.author}</div>` : ""}
+        <div class="desc">${p.description}</div>
+        <div class="actions">
+          <a class="btn-secondary" href="${p.shortcut}" target="_blank">바로가기</a>
+          <a class="btn-primary" href="${p.manual}" target="_blank">매뉴얼 보기</a>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  searchInput.addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    render(programs.filter(p => p.name.toLowerCase().includes(q)));
+  });
+
+  function decodeBestEffort(buffer) {
+    const utf8Text = new TextDecoder("utf-8").decode(buffer);
+    if (utf8Text.includes("프로그램명")) return utf8Text;
+    try {
+      const euckrText = new TextDecoder("euc-kr").decode(buffer);
+      if (euckrText.includes("프로그램명")) return euckrText;
+    } catch (e) {
+      // 브라우저가 euc-kr 디코딩을 지원하지 않는 경우 무시
+    }
+    return utf8Text;
+  }
+
+  function showMessage(html) {
+    grid.style.display = "none";
+    grid.innerHTML = "";
+    empty.style.display = "block";
+    empty.innerHTML = html;
+  }
+
+  function filePickerHtml(extraNote) {
+    return `
+      <p><b>로컬 미리보기</b></p>
+      <p>${extraNote || ""}</p>
+      <input type="file" id="local-file-input" accept=".csv" style="margin-top:14px;">
+    `;
+  }
+
+  function attachFilePicker(extraNote) {
+    showMessage(filePickerHtml(extraNote));
+    document.getElementById("local-file-input").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const buffer = await file.arrayBuffer();
+        const text = decodeBestEffort(buffer);
+        applyCsvText(text, true);
+      } catch (err) {
+        attachFilePicker(`CSV 파일을 읽는 중 오류가 발생했습니다: ${err.message}`);
+      }
+    });
+  }
+
+  function applyCsvText(text, isLocalPicker) {
+    const workbook = XLSX.read(text, { type: "string" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    programs = rows
+      .filter(r => (r["프로그램명"] || "").toString().trim() !== "")
+      .map(r => {
+        const shortcutType = (r["바로가기유형"] || "").toString().trim();
+        const shortcutValue = (r["바로가기값"] || "").toString().trim();
+        // 폴더 유형: programs 폴더 안 파일명만 적으면 경로 자동 완성
+        // URL 유형: 입력한 주소를 그대로 사용
+        const shortcut = shortcutType === "URL"
+          ? (shortcutValue || "#")
+          : (shortcutValue ? "programs/" + shortcutValue : "#");
+        return {
+          name: r["프로그램명"],
+          badge: r["뱃지"] || "",
+          author: r["제작교사"] || "",
+          description: r["설명"] || "",
+          shortcut,
+          manual: r["매뉴얼파일명"] ? ("manuals/" + r["매뉴얼파일명"]) : "#",
+        };
+      });
+
+    document.getElementById("stat-count").textContent = programs.length;
+
+    if (programs.length === 0) {
+      const noteBase = `${rows.length}개 행을 읽었지만, "프로그램명" 열에 값이 있는 행을 찾지 못했습니다.<br>
+        헤더 이름(프로그램명, 뱃지, 제작교사, 설명, 바로가기유형, 바로가기값, 매뉴얼파일명)이 정확히 유지되어 있는지,<br>
+        저장할 때 CSV(쉼표로 분리) 형식을 선택했는지 확인해주세요.`;
+      if (isLocalPicker) {
+        attachFilePicker(noteBase + "<br>다른 파일을 다시 선택할 수 있습니다.");
+      } else {
+        showMessage(`<p><b>표시할 프로그램이 없습니다.</b></p><p>${noteBase}</p>`);
+      }
+      return;
+    }
+
+    grid.style.display = "grid";
+    empty.style.display = "none";
+    render(programs);
+  }
+
+  function showLocalPreviewPicker() {
+    attachFilePicker(
+      `이 화면을 파일로 직접 열면(file://) 브라우저 보안 정책 때문에
+      programs.csv를 자동으로 불러오지 못해요. 아래에서 그 파일을 직접 선택하면
+      지금 상태로 미리 볼 수 있습니다. (GitHub Pages에 올리면 이 안내 없이 자동으로 불러와집니다)`
+    );
+  }
+
+  async function loadPrograms() {
+    try {
+      const res = await fetch("programs.csv");
+      if (!res.ok) throw new Error("fetch failed: " + res.status);
+      const buffer = await res.arrayBuffer();
+      const text = decodeBestEffort(buffer);
+      applyCsvText(text);
+    } catch (err) {
+      showLocalPreviewPicker();
+    }
+  }
+
+  loadPrograms();
+</script>
+
+</body>
+</html>

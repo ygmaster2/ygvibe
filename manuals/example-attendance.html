@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출석부 자동 정리 프로그램 매뉴얼 (예시)</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .badge {
+    display: inline-block; font-size: 12px; color: var(--accent);
+    background: #E8F1FA; padding: 4px 10px; border-radius: 100px; margin-bottom: 10px;
+  }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  table.info { width: 100%; border-collapse: collapse; margin: 24px 0 36px; font-size: 13.5px; }
+  table.info th, table.info td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+  table.info th { background: #EEF3F8; color: var(--navy); width: 130px; font-weight: 600; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <span class="badge">예시 페이지</span>
+  <div class="title-block">
+    <h1>출석부 자동 정리 프로그램</h1>
+    <p>사용 매뉴얼 (실제 프로그램 등록 시 이 예시는 교체됩니다)</p>
+  </div>
+
+  <table class="info">
+    <tr><th>제작 교사</th><td>수학과 · 김OO 교사</td></tr>
+    <tr><th>사용 언어/도구</th><td>Python, openpyxl</td></tr>
+    <tr><th>실행 환경</th><td>Windows 10 이상, Python 3.10</td></tr>
+    <tr><th>원본 위치</th><td><code>programs/example-attendance</code></td></tr>
+  </table>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>매일 손으로 정리하던 학급 출석부를 엑셀 파일로 업로드하면, 학생별 결석·지각 횟수를 자동으로 집계하고 학급 리포트를 생성해주는 프로그램입니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>엑셀 출석부 업로드 후 결석/지각/조퇴 자동 집계</li>
+      <li>학생별·학급별 통계 리포트(xlsx) 자동 생성</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>programs 폴더의 실행 파일을 더블클릭해 실행합니다.</li>
+      <li>정리할 출석부 엑셀 파일을 선택합니다.</li>
+      <li>완료되면 같은 폴더에 결과 리포트 파일이 생성됩니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>이 항목은 실제 코드를 분석해 주요 파일과 역할을 정리하는 자리입니다. (예: <code>main.py</code> 실행 진입점, <code>report.py</code> 리포트 생성 로직)</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">이 페이지는 대시보드 디자인을 보여주기 위한 예시입니다. 실제 프로그램 폴더가 등록되면 코드를 분석해 내용을 새로 작성합니다.</div>
+  </section>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[프로그램명] 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 32px;
+    font-size: 13px;
+  }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 36px 32px 80px;
+  }
+  .title-block h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    color: var(--navy);
+  }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  table.info {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0 36px;
+    font-size: 13.5px;
+  }
+  table.info th, table.info td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+  table.info th {
+    background: #EEF3F8;
+    color: var(--navy);
+    width: 130px;
+    font-weight: 600;
+  }
+
+  section { margin-bottom: 32px; }
+  section h2 {
+    font-size: 18px;
+    color: var(--navy);
+    border-bottom: 2px solid var(--navy);
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+  }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code {
+    background: #EEF1F4;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .note {
+    background: #FFF8E6;
+    border: 1px solid #F0DFA8;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>[프로그램명]</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <table class="info">
+    <tr><th>제작 교사</th><td>[교과 · 이름]</td></tr>
+    <tr><th>사용 언어/도구</th><td>[예: Python, Excel VBA, 웹앱 등]</td></tr>
+    <tr><th>실행 환경</th><td>[예: Windows, Python 3.10 필요 등]</td></tr>
+    <tr><th>원본 위치</th><td><code>programs/[폴더명]</code></td></tr>
+  </table>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>[코드를 분석해 프로그램의 목적과 해결하려는 문제를 1~2문단으로 설명]</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>[기능 1 설명]</li>
+      <li>[기능 2 설명]</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>[실행 단계 1]</li>
+      <li>[실행 단계 2]</li>
+      <li>[실행 단계 3]</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>[주요 파일과 각 파일의 역할을 간단히 정리]</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">[알려진 제약사항, 필요한 사전 준비 등]</div>
+  </section>
+</main>
+
+</body>
+</html>

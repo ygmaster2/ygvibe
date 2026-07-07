@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 시험문제 생성기 매뉴얼 (예시)</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .badge {
+    display: inline-block; font-size: 12px; color: var(--accent);
+    background: #E8F1FA; padding: 4px 10px; border-radius: 100px; margin-bottom: 10px;
+  }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  table.info { width: 100%; border-collapse: collapse; margin: 24px 0 36px; font-size: 13.5px; }
+  table.info th, table.info td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+  table.info th { background: #EEF3F8; color: var(--navy); width: 130px; font-weight: 600; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <span class="badge">예시 페이지</span>
+  <div class="title-block">
+    <h1>AI 시험문제 생성기</h1>
+    <p>사용 매뉴얼 (외부 URL 링크 방식 예시)</p>
+  </div>
+
+  <table class="info">
+    <tr><th>제작 교사</th><td>영어과 · 박OO 교사</td></tr>
+    <tr><th>바로가기 방식</th><td>URL (외부에 이미 호스팅된 웹앱으로 바로 연결)</td></tr>
+    <tr><th>바로가기 주소</th><td><code>https://example.com</code></td></tr>
+  </table>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>웹에서 바로 사용할 수 있는 AI 기반 시험 문제 생성 도구입니다. 별도 설치 없이 브라우저에서 바로 접속해서 사용합니다. 이 페이지는 "바로가기유형"을 폴더가 아니라 URL로 설정했을 때 카드가 외부 링크로 바로 연결되는 것을 보여주는 예시입니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>과목/단원을 입력하면 객관식·주관식 문제를 자동 생성</li>
+      <li>생성된 문제를 엑셀/워드 형식으로 내보내기</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>대시보드 카드의 "바로가기" 버튼을 클릭해 사이트로 이동</li>
+      <li>과목과 문제 유형을 선택 후 생성 버튼 클릭</li>
+      <li>생성된 문제를 검토 후 다운로드</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 주의사항</h2>
+    <div class="note">이 페이지는 URL 방식 카드가 어떻게 보이는지 보여주기 위한 예시입니다. 실제 외부 도구를 등록할 때는 바로가기값에 실제 서비스 주소를 입력하면 됩니다.</div>
+  </section>
+</main>
+
+</body>
+</html>
