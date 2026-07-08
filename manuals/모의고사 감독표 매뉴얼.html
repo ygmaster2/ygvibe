@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모의고사 감독표 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>모의고사 감독표</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>구글 시트에 작성된 모의고사(전국연합학력평가) 감독시간표를 그대로 웹 화면으로 옮겨 보여주는 조회 프로그램입니다. 시트의 배경색 · 글자색 · 굵기 · 셀 병합 등 서식을 그대로 재현해 원본 그대로의 감독표를 웹에서 확인할 수 있고, 교사 이름을 검색하면 해당 교사의 감독 배정 칸이 강조 표시됩니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>구글 시트 원본 서식 재현</b> : 배경색 · 글자색 · 글자 굵기 · 셀 병합 정보를 그대로 읽어와 시트와 동일한 모양의 표로 표시</li>
+      <li><b>학급 구역 강조</b> : 시트 안에서 "1-1"~"3-8" 같은 학급 표기를 자동으로 인식해 각 학급 영역의 위아래에 진한 경계선을 표시</li>
+      <li><b>스티키 헤더</b> : 제목 행과 상단 헤더 행들이 스크롤해도 화면 위에 고정되어 항상 보임</li>
+      <li><b>교사 이름 검색</b> : 이름을 입력하면 일치하는 모든 칸(및 바로 옆의 교실 · 시간 정보 칸)이 주황색으로 깜빡이며 강조되고, 몇 곳에서 감독인지 개수가 표시됨</li>
+      <li>새로고침 버튼으로 구글 시트 최신 데이터를 다시 불러옴</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>화면이 열리면 구글 시트의 감독시간표가 자동으로 불러와져 표시됩니다.</li>
+      <li>상단 검색창에 본인 이름을 입력하고 "검색"(또는 Enter)을 누릅니다.</li>
+      <li>이름이 있는 칸과 인접한 교실 · 시간 정보가 주황색으로 강조되며, 몇 곳에서 감독인지 표시됩니다.</li>
+      <li>시트 내용이 바뀐 것 같으면 "새로고침" 버튼을 눌러 최신 내용을 다시 불러옵니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>(서버 로직)와 <code>index.html</code>(조회 화면) 두 파일로 이루어져 있습니다. <code>code.gs</code>의 <code>getSheetData()</code>가 연결된 구글 시트의 활성 시트 전체 범위를 값 · 배경색 · 글자색 · 글자 굵기 · 병합 정보와 함께 읽어 전달하고, <code>index.html</code>은 이 데이터를 받아 원본과 동일한 모양의 HTML 표로 그려내며 검색 · 강조 기능을 JavaScript로 처리합니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>감독표 내용은 연결된 구글 시트의 "활성 시트"를 그대로 불러오므로, 시트를 수정하면 "새로고침" 버튼을 눌러야 최신 내용이 반영됩니다.</li>
+        <li>학급 구역 강조 표시는 시트 안에 "숫자-숫자"(예: 1-1, 3-8) 형식의 학급 표기가 있어야 정상적으로 작동합니다.</li>
+        <li>검색은 이름이 포함된 칸을 모두 찾아 강조하므로, 이름이 짧거나 다른 글자와 겹치면 관계없는 칸도 함께 강조될 수 있습니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

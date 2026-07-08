@@ -1,0 +1,353 @@
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('전국연합학력평가 감독시간표 검색')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// 구글 시트의 데이터와 스타일을 가져오는 함수
+function getSheetData() {
+  // 현재 활성화된 시트를 가져옵니다. (특정 시트명을 지정하려면 getSheetByName("시트명") 사용)
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // 데이터가 있는 전체 범위를 자동으로 잡습니다.
+  var lastRow = sheet.getLastRow();
+  var lastColumn = sheet.getLastColumn();
+  var range = sheet.getRange(1, 1, lastRow, lastColumn);
+  
+  var values = range.getDisplayValues(); // 화면에 보이는 대로 텍스트 가져오기
+  var backgrounds = range.getBackgrounds(); // 배경색 가져오기
+  var fontColors = range.getFontColors(); // 글자색 가져오기
+  var fontWeights = range.getFontWeights(); // 굵기 가져오기
+  
+  // 셀 병합 정보 분석
+  var mergedRanges = range.getMergedRanges();
+  var mergeInfo = [];
+  
+  for (var i = 0; i < mergedRanges.length; i++) {
+    var r = mergedRanges[i];
+    mergeInfo.push({
+      startRow: r.getRow() - 1,
+      startCol: r.getColumn() - 1,
+      numRows: r.getNumRows(),
+      numCols: r.getNumColumns()
+    });
+  }
+  
+  return {
+    values: values,
+    backgrounds: backgrounds,
+    fontColors: fontColors,
+    fontWeights: fontWeights,
+    mergeInfo: mergeInfo
+  };
+}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>감독시간표 검색 시스템</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', dotum, sans-serif;
+      margin: 20px;
+      background-color: #f8f9fa;
+    }
+    
+    .search-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      padding: 15px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center; /* 상단 검색 UI 요소들을 정중앙으로 정렬 */
+      gap: 10px;
+    }
+    .search-container h3 {
+      margin: 0;
+      margin-right: 20px;
+      color: #333;
+    }
+    input[type="text"] {
+      padding: 8px 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 200px;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    
+    .table-container {
+      margin-top: 80px;
+      overflow: visible !important; 
+    }
+    
+    table {
+      border-collapse: collapse;
+      white-space: nowrap;
+      margin: 0 auto;
+      background-color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      font-size: 13px;
+      text-align: center;
+      vertical-align: middle;
+      height: 24px;
+      width: 1px;            
+      white-space: normal;   
+      word-break: keep-all;  
+    }
+    
+    .highlight {
+      background-color: #ff9800 !important; 
+      color: white !important;
+      font-weight: bold !important;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.02); box-shadow: 0 0 8px rgba(255,152,0,0.7); }
+    }
+    #loading {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 120px;
+      color: #666;
+    }
+
+    /* 시트 1행 타이틀 스타일 */
+    #sheetTable tr:first-child td {
+      font-size: 32px !important;    
+      font-weight: 800 !important;   
+      padding: 20px 10px !important; 
+      border: none !important;       
+      letter-spacing: -1px;
+      position: sticky;
+      top: 54px;           
+      z-index: 11;         
+      background-color: #f8f9fa !important; 
+    }
+    
+    /* 상단 헤더 행 스티키 계단식 고정 */
+    #sheetTable tr:nth-child(2) td,
+    #sheetTable tr:nth-child(3) td,
+    #sheetTable tr:nth-child(4) td {
+      position: sticky;
+      z-index: 10;         
+      box-shadow: inset 0 -1px 0 #aaa, inset 0 1px 0 #aaa; 
+    }  
+
+    #sheetTable tr:nth-child(2) td { top: 125px; }
+    #sheetTable tr:nth-child(3) td { top: 157px; }
+    #sheetTable tr:nth-child(4) td { top: 189px; }  
+  </style>
+</head>
+<body>
+
+  <div class="search-container">
+    <h3>교사 검색</h3>
+    <input type="text" id="searchInput" placeholder="이름을 입력하세요 (예: 김OO)" onkeyup="if(window.event.keyCode==13){searchName()}">
+    <button onclick="searchName()">검색</button>
+    <button onclick="retryLoad()" style="background-color: #28a745;">새로고침</button>
+    <span id="resultCount" style="margin-left: 10px; font-weight: bold; color: #d9534f;"></span>
+  </div>
+
+  <div id="loading">구글 시트에서 시간표 데이터를 불러오는 중입니다...</div>
+  
+  <div class="table-container">
+    <table id="sheetTable"></table>
+  </div>
+
+  <script>
+    window.onload = function() {
+      google.script.run.withSuccessHandler(drawTable).getSheetData();
+    };
+
+    function drawTable(data) {
+      if (!data || !data.values) {
+        document.getElementById('loading').textContent = "데이터를 불러오는데 실패했습니다. 시트 설정을 확인해주세요.";
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'none';
+      var table = document.getElementById('sheetTable');
+      table.innerHTML = ""; // 기존 테이블 초기화
+      
+      var values = data.values;
+      var backgrounds = data.backgrounds;
+      var fontColors = data.fontColors;
+      var fontWeights = data.fontWeights;
+      var mergeInfo = data.mergeInfo;
+
+      var visited = Array(values.length).fill().map(() => Array(values[0].length).fill(false));
+
+      // 현재 어떤 학급 영역을 지나고 있는지 체크할 변수
+      var currentClass = ""; 
+
+      for (var r = 0; r < values.length; r++) {
+        var tr = document.createElement('tr');
+        
+        // 1. 현재 행에 '1-1' ~ '3-8' 같은 학급 텍스트가 존재하는지 전수 조사
+        var foundClassThisRow = "";
+        for (var checkCol = 0; checkCol < values[r].length; checkCol++) {
+          var valStr = String(values[r][checkCol]).trim();
+          if (/^\d+-\d+$/.test(valStr)) {
+            foundClassThisRow = valStr;
+            break;
+          }
+        }
+
+        var isGroupFirstRow = false;
+        // 새로운 학급 코드가 발견되었다면 그 학급의 첫 번째 줄 시작!
+        if (foundClassThisRow !== "" && foundClassThisRow !== currentClass) {
+          currentClass = foundClassThisRow;
+          isGroupFirstRow = true;
+        }
+
+        var isClassRow = (currentClass !== "");
+
+        // 2. 다음 행에 새로운 학급 코드가 등장하는지 조사하여 현재 행이 마지막 줄인지 판별
+        var isGroupLastRow = false;
+        if (isClassRow) {
+          if (r === values.length - 1) {
+            isGroupLastRow = true;
+          } else {
+            var foundClassNextRow = "";
+            for (var checkCol = 0; checkCol < values[r+1].length; checkCol++) {
+              var nextValStr = String(values[r+1][checkCol]).trim();
+              if (/^\d+-\d+$/.test(nextValStr)) {
+                foundClassNextRow = nextValStr;
+                break;
+              }
+            }
+            // 다음 행에서 새로운 반이 발견되면 현재 행이 이번 반의 마지막 줄임
+            if (foundClassNextRow !== "" && foundClassNextRow !== currentClass) {
+              isGroupLastRow = true;
+            }
+          }
+        }
+        
+        for (var c = 0; c < values[r].length; c++) {
+          if (visited[r][c]) continue; 
+
+          var td = document.createElement('td');
+          td.textContent = values[r][c];
+
+          if (r === 0) {
+            td.style.whiteSpace = 'normal'; 
+          } 
+          
+          td.style.color = fontColors[r][c];
+          td.style.fontWeight = fontWeights[r][c];
+          td.setAttribute('data-orig-bg', backgrounds[r][c]);
+          td.setAttribute('data-orig-color', fontColors[r][c]);
+
+          if (backgrounds[r][c] && backgrounds[r][c] !== '#ffffff') {
+            td.style.backgroundColor = backgrounds[r][c];
+          } else if (r >= 1 && r <= 3) {
+            td.style.backgroundColor = '#f1f3f4'; 
+          } else {
+            td.style.backgroundColor = backgrounds[r][c];
+          }
+
+          // 3. 정밀 계산된 결과를 토대로 학급 영역 최외곽에만 진한 경계선 부여
+          if (isClassRow) {
+            if (isGroupFirstRow) {
+              td.style.borderTop = '2px solid #222';
+            }
+            if (isGroupLastRow) {
+              td.style.borderBottom = '2px solid #222';
+            }
+          }
+
+          var merge = mergeInfo.find(m => m.startRow === r && m.startCol === c);
+          if (merge) {
+            td.rowSpan = merge.numRows;
+            td.colSpan = merge.numCols;
+            
+            for (var i = r; i < r + merge.numRows; i++) {
+              for (var j = c; j < c + merge.numCols; j++) {
+                visited[i][j] = true;
+              }
+            }
+          }
+          
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+        
+        // 마지막 행 처리가 끝났다면 학급 추적 정보 리셋
+        if (isGroupLastRow) {
+          currentClass = "";
+        }
+      }
+    }
+
+    function searchName() {
+      var query = document.getElementById('searchInput').value.trim();
+      if (!query) {
+        alert('검색할 이름을 입력해주세요.');
+        return;
+      }
+
+      clearSearch(); 
+
+      var cells = document.querySelectorAll('#sheetTable td');
+      var count = 0;
+
+      cells.forEach(function(cell) {
+        if (cell.textContent.indexOf(query) !== -1 && query !== "") {
+          cell.classList.add('highlight');
+          count++;
+
+          var nextCell = cell.nextElementSibling;
+          if (nextCell && (nextCell.textContent.indexOf('(') !== -1 || nextCell.textContent.indexOf(':') !== -1)) {
+            nextCell.classList.add('highlight');
+          }
+        }
+      });
+
+      document.getElementById('resultCount').textContent = count + '곳에서 감독이 확인되었습니다.';
+    }
+
+    function clearSearch() {
+      var cells = document.querySelectorAll('#sheetTable td');
+      cells.forEach(function(cell) {
+        cell.classList.remove('highlight');
+      });
+      document.getElementById('resultCount').textContent = '';
+    }
+
+    function retryLoad() {
+      document.getElementById('sheetTable').innerHTML = "";
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('loading').textContent = "구글 시트에서 시간표 데이터를 불러오는 중입니다...";
+      document.getElementById('resultCount').textContent = "";
+      document.getElementById('searchInput').value = "";
+      
+      google.script.run.withSuccessHandler(drawTable).getSheetData();
+    }
+  </script>
+</body>
+</html>

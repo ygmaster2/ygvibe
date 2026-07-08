@@ -1,0 +1,2043 @@
+{
+  "timeZone": "Asia/Seoul",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE_ANONYMOUS"
+  }
+}
+
+function doGet() {
+  return HtmlService.createTemplateFromFile('Index')
+    .evaluate()
+    .setTitle('물품 관리 시스템')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+function loginUser(username, password) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const userSheet = ss.getSheetByName('사용자');
+  const userData = userSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < userData.length; i++) {
+    if (userData[i][0].toString() === username && userData[i][1].toString() === password) {
+      return {
+        success: true,
+        username: userData[i][0],
+        role: userData[i][2],
+        assignedRoom: userData[i][3] 
+      };
+    }
+  }
+  return { success: false, message: "아이디 또는 비밀번호가 일치하지 않습니다." };
+}
+
+// 1. 데이터를 가져올 때 (시트 행 번호를 가상의 ID로 부여)
+// [수정] 최신 등록 데이터가 상단에 오도록 역순 정렬 적용
+function getInventoryData(role, assignedRooms) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('물품현황');
+    // 데이터 전체를 가져옵니다.
+    const data = sheet.getDataRange().getDisplayValues();
+    
+    // 헤더만 있거나 데이터가 없는 경우 빈 객체 반환 [cite: 9]
+    if (data.length <= 1) return { headers: [], rows: [] };
+    
+    const headers = data[0]; // A~M열 헤더 [cite: 10]
+    const rows = [];
+    const assignedArr = assignedRooms ? assignedRooms.split(',').map(r => r.trim()) : [];
+
+    /**
+     * [변경 포인트] 
+     * 기존: for (let i = 1; i < data.length; i++) (정방향)
+     * 수정: data.length - 1부터 1까지 거꾸로 반복 (역방향)
+     */
+    for (let i = data.length - 1; i >= 1; i--) {
+      const rowData = data[i];
+      const roomName = String(rowData[1] || "").trim(); // B열(인덱스 1) = 관리실 [cite: 12]
+      
+      // 권한 체크 로직 
+      if (role === '관리자' || role === '조회관리자' || assignedArr.includes(roomName) || assignedArr.includes('전체')) {
+        // i + 1은 실제 시트의 행 번호이므로, 데이터가 역순이어도 ID 값은 정확하게 유지됩니다. 
+        rows.push([i + 1, ...rowData]);
+      }
+    }
+    
+    return { headers: headers, rows: rows };
+  } catch (e) {
+    Logger.log("getInventoryData Error: " + e.toString());
+    return { headers: [], rows: [] };
+  }
+}
+
+
+// [신규 추가] 물품 정보 수정 함수
+// [수정/추가] DB 시트에 수정된 내용을 반영하는 함수
+function updateInventoryItems(updates) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('물품현황');
+    if (!sheet) throw new Error("'물품현황' 시트를 찾을 수 없습니다.");
+
+    updates.forEach(u => {
+      const row = parseInt(u.id);
+      if (isNaN(row)) return;
+
+      // u.data는 [관리실위치, 관리실, 담당자, ..., 비고, 등록일시] 순서의 배열(12개)입니다.
+      // 시트의 해당 행(row)의 1열(A)부터 12개 열(L)까지 한 번에 저장합니다.
+      sheet.getRange(row, 1, 1, 13).setValues([u.data]);
+    });
+
+    SpreadsheetApp.flush(); // 즉시 반영
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: e.toString() };
+  }
+}
+
+// [신규 추가] 물품 정보 삭제 함수
+function deleteInventoryItems(itemsToDelete) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('물품현황');
+  
+  // 행 번호가 큰 순서대로 정렬하여 삭제 시 행 번호가 꼬이지 않게 함
+  itemsToDelete.sort((a, b) => b.id - a.id);
+  
+  itemsToDelete.forEach(item => {
+    const rowIdx = parseInt(item.id);
+    const rowData = sheet.getRange(rowIdx, 1, 1, 12).getValues()[0];
+    logAction(rowData, "삭제");
+    sheet.deleteRow(rowIdx);
+  });
+  return true;
+}
+
+// [신규 추가] 로그 기록 함수 (로그 시트)
+function logAction(rowData, actionType) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let logSheet = ss.getSheetByName('로그');
+  if (!logSheet) {
+    logSheet = ss.insertSheet('로그');
+    logSheet.appendRow(['관리실위치','관리실','담당자','물품분류','품명','기종','취득일','수량','상태','폐기일','비고','수정 및 삭제 일시']);
+  }
+  const now = Utilities.formatDate(new Date(), "GMT+9", "yyyy-MM-dd HH:mm:ss");
+  // 로그 시트 열 구조에 맞춰 데이터 구성 (기존 데이터 1~11열 + 일시)
+  const logData = [
+    rowData[0], rowData[1], rowData[2], rowData[3], rowData[4], rowData[5], 
+    rowData[6], rowData[7], rowData[8], rowData[9], rowData[10],
+    actionType + " (" + now + ")"
+  ];
+  logSheet.appendRow(logData);
+}
+
+function getDropdownOptions(sheetName, columnName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(sheetName);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const colIndex = headers.indexOf(columnName);
+  if (colIndex === -1) return [];
+  let options = [];
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][colIndex]) options.push(data[i][colIndex]);
+  }
+  return options;
+}
+
+function registerItem(formData) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('물품현황');
+  
+  // 1. 등록일시 설정 (날짜와 시간을 모두 기록하려면 "yyyy-MM-dd HH:mm:ss")
+  const now = Utilities.formatDate(new Date(), "GMT+9", "yyyy-MM-dd HH:mm:ss");
+  const disposeDate = formData.disposeDate ? formData.disposeDate : "";
+
+  // 2. [기존 로직 유지] 사용자가 '직접입력'으로 품명을 넣은 경우 '물품코드' 시트에 데이터 추가
+  if (formData.isCustomItem && formData.itemName) {
+    const codeSheet = ss.getSheetByName('물품코드');
+    if (codeSheet) {
+      const headers = codeSheet.getRange(1, 1, 1, codeSheet.getLastColumn()).getValues()[0];
+      const targetColIndex = headers.indexOf(formData.category) + 1;
+      
+      if (targetColIndex > 0) {
+        const colData = codeSheet.getRange(1, targetColIndex, codeSheet.getLastRow()).getValues();
+        let insertRow = 1;
+        for (let i = 0; i < colData.length; i++) {
+          if (colData[i][0] !== "") insertRow = i + 2; 
+        }
+        codeSheet.getRange(insertRow, targetColIndex).setValue(formData.itemName);
+      }
+    }
+  }
+
+  // 3. [구조 변경] 13개 열 구조에 맞춰 데이터 배열 생성
+  // (중요: G열에 formData.budget 추가)
+  const rowData = [
+    formData.locationLoc,    // A: 관리실위치
+    formData.locationDetail, // B: 관리실
+    formData.manager,        // C: 담당자
+    formData.category,       // D: 물품분류
+    formData.itemName,       // E: 기종 (기존 품명)
+    formData.model,          // F: 모델명(규격) (기존 기종)
+    formData.budget,         // G: 예산구분 ★새로 추가됨
+    formData.acquireDate,    // H: 취득일
+    formData.quantity,       // I: 수량
+    formData.status,         // J: 상태
+    formData.disposeDate,    // K: 폐기일
+    formData.remarks,        // L: 비고
+    now                      // M: 등록일시
+  ];
+
+  // 4. 시트에 데이터 추가
+  try {
+    sheet.appendRow(rowData);
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ========= [사용자 관리 및 권한 로직] =========
+
+// [수정] 행 번호(ID)를 포함하여 사용자 데이터를 가져옵니다.
+function getUserData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('사용자');
+  const data = sheet.getDataRange().getValues();
+  
+  // 데이터가 헤더만 있거나 없는 경우
+  if (data.length <= 1) return { headers: ["ID", ...(data[0] || [])], rows: [] };
+  
+  const headers = ["ID", ...data[0]]; // 헤더에 ID 추가
+  const rows = data.slice(1).map((row, index) => {
+    // index + 2 가 시트의 실제 행 번호 (헤더가 1행이므로)
+    return [index + 2, ...row];
+  });
+  
+  return { headers: headers, rows: rows };
+}
+
+function saveUsers(usersToSave) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('사용자');
+  const data = sheet.getDataRange().getValues(); 
+  
+  usersToSave.forEach(newUser => {
+    let isUpdated = false;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0].toString() === newUser.manager) {
+        // 이름과 비밀번호가 모두 일치할 때만 관리실을 추가(병합)
+        if (data[i][1].toString() === newUser.password) {
+          let existingRooms = data[i][3] ? data[i][3].toString().split(',').map(r => r.trim()).filter(r => r !== "") : [];
+          let newRooms = newUser.rooms ? newUser.rooms.split(',').map(r => r.trim()).filter(r => r !== "") : [];
+          
+          // 중복되는 관리실 제거 후 합치기
+          let combinedRooms = [...new Set([...existingRooms, ...newRooms])].join(', ');
+
+          sheet.getRange(i + 1, 1, 1, 4).setValues([[newUser.manager, newUser.password, newUser.role, combinedRooms]]);
+          isUpdated = true;
+          break;
+        } else {
+          // 이름은 같으나 비밀번호가 다르면 보안상 거부
+          throw new Error(`'${newUser.manager}' 담당자의 비밀번호가 일치하지 않아 권한을 추가할 수 없습니다.`);
+        }
+      }
+    }
+    // 기존에 없는 담당자면 맨 아래에 새 행으로 추가
+    if (!isUpdated) {
+      sheet.appendRow([newUser.manager, newUser.password, newUser.role, newUser.rooms]);
+    }
+  });
+  return true;
+}
+
+// 1. 특정 카테고리(예: 교실)에 속한 모든 방 목록을 가져오는 함수
+function getRooms(category) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const roomSheet = ss.getSheetByName('관리실'); // 시트 이름이 정확히 '관리실'인지 확인하세요!
+  if (!roomSheet) return [];
+
+  const data = roomSheet.getDataRange().getValues();
+  const headers = data[0];
+  const colIndex = headers.indexOf(category); // 선택한 위치가 몇 번째 열인지 확인
+
+  if (colIndex === -1) return []; // 위치를 못 찾으면 빈 배열 반환
+
+  const rooms = [];
+  for (let i = 1; i < data.length; i++) {
+    const roomName = data[i][colIndex];
+    if (roomName) {
+      rooms.push(roomName.toString().trim());
+    }
+  }
+  return rooms;
+}
+
+// 2. 방 이름(예: 1-7)을 넣으면 '교실'이라는 카테고리를 찾아주는 함수
+function getRoomCategory(roomName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const roomSheet = ss.getSheetByName('관리실');
+  if (!roomSheet) return null;
+
+  const data = roomSheet.getDataRange().getValues();
+  const headers = data[0];
+
+  for (let col = 0; col < headers.length; col++) {
+    for (let row = 1; row < data.length; row++) {
+      if (data[row][col] && data[row][col].toString().trim() === roomName) {
+        return headers[col];
+      }
+    }
+  }
+  return null;
+}
+// [신규 추가] 특정 관리실이 어느 위치(열)에 속해 있는지 찾는 함수
+function getRoomMapping() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const roomSheet = ss.getSheetByName('관리실');
+  if (!roomSheet) return {};
+
+  const data = roomSheet.getDataRange().getValues();
+  const headers = data[0]; // 첫 줄 (본관, 미래관, 교실 등)
+  const mapping = {};
+
+  // 열별로 순회하며 각 방이 어느 헤더에 속하는지 매핑
+  for (let col = 0; col < headers.length; col++) {
+    const category = headers[col];
+    for (let row = 1; row < data.length; row++) {
+      const roomName = data[row][col];
+      if (roomName) {
+        mapping[roomName.toString().trim()] = category;
+      }
+    }
+  }
+  return mapping; // 결과 예: {"1-7": "교실", "과학실1": "과학실"}
+}
+
+// 권한이 '전체'인 사용자를 위해 모든 관리실 목록을 가져오는 함수 (수정됨)
+function getAllRooms() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let allRooms = [];
+
+  // 1. '관리실' 시트에서 모든 세부위치를 추출 (날짜/시간 제외)
+  const roomSheet = ss.getSheetByName('관리실');
+  if (roomSheet) {
+    const data = roomSheet.getDataRange().getValues();
+    for (let col = 0; col < data[0].length; col++) {
+      for (let row = 1; row < data.length; row++) {
+        let cell = data[row][col];
+        
+        // 값 없음, 날짜/시간(Date) 객체 데이터는 탭 생성에서 제외
+        if (!cell || cell instanceof Date) continue;
+        
+        let strValue = cell.toString().trim();
+        // 문자열이 비어있지 않다면 배열에 추가
+        if (strValue !== "") {
+          allRooms.push(strValue);
+        }
+      }
+    }
+  }
+
+  // 2. 만약 관리실 시트 구조가 달라 못 가져왔다면 '물품현황' 시트(2번째 열)에서 추출
+  if (allRooms.length === 0) {
+    const invSheet = ss.getSheetByName('물품현황');
+    if (invSheet) {
+      const data = invSheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        let cell = data[i][1];
+        
+        // 날짜/시간(Date) 데이터 제외
+        if (!cell || cell instanceof Date) continue;
+        
+        let strValue = cell.toString().trim();
+        if (strValue !== "") {
+          allRooms.push(strValue);
+        }
+      }
+    }
+  }
+
+  // 중복 제거 후 반환
+  return [...new Set(allRooms)];
+}
+
+/**
+ * '관리실' 시트에서 위치와 세부 방 정보를 가져와 맵핑 객체로 반환
+ * 결과 예시: { "교실": ["1-1", "1-2"], "사무실": ["행정실", "교장실"] }
+ */
+function getManagementMapping() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("관리실");
+  if (!sheet) return {};
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0]; // 첫 줄: 관리실 위치 (교실, 특별실 등)
+  let mapping = {};
+
+  headers.forEach((header, colIndex) => {
+    if (header) {
+      mapping[header] = [];
+      for (let rowIndex = 1; rowIndex < data.length; rowIndex++) {
+        const room = data[rowIndex][colIndex];
+        if (room) mapping[header].push(room);
+      }
+    }
+  });
+  return mapping;
+}
+
+
+// [신규 추가] 회원정보 수정 로직
+function updateUserInfo(username, oldPass, newPass, newRole) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const userSheet = ss.getSheetByName('사용자');
+    const data = userSheet.getDataRange().getDisplayValues();
+    
+    for (let i = 1; i < data.length; i++) {
+      // 1. 사용자 일치 여부 확인 (공백 제거)
+      if (data[i][0].trim() === username.trim()) {
+        
+        // 2. 현재 비밀번호 일치 여부 확인
+        if (data[i][1].trim() !== oldPass.trim()) {
+          return { success: false, message: "현재 비밀번호가 일치하지 않습니다." };
+        }
+        
+        // 3. 새 비밀번호 수정 (입력된 경우에만)
+        if (newPass && newPass.trim() !== "") {
+          userSheet.getRange(i + 1, 2).setValue(newPass.trim());
+        }
+        
+        // 4. 권한 변경 (전달된 경우에만)
+        if (newRole) {
+          userSheet.getRange(i + 1, 3).setValue(newRole);
+        }
+        
+        return { success: true };
+      }
+    }
+    return { success: false, message: "사용자를 찾을 수 없습니다." };
+  } catch (e) {
+    return { success: false, message: "서버 오류: " + e.toString() };
+  }
+}
+
+
+// [추가] 물품코드 시트에서 분류별 품명을 가져오는 함수
+// [수정] 물품코드 시트의 첫 행(분류)을 기준으로 데이터를 맵핑
+function getCategoryItemMap() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('물품코드');
+    if (!sheet) return {};
+    
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 1) return {};
+
+    const map = {};
+    const headers = data[0]; // 첫 번째 행 (분류들)
+
+    for (let j = 0; j < headers.length; j++) {
+      const category = String(headers[j]).trim();
+      if (!category) continue;
+      
+      const items = [];
+      for (let i = 1; i < data.length; i++) {
+        const item = String(data[i][j] || "").trim();
+        if (item) items.push(item);
+      }
+      map[category] = items;
+    }
+    return map;
+  } catch(e) {
+    return {};
+  }
+}
+
+// [추가] 수정된 데이터를 시트에 반영하는 함수
+function updateRows(updatedData) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('DB'); // 실제 데이터 시트 이름 확인 (보통 DB 또는 물품현황)
+  const data = sheet.getDataRange().getValues();
+
+  updatedData.forEach(update => {
+    const rowId = update[0]; // 수정할 행의 고유 ID (보통 row[0])
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0].toString() === rowId.toString()) {
+        // 인덱스 1~12까지 업데이트 (요청하신 12개 필드)
+        for (let col = 1; col <= 12; col++) {
+          sheet.getRange(i + 1, col + 1).setValue(update[col]);
+        }
+        break;
+      }
+    }
+  });
+  return {success: true};
+}
+
+// [신규 추가] 권한 관리에서 수정한 사용자 정보 반영
+function updateAdminUsers(updates) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('사용자');
+
+  updates.forEach(user => {
+    const rowIndex = parseInt(user.id);
+    
+    // 1열(A): 담당자, 2열(B): 비번, 3열(C): 권한, 4열(D): 관리실
+    // 행 번호(rowIndex) 위치에 데이터를 배열 형태로 덮어씁니다.
+    sheet.getRange(rowIndex, 1, 1, 4).setValues([[
+      user.manager, 
+      user.password, 
+      user.role, 
+      user.rooms
+    ]]);
+  });
+  
+  return true;
+}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; margin: 0; background: #f4f7f6; }
+    .screen { display: none; padding: 20px; }
+    .active { display: block; }
+    input, select, textarea { padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; background: #007bff; color: white; }
+    button:hover { opacity: 0.8; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+    th { background: #f8f9fa; }
+    /* 버튼 비활성화(disabled) 시 회색 스타일 */
+    button:disabled {
+      background-color: #ccc !important;
+      color: #666 !important;
+      cursor: not-allowed;
+      border: 1px solid #bbb;
+    }
+
+
+  #custom-modal-overlay { 
+    display: none; 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.5); 
+    z-index: 99999; /* 기존 9999에서 99999로 대폭 높임 */
+    align-items: center; 
+    justify-content: center; 
+  }
+  #custom-modal { 
+    background: white; padding: 25px; border-radius: 10px; width: 350px; max-width: 90%; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2); text-align: center; 
+  }
+  #custom-modal-msg { 
+    margin-bottom: 25px; font-size: 16px; color: #333; line-height: 1.5; 
+    white-space: pre-wrap; word-break: keep-all; 
+  }
+  .modal-btn-wrap { display: flex; gap: 10px; justify-content: center; }
+  .modal-btn { 
+    padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; 
+    font-weight: bold; font-size: 15px; transition: background 0.2s; flex: 1;
+  }
+  #btn-modal-ok { background: #007bff; color: white; }
+  #btn-modal-ok:hover { background: #0056b3; }
+  #btn-modal-cancel { background: #dc3545; color: white; }
+  #btn-modal-cancel:hover { background: #c82333; }
+  </style>
+</head>
+<body>
+
+  <div id="login-screen" class="screen active">
+    <div style="max-width: 300px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+      <h2 style="text-align: center;">물품관리 시스템 로그인</h2>
+      <input type="text" id="username" placeholder="사용자 이름" style="width:100%" onkeyup="if(window.event.keyCode==13){handleLogin()}">
+      <input type="password" id="password" placeholder="비밀번호" style="width:100%" onkeyup="if(window.event.keyCode==13){handleLogin()}">
+      <button onclick="handleLogin()" style="width:100%; margin-top:10px;">로그인</button>
+      <p id="login-msg" style="color:red; font-size:12px; text-align: center;"></p>
+    </div>
+  </div>
+
+  <div id="dashboard-screen" class="screen">
+    <?!= include('Dashboard'); ?>
+  </div>
+
+  <div id="register-screen" class="screen">
+    <?!= include('Register'); ?>
+  </div>
+
+  <div id="admin-screen" class="screen">
+    <?!= include('Admin'); ?>
+  </div>
+
+<div id="profile-screen" class="screen" style="display:none;">
+  <div style="max-width: 450px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+    <h2 style="margin-top:0; border-bottom:2px solid #f0f0f0; padding-bottom:10px;">회원정보수정</h2>
+    <div style="display: grid; gap: 15px;">
+      <div><label>아이디(이름)</label><input type="text" id="prof-username" readonly style="width:100%; background:#e9ecef;"></div>
+      <div><label>현재 비밀번호</label><input type="password" id="prof-old-pass" style="width:100%"></div>
+      <div><label>새 비밀번호 (변경시)</label><input type="password" id="prof-new-pass" style="width:100%" placeholder="변경할 비밀번호 입력"></div>
+      <div>
+        <label>관리권한</label>
+        <select id="prof-role" style="width:100%">
+          <option value="일반">일반</option>
+          <option value="관리자">관리자</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button onclick="saveProfile()" style="flex:1.5; background:#007bff; font-weight:bold;">수정하기</button>
+        <button onclick="showScreen('dashboard-screen')" style="flex:1; background:#6c757d;">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="custom-modal-overlay">
+  <div id="custom-modal">
+    <div id="custom-modal-msg"></div>
+    <div class="modal-btn-wrap">
+      <button id="btn-modal-cancel" class="modal-btn" style="display:none;">취소</button>
+      <button id="btn-modal-ok" class="modal-btn">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 1. 화면 전환 함수 (스타일 충돌 방지 버전)
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  
+  const target = document.getElementById(screenId);
+  if (target) {
+    target.classList.add('active');
+    target.style.display = 'block';
+
+    // [기존 유지] 프로필 화면 초기화 로직
+    if (screenId === 'profile-screen') {
+      const saveBtn = document.querySelector('#profile-screen button[onclick="saveProfile()"]');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "수정하기";
+      }
+      document.getElementById('prof-old-pass').value = "";
+      document.getElementById('prof-new-pass').value = "";
+    }
+
+    // [수정 사항 적용] 물품등록 화면이 열릴 때만 초기화 함수 호출
+    if (screenId === 'register-screen') {
+      if (typeof resetRegisterForm === 'function') {
+        resetRegisterForm();
+      }
+    }
+  }
+}
+
+  // 2. 로그인 처리
+  function handleLogin() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    
+    google.script.run.withSuccessHandler(function(res) {
+      if (res.success) {
+        sessionStorage.setItem('userData', JSON.stringify(res));
+        initDashboard(); 
+        showScreen('dashboard-screen');
+      } else {
+        document.getElementById('login-msg').innerText = res.message;
+      }
+    }).loginUser(user, pass);
+  }
+
+// [수정] 3. 로그아웃 처리 (커스텀 확인창 적용)
+function handleLogout() {
+  // 브라우저 기본 confirm 대신 customConfirm 호출
+  customConfirm("로그아웃 하시겠습니까?", function(isConfirmed) {
+    if (isConfirmed) {
+      // '확인'을 눌렀을 때만 아래 로직이 실행됩니다.
+      sessionStorage.removeItem('userData');
+      
+      // 입력 필드 및 메시지 초기화
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('login-msg').innerText = '';
+      
+      // 로그인 화면으로 이동
+      showScreen('login-screen');
+    }
+  });
+}
+
+  // 4. 회원정보 저장 (오류 수정 버전)
+  function saveProfile() {
+    const storedData = sessionStorage.getItem('userData');
+    if (!storedData) {
+      alert("로그인 정보가 없습니다.");
+      showScreen('login-screen');
+      return;
+    }
+    const user = JSON.parse(storedData);
+
+    // [중요] HTML ID와 일치하도록 수정함
+    const oldPassEl = document.getElementById('prof-old-pass');
+    const newPassEl = document.getElementById('prof-new-pass');
+    const newRoleEl = document.getElementById('prof-role');
+
+    const oldPass = oldPassEl.value;
+    const newPass = newPassEl.value;
+    const newRole = newRoleEl.value;
+
+    if (!oldPass) {
+      alert("현재 비밀번호를 입력해주세요.");
+      return;
+    }
+
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "수정 중...";
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res.success) {
+        // [수정] 알림창을 띄우기 전에 현재 화면 설정을 확실히 함
+        alert("회원정보가 수정되었습니다. 보안을 위해 다시 로그인해주세요.");
+        
+        sessionStorage.removeItem('userData'); 
+        document.getElementById('prof-old-pass').value = ""; 
+        document.getElementById('prof-new-pass').value = "";
+        
+        showScreen('login-screen'); 
+      } else {
+        alert("수정 실패: " + res.message);
+        btn.disabled = false;
+        btn.innerText = originalText;
+      }
+      })
+      .withFailureHandler(function(err) {
+        alert("네트워크 오류가 발생했습니다.");
+        btn.disabled = false;
+        btn.innerText = originalText;
+      })
+      .updateUserInfo(user.username, oldPass, newPass, newRole);
+  }
+
+
+
+  // 1. 브라우저 기본 alert 덮어쓰기 (기존의 모든 alert() 코드가 예쁜 창으로 자동 변환됨)
+  window.alert = function(msg) {
+    showCustomModal(msg, 'alert');
+  };
+
+  // 2. 브라우저 기본 confirm을 대체할 커스텀 함수
+  function customConfirm(msg, callback) {
+    showCustomModal(msg, 'confirm', callback);
+  }
+
+  // 모달 창 제어 핵심 로직
+  function showCustomModal(msg, type, callback) {
+    const overlay = document.getElementById('custom-modal-overlay');
+    const msgDiv = document.getElementById('custom-modal-msg');
+    const btnOk = document.getElementById('btn-modal-ok');
+    const btnCancel = document.getElementById('btn-modal-cancel');
+
+    msgDiv.innerText = msg;
+    overlay.style.display = 'flex';
+
+    btnOk.onclick = null;
+    btnCancel.onclick = null;
+
+    if (type === 'alert') {
+      btnCancel.style.display = 'none'; // 알림창은 취소버튼 숨김
+      btnOk.onclick = () => { overlay.style.display = 'none'; if(callback) callback(true); };
+    } else if (type === 'confirm') {
+      btnCancel.style.display = 'block'; // 확인창은 취소버튼 표시
+      btnOk.onclick = () => { overlay.style.display = 'none'; if(callback) callback(true); };
+      btnCancel.onclick = () => { overlay.style.display = 'none'; if(callback) callback(false); };
+    }
+  }
+</script>
+</body>
+</html>
+
+
+<style>
+  #nav-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+  .tab-btn { 
+    padding: 12px 24px; 
+    border: 1px solid #ddd; 
+    background: #f8f9fa; 
+    cursor: pointer; 
+    border-radius: 6px; 
+    font-size: 15px; 
+    font-weight: bold; 
+    color: #495057;
+    transition: background 0.2s; 
+  }
+  .tab-btn:hover { background: #e2e6ea; }
+  .tab-btn.active-tab { background: #007bff; color: white; border-color: #007bff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  table { width: 100%; border-collapse: collapse; min-width: 1300px; }
+  th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; }
+  th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; }
+  .edit-mode input, .edit-mode select { width: 100%; padding: 4px; box-sizing: border-box; border: 1px solid #007bff; }
+
+  #custom-modal-overlay { 
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; 
+  }
+  #custom-modal { 
+    background: white; padding: 25px; border-radius: 10px; width: 350px; max-width: 90%; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2); text-align: center; 
+  }
+  #custom-modal-msg { 
+    margin-bottom: 25px; font-size: 16px; color: #333; line-height: 1.5; 
+    white-space: pre-wrap; word-break: keep-all; 
+  }
+  .modal-btn-wrap { display: flex; gap: 10px; justify-content: center; }
+  .modal-btn { 
+    padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; 
+    font-weight: bold; font-size: 15px; transition: background 0.2s; flex: 1;
+  }
+  #btn-modal-ok { background: #007bff; color: white; }
+  #btn-modal-ok:hover { background: #0056b3; }
+  #btn-modal-cancel { background: #dc3545; color: white; }
+  #btn-modal-cancel:hover { background: #c82333; }
+</style>
+
+<div id="nav-tabs"></div>
+
+<div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+  <h3 id="room-title" style="margin:0;">물품 현황</h3>
+  <div style="display: flex; gap: 5px;">
+    <button id="btn-save" onclick="saveChanges()" style="background:#28a745; color:white; font-weight:bold;" disabled>수정/저장</button>
+    <button id="btn-delete" onclick="deleteItems()" style="background:#dc3545; color:white; font-weight:bold;" disabled>삭제</button>
+    
+    <button id="btn-admin" onclick="openAdmin()" style="background:#17a2b8; color:white; font-weight:bold; display:none;">권한관리</button>
+    <button onclick="openRegisterWithContext()" style="background:#007bff; color:white; font-weight:bold;">+ 물품등록</button>
+    <button onclick="handleDownload()" style="background:#28a745; color:white;">다운로드</button>
+    <button onclick="openProfile()" style="background:#ffc107; font-weight:bold; color:black;">회원정보수정</button>
+    <button onclick="handleLogout()" style="background:#333; color:white; font-weight:bold;">로그아웃</button>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr id="table-head">
+        </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div style="display:flex; gap:10px; margin-bottom:10px; background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd; flex-wrap: wrap;">
+  <div style="display:flex; align-items:center; gap:6px; background:#f0f4f8; padding:6px 14px; border-radius:20px; color:#334155; font-weight:bold; font-size:14px; white-space:nowrap;">
+    필터
+  </div>
+  <select id="filter-room" onchange="applyFilters()" style="flex:1; min-width:120px; padding:8px; border:1px solid #ccc; border-radius:4px;"><option value="">관리실 전체</option></select>
+  <select id="filter-category" onchange="applyFilters()" style="flex:1; min-width:120px; padding:8px; border:1px solid #ccc; border-radius:4px;">
+    <option value="">물품분류 전체</option><option value="정보화기자재">정보화기자재</option><option value="교구/기자재">교구/기자재</option><option value="비품(일반기계기구)">비품(일반기계기구)</option><option value="가구">가구</option><option value="소모품">소모품</option>
+  </select>
+  <select id="filter-item" onchange="applyFilters()" style="flex:1; min-width:120px; padding:8px; border:1px solid #ccc; border-radius:4px;"><option value="">기종 전체</option></select>
+  <select id="filter-model" onchange="applyFilters()" style="flex:1; min-width:120px; padding:8px; border:1px solid #ccc; border-radius:4px;"><option value="">모델명 전체</option></select>
+  <select id="filter-status" onchange="applyFilters()" style="flex:1; min-width:120px; padding:8px; border:1px solid #ccc; border-radius:4px;">
+    <option value="">상태 전체</option><option value="사용중">사용중</option><option value="수리중">수리중</option><option value="불용">불용</option><option value="폐기">폐기</option>
+  </select>
+</div>
+
+<div id="pagination-container" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 16px;"></div>
+
+<script>
+  let globalRawData = [];       
+  let globalFilteredData = [];  
+  let currentPage = 1;
+  let categoryItemMap = {};
+  let allAvailableRooms = [];
+  let locationMap = {};         
+  const ITEMS_PER_PAGE = 10;    
+
+  function initDashboard(targetRoom) {
+    const user = JSON.parse(sessionStorage.getItem('userData'));
+    if (!user) { showScreen('login-screen'); return; }
+    
+    google.script.run.withSuccessHandler(map => { categoryItemMap = map; }).getCategoryItemMap();
+    google.script.run.withSuccessHandler(rooms => { allAvailableRooms = rooms; }).getAllRooms();
+    google.script.run.withSuccessHandler(map => { locationMap = map; }).getManagementMapping(); 
+
+    const adminBtn = document.getElementById('btn-admin');
+    if(adminBtn) adminBtn.style.display = (user.role === '관리자' ? 'inline-block' : 'none');
+    
+    const assignedRoomsStr = user.assignedRoom || "";
+    if (assignedRoomsStr === "") {
+      document.getElementById('nav-tabs').innerHTML = '<b style="color:red;">배정된 관리실이 없습니다.</b>';
+      return;
+    }
+
+    let rooms = assignedRoomsStr.split(',').map(r => r.trim()).filter(r => r !== "");
+    if (user.role === '관리자' && !rooms.includes('전체')) {
+      rooms.unshift('전체');
+    }
+
+    if (rooms.includes('전체')) {
+      google.script.run.withSuccessHandler(function(allRooms) {
+          let finalRooms = ['전체', ...allRooms.filter(r => r !== '전체')];
+          renderTabs(finalRooms, targetRoom || '전체');
+      }).getAllRooms();
+    } else {
+      renderTabs(rooms, targetRoom);
+    }
+  }
+
+function renderTabs(roomList, targetRoom) {
+  const nav = document.getElementById('nav-tabs');
+  nav.innerHTML = '';
+  const user = JSON.parse(sessionStorage.getItem('userData'));
+
+  if (!roomList || roomList.length === 0) {
+    nav.innerHTML = '<span style="color:red;">표시할 관리실이 없습니다.</span>';
+    return;
+  }
+  
+  // [수정] 조회관리자 권한일 경우 '전체' 탭만 표시
+  let displayRooms;
+  if (user.role === '조회관리자') {
+    displayRooms = ['전체'];
+  } else {
+    displayRooms = (user.role === '관리자') ? ['전체'] : roomList;
+  }
+
+  displayRooms.forEach(room => {
+    let btn = document.createElement('button');
+    btn.innerText = room;
+    btn.className = 'tab-btn';
+    btn.onclick = (e) => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+      e.target.classList.add('active-tab');
+      loadDashboardData(room);
+    };
+    nav.appendChild(btn);
+  });
+
+  const defaultRoom = (targetRoom && displayRooms.includes(targetRoom)) ? targetRoom : displayRooms[0];
+  const buttons = Array.from(nav.children);
+  const targetBtn = buttons.find(b => b.innerText === defaultRoom) || buttons[0];
+  
+  if(targetBtn) {
+    buttons.forEach(b => b.classList.remove('active-tab'));
+    targetBtn.classList.add('active-tab');
+  }
+  
+  loadDashboardData(defaultRoom);
+}
+
+  function loadDashboardData(roomName) {
+    document.getElementById('room-title').innerText = (roomName === '전체' ? "전체 관리실" : roomName) + " 물품 현황";
+    const user = JSON.parse(sessionStorage.getItem('userData'));
+    const body = document.getElementById('table-body');
+    body.innerHTML = '<tr><td colspan="14" style="text-align:center; padding:20px;">데이터를 불러오는 중...</td></tr>';
+
+    google.script.run
+      .withSuccessHandler(function(data) {
+        if (!data.headers || data.headers.length === 0) return;
+        const head = document.getElementById('table-head');
+        
+        head.innerHTML = '<th style="width:40px; text-align:center;"><input type="checkbox" onchange="toggleAll(this)"></th>' + 
+                         data.headers.map(h => `<th>${h}</th>`).join('');
+        
+        if (roomName === '전체') {
+          globalRawData = data.rows;
+        } else {
+          globalRawData = data.rows.filter(row => String(row[2]).trim() === String(roomName).trim());
+        }
+
+        const roomSelect = document.getElementById('filter-room');
+        if (roomSelect) {
+          let roomOptions = '<option value="">관리실 전체</option>';
+          if (allAvailableRooms && allAvailableRooms.length > 0) {
+            roomOptions += allAvailableRooms.map(r => `<option value="${r}">${r}</option>`).join('');
+          } else {
+            const roomsFromData = [...new Set(data.rows.map(row => String(row[2] || "").trim()).filter(v => v !== ""))].sort();
+            roomOptions += roomsFromData.map(r => `<option value="${r}">${r}</option>`).join('');
+          }
+          roomSelect.innerHTML = roomOptions;
+        }
+
+        const uniqueItems = [...new Set(globalRawData.map(row => String(row[5] || "").trim()).filter(v => v !== ""))].sort();
+        const uniqueModels = [...new Set(globalRawData.map(row => String(row[6] || "").trim()).filter(v => v !== ""))].sort();
+
+        // [수정] 필터 드롭다운 텍스트 통일 (기종 전체, 모델명 전체)
+        document.getElementById('filter-item').innerHTML = '<option value="">기종 전체</option>' + uniqueItems.map(item => `<option value="${item}">${item}</option>`).join('');
+        document.getElementById('filter-model').innerHTML = '<option value="">모델명 전체</option>' + uniqueModels.map(mod => `<option value="${mod}">${mod}</option>`).join('');
+        
+        document.getElementById('filter-category').value = '';
+        if(document.getElementById('filter-status')) document.getElementById('filter-status').value = '';
+        if(roomSelect) roomSelect.value = ''; 
+        
+        applyFilters(); 
+      })
+      .getInventoryData(user.role, user.assignedRoom);
+  }
+
+  function applyFilters() {
+    const roomFilt = document.getElementById('filter-room') ? document.getElementById('filter-room').value.trim() : "";
+    const catFilt = document.getElementById('filter-category') ? document.getElementById('filter-category').value.trim() : "";
+    const itemFilt = document.getElementById('filter-item') ? document.getElementById('filter-item').value.trim() : "";
+    const modelFilt = document.getElementById('filter-model') ? document.getElementById('filter-model').value.trim() : "";
+    const statusFilt = document.getElementById('filter-status') ? document.getElementById('filter-status').value.trim() : "";
+
+    globalFilteredData = globalRawData.filter(row => {
+      const room = String(row[2] || "").trim();    
+      const cat = String(row[4] || "").trim();     
+      const item = String(row[5] || "").trim();    
+      const mod = String(row[6] || "").trim();     
+      const status = String(row[10] || "").trim(); 
+
+      return (roomFilt === "" || room === roomFilt) &&
+             (catFilt === "" || cat === catFilt) &&
+             (itemFilt === "" || item === itemFilt) &&
+             (modelFilt === "" || mod === modelFilt) &&
+             (statusFilt === "" || status === statusFilt);
+    });
+
+    currentPage = 1;
+    renderTable();
+  }
+
+  function renderTable() {
+    const body = document.getElementById('table-body');
+    if (!globalFilteredData || globalFilteredData.length === 0) {
+      body.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:20px;">조건에 맞는 등록된 물품 없음</td></tr>`;
+      return;
+    }
+
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const pageData = globalFilteredData.slice(start, end);
+
+    body.innerHTML = pageData.map(row => {
+      const sheetId = row[0]; 
+      const displayData = row.slice(1); 
+      
+      return `<tr id="row-${sheetId}">
+        <td style="text-align:center;"><input type="checkbox" class="row-checkbox" value="${sheetId}" onchange="toggleRowEdit(this)"></td>
+        ${displayData.map((cell, cIdx) => `<td class="col-${cIdx + 1}">${cell || ""}</td>`).join('')}
+      </tr>`;
+    }).join('');
+    
+    renderPagination();
+    if (typeof updateButtonsState === 'function') updateButtonsState();
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(globalFilteredData.length / ITEMS_PER_PAGE);
+    const container = document.getElementById('pagination-container');
+    let html = '';
+
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+    if (currentPage > 1) html += `<span style="cursor:pointer; margin:0 5px; color:#007bff;" onclick="changePage(${currentPage - 1})">이전</span> | `;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === currentPage) html += `<span style="font-weight:bold; margin:0 5px; text-decoration:underline;">[${i}]</span>`;
+      else html += `<span style="cursor:pointer; margin:0 5px; color:#007bff;" onclick="changePage(${i})">[${i}]</span>`;
+    }
+    if (currentPage < totalPages) html += ` | <span style="cursor:pointer; margin:0 5px; color:#007bff;" onclick="changePage(${currentPage + 1})">다음</span>`;
+    container.innerHTML = html;
+  }
+
+  function changePage(page) { currentPage = page; renderTable(); }
+  function toggleAll(chkAll) { document.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = chkAll.checked; toggleRowEdit(cb); }); }
+
+// [수정된 함수] 체크박스 선택 시 편집 모드 전환 및 버튼 활성화
+function toggleRowEdit(cb) {
+  try {
+    const storedData = sessionStorage.getItem('userData');
+    if (storedData) {
+      const user = JSON.parse(storedData);
+      const rowId = cb.value;
+      const tr = document.getElementById(`row-${rowId}`);
+      if (!tr) return;
+
+      // [수정] 행의 관리실(B열) 텍스트 가져오기 - 현재 테이블 구조상 .col-2가 관리실입니다.
+      const rowRoomName = tr.querySelector('.col-2').innerText.trim();
+      const assignedRooms = user.assignedRoom ? user.assignedRoom.split(',').map(r => r.trim()) : [];
+
+      // [핵심 로직] 조회관리자 권한 체크 분기
+      if (user.role === '조회관리자') {
+        // 본인에게 할당된 관리실 목록에 현재 행의 관리실이 포함되어 있지 않다면 차단
+        if (!assignedRooms.includes(rowRoomName)) {
+          alert(`'${rowRoomName}'은 조회 전용입니다. 본인 배정 구역만 수정할 수 있습니다.`);
+          cb.checked = false; // 체크박스 해제
+          return; // 함수 종료
+        }
+      }
+    }
+
+    const rowId = cb.value;
+    const tr = document.getElementById(`row-${rowId}`);
+    if (!tr) return;
+
+    // ★ 13열 구조에 맞춘 인덱스 배열 (1~13)
+    const editableIndices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]; 
+
+    if (cb.checked) {
+      editableIndices.forEach(idx => {
+        const td = tr.querySelector(`.col-${idx}`);
+        if (!td) return;
+
+        // ★ 핵심 해결책: 이미 수정 모드(input이나 select가 들어있음)라면 중복 실행 방지!
+        // 이 코드가 있어야 '전체 선택' 시 화면이 깨지는 현상이 사라집니다.
+        if (td.querySelector('input, select')) return;
+
+        const currentVal = td.innerText.trim();
+        td.setAttribute('data-old-val', currentVal); // 취소 시 복구를 위해 저장
+
+        // 1. 관리실위치
+        if (idx === 1) {
+          const locs = Object.keys(locationMap).length > 0 ? Object.keys(locationMap) : ['본관', '미래관', '동량관', '예절관', '선명당', '마실', '과학실', '컴퓨터실', '특별실', '교실'];
+          let options = '<option value="">선택</option>' + locs.map(l => `<option value="${l}" ${l === currentVal ? 'selected' : ''}>${l}</option>`).join('');
+          td.innerHTML = `<select class="loc-select" onchange="syncRoomDropdown('${rowId}')" style="width:100%;">${options}</select>`;
+        } 
+        // 2. 관리실
+        else if (idx === 2) {
+          let rooms = allAvailableRooms.length > 0 ? allAvailableRooms : [currentVal];
+          let options = '<option value="">선택</option>' + rooms.map(r => `<option value="${r}" ${r === currentVal ? 'selected' : ''}>${r}</option>`).join('');
+          td.innerHTML = `<select class="room-select" onchange="syncLocationDropdown('${rowId}')" style="width:100%;">${options}</select>`;
+        }
+        // 3. 담당자, 6. 모델명(규격), 9. 수량, 12. 비고 (텍스트)
+        else if (idx === 3 || idx === 6 || idx === 9 || idx === 12) {
+          td.innerHTML = `<input type="text" value="${currentVal}" style="width:100%;">`;
+        }
+        // 4. 물품분류 (고정 드롭박스)
+        else if (idx === 4) {
+          const categories = ['정보화기자재', '교구/기자재', '비품(일반기계기구)', '가구', '소모품'];
+          let options = categories.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
+          td.innerHTML = `<select onchange="updateItemDropdown('${rowId}')" style="width:100%;">${options}</select>`;
+        } 
+        // 5. 기종 (분류 연동 드롭박스)
+        else if (idx === 5) {
+          const catVal = tr.querySelector('.col-4 select') ? tr.querySelector('.col-4 select').value : tr.querySelector('.col-4').innerText;
+          const items = categoryItemMap[catVal] || [currentVal];
+          let options = items.map(it => `<option value="${it}" ${it === currentVal ? 'selected' : ''}>${it}</option>`).join('');
+          td.innerHTML = `<select style="width:100%;">${options}</select>`;
+        }
+        // ★ 7. 예산구분 (새로 추가된 열)
+        else if (idx === 7) {
+          const budgetsList = ['학교', '교육청', '시청', '기부', '기타'];
+          let options = budgetsList.map(b => `<option value="${b}" ${b === currentVal ? 'selected' : ''}>${b}</option>`).join('');
+          if (!budgetsList.includes(currentVal) && currentVal !== "") {
+              options += `<option value="${currentVal}" selected>${currentVal}</option>`;
+          }
+          td.innerHTML = `<select style="width:100%;"><option value="">선택</option>${options}</select>`;
+        }
+        // ★ 8. 취득일, 11. 폐기일 (달력) - 순서 조정됨!
+        else if (idx === 8 || idx === 11) {
+          td.innerHTML = `<input type="date" value="${currentVal}" style="width:100%;">`;
+        }
+        // ★ 10. 상태 (드롭박스) - 순서 조정됨!
+        else if (idx === 10) {
+          const statusList = ['사용중', '수리중', '불용', '폐기'];
+          let options = statusList.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
+          td.innerHTML = `<select style="width:100%;">${options}</select>`;
+        }
+        // 13. 등록일시 (읽기 전용)
+        else if (idx === 13) {
+          td.innerHTML = `<input type="text" value="${currentVal}" readonly style="width:100%; background:#f0f0f0; border:none; outline:none;">`;
+        }
+      });
+    } else {
+      // 체크 해제 시 원래 값으로 복구
+      editableIndices.forEach(idx => {
+        const td = tr.querySelector(`.col-${idx}`);
+        if (td && td.hasAttribute('data-old-val')) {
+          td.innerHTML = td.getAttribute('data-old-val');
+          td.removeAttribute('data-old-val'); // ★ 복구 후 속성 제거 (중복 실행 꼬임 방지)
+        }
+      });
+    }
+    if (typeof updateButtonsState === 'function') updateButtonsState();
+  } catch (e) {
+    console.error("수정모드 에러:", e);
+  }
+}
+
+  function updateItemDropdown(rowId) {
+    const tr = document.getElementById(`row-${rowId}`);
+    const catVal = tr.querySelector('.col-4 select').value; 
+    const itemTd = tr.querySelector('.col-5'); 
+    const items = categoryItemMap[catVal] || [];
+    // [수정] 품명 없음 -> 기종 없음
+    let options = items.length > 0 ? items.map(it => `<option value="${it}">${it}</option>`).join('') : '<option value="">기종 없음</option>';
+    itemTd.innerHTML = `<select style="width:100%;">${options}</select>`;
+  }
+
+  function syncRoomDropdown(rowId) {
+    const tr = document.getElementById(`row-${rowId}`);
+    const locSelect = tr.querySelector('.loc-select');
+    const roomSelect = tr.querySelector('.room-select');
+    if (!locSelect || !roomSelect) return;
+    const selectedLoc = locSelect.value;
+    const currentRoom = roomSelect.value;
+    let roomsToDisplay = (selectedLoc && locationMap[selectedLoc]) ? locationMap[selectedLoc] : allAvailableRooms;
+    roomSelect.innerHTML = '<option value="">선택</option>' + roomsToDisplay.map(r => `<option value="${r}" ${r === currentRoom ? 'selected' : ''}>${r}</option>`).join('');
+    if (selectedLoc && locationMap[selectedLoc] && !locationMap[selectedLoc].includes(currentRoom)) roomSelect.value = '';
+  }
+
+  function syncLocationDropdown(rowId) {
+    const tr = document.getElementById(`row-${rowId}`);
+    const locSelect = tr.querySelector('.loc-select');
+    const roomSelect = tr.querySelector('.room-select');
+    if (!locSelect || !roomSelect) return;
+    const selectedRoom = roomSelect.value;
+    if (!selectedRoom) return;
+    for (const loc in locationMap) {
+      if (locationMap[loc].includes(selectedRoom)) { locSelect.value = loc; break; }
+    }
+  }
+
+  function updateButtonsState() {
+    const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+    document.getElementById('btn-save').disabled = (checkedCount === 0);
+    document.getElementById('btn-delete').disabled = (checkedCount === 0);
+  }
+
+// [수정된 함수] 저장 버튼 클릭 시 처리
+function saveChanges() {
+  const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+  if (checkedBoxes.length === 0) return;
+
+  const user = JSON.parse(sessionStorage.getItem('userData'));
+  const assignedRooms = user.assignedRoom.split(',').map(r => r.trim()); 
+  const updates = [];
+  
+  for (let cb of checkedBoxes) {
+    const rowId = cb.value;
+    const tr = document.getElementById(`row-${rowId}`);
+    
+    const roomInput = tr.querySelector('.col-2 select, .col-2 input');
+    const currentRoomValue = roomInput ? roomInput.value : tr.querySelector('.col-2').innerText.trim();
+
+    if (user.role !== '관리자' && !assignedRooms.includes(currentRoomValue)) {
+      alert(`권한 오류: '${currentRoomValue}'은(는) 수정 권한이 없는 관리실입니다.\n\n사용 가능한 관리실: [ ${user.assignedRoom} ]`);
+      return; 
+    }
+
+    const rowData = [];
+    // ★ 기존 12가 아니라 13으로 변경! (A열~M열 13개 데이터 모두 수집)
+    for (let i = 1; i <= 13; i++) {
+      const el = tr.querySelector(`.col-${i} input, .col-${i} select`);
+      rowData.push(el ? el.value : tr.querySelector(`.col-${i}`).innerText.trim());
+    }
+    updates.push({ id: rowId, data: rowData });
+  }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.innerText = "저장 중...";
+
+  google.script.run
+    .withSuccessHandler((res) => {
+      if (res && res.success) {
+        alert("수정되었습니다.");
+        btn.innerText = "수정/저장";
+        const activeTab = document.querySelector('.tab-btn.active-tab');
+        if (activeTab) loadDashboardData(activeTab.innerText);
+      } else {
+        alert("실패: " + (res ? res.message : "오류 발생"));
+        btn.disabled = false;
+        btn.innerText = "수정/저장";
+      }
+    })
+    .updateInventoryItems(updates);
+}
+
+// [수정] 삭제 버튼 클릭 시 처리 (메시지 구성 최적화 및 권한 유지)
+function deleteItems() {
+  const storedData = sessionStorage.getItem('userData');
+  if (!storedData) return;
+  
+  const user = JSON.parse(storedData);
+  const assignedRooms = user.assignedRoom ? user.assignedRoom.split(',').map(r => r.trim()) : [];
+  const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+  
+  if (checkedBoxes.length === 0) {
+    alert("삭제할 항목을 선택해주세요.");
+    return;
+  }
+
+  const deletions = [];
+  let confirmMsg = "다음 물품을 삭제하시겠습니까?\n\n";
+
+  for (let cb of checkedBoxes) {
+    const rowId = cb.value;
+    const tr = document.getElementById(`row-${rowId}`);
+    if (!tr) continue;
+
+    const cells = tr.getElementsByTagName('td');
+    
+    // [데이터 추출 함수] 입력창(수정모드)과 일반 텍스트 모두 대응
+    const getValue = (cell) => {
+      if (!cell) return "";
+      const input = cell.querySelector('input, select');
+      if (input) return input.value.trim();
+      return cell.innerText.split('\n')[0].trim();
+    };
+
+    /**
+     * [이미지 image_2ac81a.png 기반 인덱스 재설정]
+     * cells[2]: 관리실 (권한체크용)
+     * cells[4]: 물품분류 (예: 정보화기자재)
+     * cells[5]: 기종 (예: 노트북)
+     * cells[6]: 모델명(규격) (예: ㅠㅠㅠㅠㅠㅠㅠㅠ)
+     * cells[9]: 수량 (예: 1)
+     */
+    const rowRoomName = getValue(cells[2]); 
+    const category    = getValue(cells[4]); 
+    const itemName    = getValue(cells[5]); 
+    const model       = getValue(cells[6]); 
+    const quantity    = getValue(cells[9]); 
+
+    // 1. 조회관리자 권한 체크 (관리실 기준)
+    if (user.role === '조회관리자') {
+      if (!assignedRooms.includes(rowRoomName)) {
+        alert(`'${rowRoomName}'에 대한 삭제 권한이 없습니다.`);
+        return; 
+      }
+    }
+
+    // 2. 메시지 구성 (요청하신 형식)
+    confirmMsg += `- [${category}] ${itemName} (${model}) / ${quantity}개\n`;
+    deletions.push({ id: rowId });
+  }
+
+  confirmMsg += "\n정말 삭제하시겠습니까?";
+  
+  customConfirm(confirmMsg, function(isConfirmed) {
+    if (!isConfirmed) return;
+    
+    google.script.run.withSuccessHandler(() => {
+      alert("삭제되었습니다.");
+      const activeTab = document.querySelector('.tab-btn.active-tab');
+      const activeTabText = activeTab ? activeTab.innerText.trim() : '전체';
+      loadDashboardData(activeTabText);
+    }).deleteInventoryItems(deletions);
+  });
+}
+function openRegisterWithContext() {
+  const storedData = sessionStorage.getItem('userData');
+  if (!storedData) return;
+  
+  const user = JSON.parse(storedData);
+  const activeTab = document.querySelector('.tab-btn.active-tab');
+  const currentRoom = activeTab ? activeTab.innerText.trim() : '';
+  
+  // 1. 배정된 실 목록에서 '전체'를 제외한 실제 관리실만 추출
+  const assignedRooms = user.assignedRoom 
+    ? user.assignedRoom.split(',').map(r => r.trim()).filter(r => r !== "" && r !== "전체") 
+    : [];
+
+  if (user.role === '조회관리자') {
+    // 2. 실제 배정된 관리실이 하나도 없는 경우 등록 차단
+    if (assignedRooms.length === 0) {
+      alert("조회관리자는 '전체' 조회 권한 외에 별도로 배정된 실제 관리실이 있어야 물품을 등록할 수 있습니다.");
+      return;
+    }
+
+    // 3. 문맥(Context) 설정
+    // 현재 보고 있는 탭이 실제 배정된 실이면 그 실로, 아니면 첫 번째 배정된 실로 설정
+    const targetRoom = assignedRooms.includes(currentRoom) ? currentRoom : assignedRooms[0];
+    if (typeof setRegisterRoomContext === 'function') {
+      setRegisterRoomContext(targetRoom);
+    }
+  } else {
+    // 관리자나 일반 사용자인 경우 (기존 로직 유지)
+    if (currentRoom && currentRoom !== '전체' && typeof setRegisterRoomContext === 'function') {
+      setRegisterRoomContext(currentRoom);
+    }
+  }
+
+  showScreen('register-screen');
+}
+
+  function openAdmin() { showScreen('admin-screen'); initAdmin(); }
+// Dashboard.html 내의 openProfile 함수 수정
+  function openProfile() {
+    const storedData = sessionStorage.getItem('userData');
+    if (!storedData) return;
+    const user = JSON.parse(storedData);
+
+    document.getElementById('prof-username').value = user.username;
+    const roleSelect = document.getElementById('prof-role');
+    roleSelect.value = user.role;
+    roleSelect.disabled = (user.role !== '관리자');
+
+    // [수정] 개별 display 조작 대신 Index.html의 공통 함수 호출
+    if (typeof showScreen === 'function') {
+      showScreen('profile-screen');
+    } else {
+      document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+      document.getElementById('profile-screen').style.display = 'block';
+    }
+  }
+ // 다운로드
+function handleDownload() {
+  const storedData = sessionStorage.getItem('userData');
+  if (!storedData) return;
+  const user = JSON.parse(storedData);
+  
+  // 데이터 존재 여부 확인
+  if (!globalRawData || globalRawData.length === 0) {
+    alert("다운로드할 데이터가 없습니다.");
+    return;
+  }
+
+  // [수정] 조회관리자도 관리자와 동일하게 전체 다운로드 권한 부여
+  if (user.role === '관리자' || user.role === '조회관리자') {
+    customConfirm("모든 관리실의 전체 데이터를 다운로드하시겠습니까?", function(isConfirmed) {
+      if (isConfirmed) {
+        downloadData(true); // 전체 다운로드 실행
+      }
+    });
+  } 
+  // 일반 사용자 로직
+  else {
+    const activeTab = document.querySelector('.tab-btn.active-tab');
+    const roomName = activeTab ? activeTab.innerText.trim() : '';
+    
+    // 만약 일반 사용자가 '전체' 탭을 보고 있다면 (assignedRoom에 '전체'가 있는 경우 등)
+    if (roomName === '전체') {
+      customConfirm("전체 데이터를 다운로드하시겠습니까?", function(isConfirmed) {
+        if (isConfirmed) downloadData(true);
+      });
+    } else if (roomName) {
+      downloadData(false, roomName); // 선택된 특정 탭 데이터만 다운로드
+    } else {
+      alert("다운로드할 관리실이 선택되지 않았습니다.");
+    }
+  }
+}
+
+
+function downloadData(isAll, roomName = '') {
+  try {
+    let csvContent = "\uFEFF"; // 한글 깨짐 방지 BOM
+
+    // 1. 헤더 정의 (표에 보이는 순서대로)
+    const headers = ["관리실(세부위치)", "담당자", "물품분류", "기종", "모델명", "예산구분", "취득일", "수량", "상태", "폐기일", "비고"];
+    csvContent += headers.map(h => `"${h}"`).join(",") + "\r\n";
+
+    let count = 0;
+    
+    // 2. [수정] inventoryData 대신 globalRawData 사용
+    if (typeof globalRawData === 'undefined' || !globalRawData) {
+      alert("데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
+    globalRawData.forEach(row => {
+      // 3. [수정] 현재 코드상 row[2]가 관리실(세부위치) 이름입니다.
+      const rowRoomName = String(row[2] || "").trim();
+
+      if (isAll || rowRoomName === roomName) {
+        let rowData = [];
+        // 4. [수정] 실제 데이터는 index 2번(관리실)부터 시작합니다.
+        // row[0]은 행번호, row[1]은 ID일 가능성이 높으므로 j=2부터 수집합니다.
+        for (let j = 2; j < row.length; j++) {
+          let text = String(row[j] || "").replace(/"/g, '""'); 
+          rowData.push(`"${text}"`);
+        }
+        csvContent += rowData.join(",") + "\r\n";
+        count++;
+      }
+    });
+
+    if (count === 0) {
+      alert("다운로드할 데이터가 없습니다.");
+      return;
+    }
+
+    // 5. 파일 다운로드 실행
+    const fileName = isAll ? "전체_물품현황" : `${roomName}_물품현황`;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileName}_${dateStr}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+  } catch (err) {
+    console.error("다운로드 오류:", err);
+    alert("오류 발생: " + err.message);
+  }
+}
+
+</script>
+
+
+<style>
+  #custom-modal-overlay { 
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; 
+  }
+  #custom-modal { 
+    background: white; padding: 25px; border-radius: 10px; width: 350px; max-width: 90%; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2); text-align: center; 
+  }
+  #custom-modal-msg { 
+    margin-bottom: 25px; font-size: 16px; color: #333; line-height: 1.5; 
+    white-space: pre-wrap; word-break: keep-all; 
+  }
+  .modal-btn-wrap { display: flex; gap: 10px; justify-content: center; }
+  .modal-btn { 
+    padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; 
+    font-weight: bold; font-size: 15px; transition: background 0.2s; flex: 1;
+  }
+  #btn-modal-ok { background: #007bff; color: white; }
+  #btn-modal-ok:hover { background: #0056b3; }
+  #btn-modal-cancel { background: #dc3545; color: white; }
+  #btn-modal-cancel:hover { background: #c82333; }
+</style>
+
+
+<div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+  <h2 style="margin-top:0; color:#333; border-bottom:2px solid #f0f0f0; padding-bottom:10px;">새 물품 등록</h2>
+  
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+    <div>
+      <label><b>관리실 위치 *</b></label>
+      <select id="reg-locationLoc" onchange="updateSubLoc(this.value)" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+        <option value="">선택하세요</option>
+        <option>본관</option><option>미래관</option><option>동량관</option><option>예절관</option>
+        <option>선명당</option><option>마실</option><option>과학실</option><option>컴퓨터실</option>
+        <option>특별실</option><option>교실</option>
+      </select>
+    </div>
+    <div>
+      <label><b>관리실(세부위치) *</b></label>
+      <select id="reg-locationDetail" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+        <option value="">위치를 먼저 선택하세요</option>
+      </select>
+    </div>
+
+    <div>
+      <label><b>물품분류 *</b></label>
+      <select id="reg-category" onchange="updateItems(this.value)" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+        <option value="">선택하세요</option>
+        <option>정보화기자재</option><option>교구/기자재</option>
+        <option>비품(일반기계기구)</option><option>가구</option><option>소모품</option>
+      </select>
+    </div>
+    <div>
+      <label><b>예산구분 *</b></label>
+      <select id="reg-budget" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+        <option value="">선택하세요</option>
+        <option>학교</option><option>교육청</option><option>시청</option><option>기부</option>
+        <option>교비</option><option>국고</option><option>기타</option>
+      </select>
+    </div>
+
+    <div>
+      <label><b>품명 *</b></label>
+      <select id="reg-itemName" onchange="toggleCustomItemInput()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></select>
+    </div>
+
+    <div id="custom-item-container" style="display: none; grid-column: 1 / span 2; width: 100%; margin: 10px 0; padding: 15px; background-color: #f8fbff; border: 1px dashed #007bff; border-radius: 8px; box-sizing: border-box;">
+      <label style="display: block; margin-bottom: 8px; color: #007bff; font-weight: bold;">품명 직접입력 *</label>
+  
+      <input type="text" 
+             id="reg-customItemName" 
+             placeholder="이곳에 품명을 입력하세요" 
+             style="width: 100% !important; display: block !important; padding: 10px; border: 1px solid #007bff; border-radius: 4px; background-color: #ffffff !important; color: #000000 !important; box-sizing: border-box; visibility: visible !important;">
+    </div>
+
+    <div>
+      <label><b>기종(모델명) *</b></label>
+      <input type="text" id="reg-model" placeholder="기종을 입력하세요" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+    </div>
+    <div>
+      <label><b>수량 *</b></label>
+      <input type="number" id="reg-quantity" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;" value="1">
+    </div>
+
+    <div>
+      <label><b>취득일 *</b></label>
+      <input type="date" id="reg-acquireDate" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+    </div>
+    <div>
+      <label><b>폐기일 (선택)</b></label>
+      <input type="date" id="reg-disposeDate" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+    </div>
+
+    <div>
+      <label><b>상태 *</b></label>
+      <select id="reg-status" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+        <option>사용중</option><option>수리중</option><option>불용</option><option>폐기</option>
+      </select>
+    </div>
+    <div></div>
+
+    <div style="grid-column: 1 / span 2;">
+      <label><b>비고</b></label>
+      <textarea id="reg-remarks" style="width:100%; height:60px; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="상세 정보를 입력하세요."></textarea>
+    </div>
+  </div>
+    
+  <div style="margin-top:20px; display:flex; gap:10px;">
+    <button id="btn-submit" onclick="submitNewItem()" style="flex:1.5; background:#007bff; color:white; border:none; height:45px; font-size:16px; border-radius:6px; cursor:pointer;">등록하기</button>
+    <button onclick="showScreen('dashboard-screen')" style="flex:1; background:#6c757d; color:white; border:none; height:45px; border-radius:6px; cursor:pointer;">취소</button>
+  </div>
+</div>
+
+<script>
+  let cachedMapping = null; // 관리실 맵 캐싱
+
+  // [기능 1] 관리실 위치에 따른 세부위치 업데이트
+  function updateSubLoc(locValue, roomToSelect = null) {
+    const detailSelect = document.getElementById('reg-locationDetail');
+    detailSelect.innerHTML = '<option value="">로딩 중...</option>';
+
+    if (cachedMapping) {
+      renderRooms(locValue, roomToSelect);
+    } else {
+      google.script.run.withSuccessHandler(map => {
+        cachedMapping = map;
+        renderRooms(locValue, roomToSelect);
+      }).getManagementMapping();
+    }
+  }
+
+function renderRooms(locValue, roomToSelect) {
+  const detailSelect = document.getElementById('reg-locationDetail');
+  detailSelect.innerHTML = '<option value="">선택하세요</option>';
+  
+  const storedData = sessionStorage.getItem('userData');
+  const user = storedData ? JSON.parse(storedData) : null;
+  
+  // '전체'를 제외한 배정 목록 생성
+  const assignedRooms = (user && user.assignedRoom) 
+    ? user.assignedRoom.split(',').map(r => r.trim()).filter(r => r !== "전체") 
+    : [];
+
+  if (locValue && cachedMapping[locValue]) {
+    cachedMapping[locValue].forEach(room => {
+      if (user && user.role === '조회관리자') {
+        // [핵심] '전체' 권한이 있어도 무시하고, 실제 배정 목록에 있을 때만 옵션 추가
+        if (assignedRooms.includes(room)) {
+          const opt = new Option(room, room);
+          detailSelect.add(opt);
+        }
+      } else {
+        // 관리자나 일반 사용자는 모든 실 표시
+        const opt = new Option(room, room);
+        detailSelect.add(opt);
+      }
+    });
+    
+    // 만약 조회관리자인데 선택 가능한 옵션이 하나도 없다면 안내 문구 출력
+    if (user && user.role === '조회관리자' && detailSelect.options.length === 1) {
+       detailSelect.options[0].text = "배정된 관리실 없음";
+    }
+
+    if (roomToSelect) detailSelect.value = roomToSelect;
+  }
+}
+
+  // [기능 2] 물품분류에 따른 품명 리스트 업데이트 (직접입력 포함)
+  function updateItems(val) {
+    if(!val) return;
+    const itemSelect = document.getElementById('reg-itemName');
+    itemSelect.innerHTML = '<option>로딩 중...</option>';
+
+    google.script.run.withSuccessHandler(opts => {
+      let html = '<option value="">품명 선택</option>';
+      html += opts.map(o => `<option value="${o}">${o}</option>`).join('');
+      html += '<option value="직접입력">직접입력</option>';
+      itemSelect.innerHTML = html;
+      toggleCustomItemInput();
+    }).getDropdownOptions('물품코드', val);
+  }
+
+  // [기능 3] 직접입력 토글
+  function toggleCustomItemInput() {
+    const itemSelect = document.getElementById('reg-itemName');
+    const container = document.getElementById('custom-item-container');
+    const customInput = document.getElementById('reg-customItemName');
+  
+    if (itemSelect.value === '직접입력') {
+      // 컨테이너를 한 줄 전체(span 2)로 보여줍니다.
+      container.style.display = 'block'; 
+      if (customInput) {
+        customInput.style.display = 'block';
+        customInput.focus();
+      }
+    } else {
+      container.style.display = 'none';
+      if (customInput) customInput.value = '';
+    }
+  }
+
+  // [기능 4] 대시보드에서 호출 시 자동 선택 로직
+  function setRegisterRoomContext(roomName) {
+    google.script.run.withSuccessHandler(map => {
+      cachedMapping = map;
+      let targetLoc = "";
+      for (const loc in map) {
+        if (map[loc].includes(roomName)) {
+          targetLoc = loc;
+          break;
+        }
+      }
+      if (targetLoc) {
+        document.getElementById('reg-locationLoc').value = targetLoc;
+        updateSubLoc(targetLoc, roomName);
+      }
+    }).getManagementMapping();
+  }
+
+  // [기능 5] 최종 등록 제출
+function submitNewItem() {
+  const user = JSON.parse(sessionStorage.getItem('userData'));
+  
+  // 1. 품명 요소들 가져오기
+  const itemNameSel = document.getElementById('reg-itemName').value;
+  const customInput = document.getElementById('reg-customItemName');
+  let finalItemName = itemNameSel;
+  const isCustom = (itemNameSel === '직접입력');
+
+  // 2. [핵심 수정] 직접입력 시 필수 입력 체크
+  if (isCustom) {
+    finalItemName = customInput.value.trim();
+    if (!finalItemName) {
+      alert("품명을 직접 입력해주세요.");
+      customInput.focus(); // 사용자가 바로 입력할 수 있게 커서 이동
+      return; // 등록 중단
+    }
+  }
+
+  // 3. 데이터 객체 생성
+  const formData = {
+    locationLoc: document.getElementById('reg-locationLoc').value,
+    locationDetail: document.getElementById('reg-locationDetail').value,
+    manager: user.username,
+    category: document.getElementById('reg-category').value,
+    budget: document.getElementById('reg-budget').value,
+    itemName: finalItemName,
+    isCustomItem: isCustom,
+    model: document.getElementById('reg-model').value.trim(),
+    quantity: document.getElementById('reg-quantity').value,
+    acquireDate: document.getElementById('reg-acquireDate').value,
+    disposeDate: document.getElementById('reg-disposeDate').value,
+    status: document.getElementById('reg-status').value,
+    remarks: document.getElementById('reg-remarks').value.trim()
+  };
+
+  // 4. 나머지 필수 항목 유효성 검사
+  if (!formData.locationDetail || !formData.category || !formData.budget || !formData.itemName || !formData.model || !formData.acquireDate) {
+    alert("필수 항목(*)을 모두 채워주세요.");
+    return;
+  }
+
+  // 5. 서버 전송 로직 (기존과 동일)
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.innerText = "등록 중...";
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.success) {
+        alert('성공적으로 등록되었습니다.');
+        showScreen('dashboard-screen');
+        loadDashboardData(formData.locationDetail);
+      } else {
+        alert('실패: ' + res.message);
+      }
+      btn.disabled = false; btn.innerText = "등록하기";
+    })
+    .withFailureHandler(err => {
+      alert("에러: " + err.message);
+      btn.disabled = false; btn.innerText = "등록하기";
+    })
+    .registerItem(formData);
+}
+
+// Register.html 내부 스크립트
+// Register.html에 추가할 초기화 함수
+function resetRegisterForm() {
+  // 1. 텍스트 입력창 및 숫자 입력창 초기화
+  document.getElementById('reg-model').value = "";
+  document.getElementById('reg-quantity').value = "1"; // 수량 기본값
+  document.getElementById('reg-remarks').value = "";   // 비고란
+  
+  // 2. 직접 입력(커스텀) 필드 초기화 및 숨김
+  const customItem = document.getElementById('reg-customItemName');
+  if (customItem) {
+    customItem.value = "";
+    customItem.style.display = 'none';
+  }
+
+  // 3. 드롭다운(select) 초기화 (첫 번째 '선택하세요'로 이동)
+  // 관리실 위치와 관리실은 유지하고 싶다면 이 부분은 제외해도 됩니다.
+  const selects = ['reg-category', 'reg-budget', 'reg-itemName', 'reg-status'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+
+  // 4. 날짜 필드를 오늘 날짜로 초기화 (선택 사항)
+  const today = new Date().toISOString().substring(0, 10);
+  document.getElementById('reg-acquireDate').value = today;
+}
+
+</script>
+
+
+<div style="max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+  <h2 style="margin-top:0; color:#333; border-bottom:2px solid #f0f0f0; padding-bottom:10px;">권한 관리 (사용자 현황)</h2>
+  
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+    <thead>
+      <tr style="background:#f8f9fa;">
+        <th style="width: 50px; text-align:center;">선택</th>
+        <th style="width: 50px; text-align:center;">ID</th>
+        <th>담당자</th>
+        <th>비번</th>
+        <th>권한</th>
+        <th>관리실 (멀티 선택)</th>
+      </tr>
+    </thead>
+    <tbody id="admin-tbody">
+      </tbody>
+  </table>
+
+  <div style="display: flex; gap: 10px;">
+    <button onclick="addAdminRow()" style="background:#ffc107; color:black; font-weight:bold; flex: 1;">+ 행 추가</button>
+    <button id="btn-edit-users" onclick="saveAdminChanges()" style="background:#28a745; color:white; font-weight:bold; flex: 1;" disabled>수정/저장</button>
+    <button id="btn-save-users" onclick="submitUsers()" style="background:#007bff; color:white; font-weight:bold; flex: 1;">사용자 등록</button>
+    <button onclick="showScreen('dashboard-screen')" style="background:#6c757d; color:white; font-weight:bold; flex: 1;">돌아가기</button>
+  </div>
+</div>
+
+<script>
+  let adminAllRooms = [];
+  let adminRawData = [];
+  let adminRoles = ['관리자', '조회관리자', '일반']; 
+
+  function initAdmin() {
+    google.script.run.withSuccessHandler(rooms => {
+      adminAllRooms = rooms;
+      loadAdminUsers();
+    }).getAllRooms();
+  }
+
+  function loadAdminUsers() {
+    const tbody = document.getElementById('admin-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">데이터를 불러오는 중...</td></tr>';
+    
+    google.script.run.withSuccessHandler(data => {
+      adminRawData = data.rows; 
+      const existingRoles = [...new Set(data.rows.map(r => r[3]))];
+      adminRoles = [...new Set([...adminRoles, ...existingRoles])];
+
+      tbody.innerHTML = data.rows.map(row => `
+        <tr id="u-row-${row[0]}">
+          <td style="text-align:center;"><input type="checkbox" class="admin-checkbox" value="${row[0]}" onchange="toggleAdminEdit(this)"></td>
+          <td class="ucol-1" style="text-align:center;">${row[0]}</td>
+          <td class="ucol-2">${row[1]}</td>
+          <td class="ucol-3">${row[2]}</td>
+          <td class="ucol-4">${row[3]}</td>
+          <td class="ucol-5">${row[4]}</td>
+        </tr>
+      `).join('');
+    }).getUserData();
+  }
+
+  function toggleAdminEdit(cb) {
+    const rowId = cb.value;
+    const tr = document.getElementById(`u-row-${rowId}`);
+    
+    if (cb.checked) {
+      for(let i=2; i<=5; i++) {
+        let td = tr.querySelector(`.ucol-${i}`);
+        td.setAttribute('data-old', td.innerText.trim());
+      }
+      
+      const manager = tr.querySelector('.ucol-2').innerText.trim();
+      const pass = tr.querySelector('.ucol-3').innerText.trim();
+      const role = tr.querySelector('.ucol-4').innerText.trim();
+      const currentRooms = tr.querySelector('.ucol-5').innerText.split(',').map(r => r.trim());
+
+      tr.querySelector('.ucol-2').innerHTML = `<input type="text" value="${manager}" style="width:100%; padding:4px; box-sizing:border-box;">`;
+      tr.querySelector('.ucol-3').innerHTML = `<input type="text" value="${pass}" style="width:100%; padding:4px; box-sizing:border-box;">`;
+      
+      let roleOptions = adminRoles.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('');
+      tr.querySelector('.ucol-4').innerHTML = `<select style="width:100%; padding:4px;">${roleOptions}</select>`;
+
+      // 관리실 멀티 선택 UI
+      let roomCheckboxes = adminAllRooms.map(room => {
+        let isChecked = currentRooms.includes(room) ? 'checked' : '';
+        return `<label style="display:block; margin-bottom:2px; cursor:pointer;">
+                  <input type="checkbox" class="room-multi-cb" value="${room}" ${isChecked}> ${room}
+                </label>`;
+      }).join('');
+      
+      tr.querySelector('.ucol-5').innerHTML = `
+        <div style="max-height: 80px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; background: white; font-size: 13px;">
+          ${roomCheckboxes}
+        </div>
+      `;
+      
+    } else {
+      for(let i=2; i<=5; i++) {
+        let td = tr.querySelector(`.ucol-${i}`);
+        td.innerHTML = td.getAttribute('data-old');
+      }
+    }
+    updateAdminBtnState();
+  }
+
+  function updateAdminBtnState() {
+    const checkedCount = document.querySelectorAll('.admin-checkbox:checked').length;
+    document.getElementById('btn-edit-users').disabled = (checkedCount === 0);
+  }
+
+  function saveAdminChanges() {
+    const checkedBoxes = document.querySelectorAll('.admin-checkbox:checked');
+    if (checkedBoxes.length === 0) return;
+
+    const updates = [];
+    checkedBoxes.forEach(cb => {
+      const tr = document.getElementById(`u-row-${cb.value}`);
+      const roomCbs = tr.querySelectorAll('.room-multi-cb:checked');
+      const selectedRooms = Array.from(roomCbs).map(c => c.value).join(', ');
+
+      updates.push({
+        id: cb.value,
+        manager: tr.querySelector('.ucol-2 input').value.trim(),
+        password: tr.querySelector('.ucol-3 input').value.trim(),
+        role: tr.querySelector('.ucol-4 select').value,
+        rooms: selectedRooms
+      });
+    });
+
+    const btn = document.getElementById('btn-edit-users');
+    btn.disabled = true;
+    btn.innerText = "저장 중...";
+
+    google.script.run
+      .withSuccessHandler(() => {
+        alert("사용자 정보가 성공적으로 수정되었습니다.");
+        btn.innerText = "수정/저장";
+        btn.disabled = true;
+        loadAdminUsers();
+      })
+      .withFailureHandler(err => {
+        alert("저장 실패: " + err.message);
+        btn.innerText = "수정/저장";
+        btn.disabled = false;
+      })
+      .updateAdminUsers(updates);
+  }
+
+  // ========= [수정] +행추가 시 관리실 멀티선택 반영 =========
+
+  function addAdminRow() {
+    const tbody = document.getElementById('admin-tbody');
+    const tr = document.createElement('tr');
+    tr.className = 'new-user-row';
+    
+    // 신규 행 전용 관리실 체크박스 목록 생성
+    let roomCheckboxes = adminAllRooms.map(room => {
+      return `<label style="display:block; margin-bottom:2px; cursor:pointer;">
+                <input type="checkbox" class="new-room-cb" value="${room}"> ${room}
+              </label>`;
+    }).join('');
+
+    tr.innerHTML = `
+      <td></td>
+      <td style="text-align:center; color:#888;">신규</td>
+      <td><input type="text" class="u-manager" placeholder="담당자명" style="width:100%; padding:4px; box-sizing:border-box;"></td>
+      <td><input type="text" class="u-pass" placeholder="비밀번호" style="width:100%; padding:4px; box-sizing:border-box;"></td>
+      <td>
+        <select class="u-role" style="width:100%; padding:4px; box-sizing:border-box;">
+          <option>일반</option>
+          <option>조회관리자</option>
+          <option>관리자</option>
+        </select>
+      </td>
+      <td>
+        <div style="max-height: 80px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; background: white; font-size: 13px;">
+          ${roomCheckboxes}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function submitUsers() {
+    const newRows = document.querySelectorAll('.new-user-row');
+    const usersToSave = [];
+    
+    newRows.forEach(row => {
+      const manager = row.querySelector('.u-manager').value.trim();
+      if (manager) {
+        // [수정] 신규 행의 체크된 관리실 목록 추출 및 콤마 결합
+        const roomCbs = row.querySelectorAll('.new-room-cb:checked');
+        const selectedRooms = Array.from(roomCbs).map(c => c.value).join(', ');
+
+        usersToSave.push({
+          manager: manager,
+          password: row.querySelector('.u-pass').value.trim(),
+          role: row.querySelector('.u-role').value,
+          rooms: selectedRooms
+        });
+      }
+    });
+
+    if (usersToSave.length === 0) {
+      alert("새로 추가할 사용자 정보가 없습니다.");
+      return;
+    }
+
+    const btn = document.getElementById('btn-save-users');
+    btn.disabled = true;
+    btn.innerText = "저장 중...";
+
+    google.script.run
+      .withSuccessHandler(() => {
+        alert('신규 사용자 정보가 성공적으로 등록되었습니다.');
+        btn.disabled = false;
+        btn.innerText = "사용자 등록";
+        loadAdminUsers();
+      })
+      .withFailureHandler(err => {
+        alert("저장 오류: " + err.message);
+        btn.disabled = false;
+        btn.innerText = "사용자 등록";
+      })
+      .saveUsers(usersToSave);
+  }
+</script>

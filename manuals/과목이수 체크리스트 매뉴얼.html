@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>과목이수 체크리스트 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>과목이수 체크리스트</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>2022 개정 교육과정 고교학점제에 따라 학생이 1~3학년 학기별로 이수할 과목을 선택하고, 학점과 교과(군)별 필수 이수 기준 충족 여부를 자동으로 확인할 수 있는 체크리스트 웹앱입니다. 필수 과목은 자동으로 반영되고 선택 과목만 체크하면 되며, 학기별 이수율과 졸업에 필요한 총 174학점 달성 여부를 실시간으로 확인할 수 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>학년(1~3학년) · 학기별 탭으로 구분된 과목 목록 제공, 필수 과목(주황색)은 자동 체크되어 해제 불가, 선택 과목(초록색)만 직접 체크</li>
+      <li>과목 체크 시 학점과 이수율이 실시간 자동 계산되어 학기별 요약(총 학점/신청 학점/이수율)에 반영</li>
+      <li>선택 인원 제한 : 일부 과목 그룹은 선택 가능한 개수가 정해져 있어, 제한을 넘으면 선택할 수 없고 안내 메시지가 표시됨</li>
+      <li>크로스 학기 과목 처리 : 연극처럼 2학년 1 · 2학기에 모두 개설되는 과목은 두 학기 중 한 번만 선택하도록 제한하고 중복 선택 시 경고</li>
+      <li>점검표 탭 : 교과(군)별 필수 이수 학점과 실제 신청 학점을 비교해 "이상없음"/"점검필요"로 표시, 항목을 클릭하면 부족 학점과 보충 방법을 상세 팝업으로 확인</li>
+      <li>총 신청 학점이 목표(174학점)보다 부족하면 경고 배너로 부족한 학점과 학기별 현황을 안내</li>
+      <li>모든 선택 내용은 브라우저에 자동 저장되어 재방문 시 그대로 복원, "초기화" 버튼으로 전체 선택 삭제 가능</li>
+      <li>튜토리얼 · 도움말(FAQ) 팝업 제공</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>상단 학년 탭과 학기 탭을 눌러 확인하려는 학기를 선택합니다.</li>
+      <li>필수 과목은 이미 체크되어 있으니, 선택 과목 중 원하는 과목의 체크박스를 클릭합니다. (선택 인원 제한이 있는 과목은 제한 개수만큼만 선택 가능)</li>
+      <li>화면 하단의 학기별 학점 요약에서 총 학점 · 신청 학점 · 이수율을 확인합니다.</li>
+      <li>상단 "점검표" 탭에서 교과(군)별 필수 이수 학점 충족 여부를 확인합니다. "점검필요" 항목을 클릭하면 부족한 학점과 채우는 방법이 나옵니다.</li>
+      <li>총 신청 학점이 174학점에 못 미치면 경고 배너가 표시되니, 부족한 학기의 선택 과목을 추가로 체크합니다.</li>
+      <li>선택 내용을 모두 지우고 다시 시작하려면 "🔄 초기화" 버튼을 누릅니다. (되돌릴 수 없음)</li>
+      <li>사용법이 궁금하면 "📖 튜토리얼"이나 "❓ 도움말" 버튼을 확인합니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>별도 서버 없이 브라우저에서 바로 실행되는 단일 HTML 파일입니다. 1~3학년, 학기별 필수/선택 과목 목록(과목명 · 교과분야 · 학점)이 코드에 데이터로 정의되어 있으며, 체크박스 상태에 따라 학점 합계 · 이수율 · 점검표 결과를 자바스크립트로 실시간 계산합니다. 선택 데이터는 브라우저의 localStorage에 저장되어 새로고침하거나 다시 방문해도 유지됩니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>선택 데이터는 브라우저(기기)별로 localStorage에 저장되므로, 다른 브라우저나 기기에서는 이전 선택 내용이 보이지 않습니다.</li>
+        <li>필수 과목은 체크 해제할 수 없으며, 일부 선택 과목 그룹은 선택 가능 개수가 제한되어 있습니다.</li>
+        <li>연극처럼 여러 학기에 개설되는 과목은 한 학기에서만 선택할 수 있습니다.</li>
+        <li>"초기화" 버튼을 누르면 모든 선택이 삭제되며 되돌릴 수 없습니다.</li>
+        <li>과목 구성과 학점 기준은 학교 교육과정에 맞춰 코드에 고정되어 있으므로, 교육과정이 바뀌면 코드 수정이 필요합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

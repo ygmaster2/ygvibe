@@ -1,0 +1,2700 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>과목 이수 체크리스트</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+min-height: 100vh;
+padding: 20px;
+color: #333;
+}
+.container {
+max-width: 1200px;
+margin: 0 auto;
+background: white;
+border-radius: 16px;
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+overflow: hidden;
+}
+.header {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 40px 20px;
+text-align: center;
+}
+.header-content {
+margin-bottom: 20px;
+}
+.header h1 {
+font-size: 32px;
+margin-bottom: 10px;
+font-weight: 700;
+}
+.header p {
+font-size: 15px;
+opacity: 0.9;
+}
+.header-buttons {
+display: flex;
+gap: 15px;
+justify-content: center;
+}
+.help-btn, .tutorial-btn {
+background: rgba(255, 255, 255, 0.2);
+color: white;
+border: 2px solid white;
+padding: 12px 24px;
+border-radius: 8px;
+cursor: pointer;
+font-weight: 600;
+font-size: 15px;
+transition: all 0.3s ease;
+}
+.help-btn:hover, .tutorial-btn:hover {
+background: white;
+color: #667eea;
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+/* 정보 배너 */
+.info-banner {
+display: flex;
+justify-content: center;
+align-items: center;
+background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+padding: 12px 20px;
+border-bottom: 1px solid #e0e0e0;
+}
+
+.info-text {
+font-size: 14px;
+color: #555;
+font-weight: 500;
+letter-spacing: 0.3px;
+}
+
+/* 학년 탭 네비게이션 */
+.tabs {
+display: flex;
+background: #f5f5f5;
+border-bottom: 2px solid #ddd;
+overflow-x: auto;
+}
+.tab-button {
+flex: 1;
+padding: 16px;
+text-align: center;
+background: none;
+border: none;
+cursor: pointer;
+font-size: 16px;
+font-weight: 600;
+color: #666;
+transition: all 0.3s ease;
+white-space: nowrap;
+}
+.tab-button:hover {
+background: #e8e8e8;
+}
+.tab-button.active {
+color: #667eea;
+border-bottom: 4px solid #667eea;
+background: white;
+}
+/* 학기 탭 네비게이션 (학년 탭 내부) */
+.semester-tabs {
+display: flex;
+background: #ffffff;
+border-bottom: 1px solid #e0e0e0;
+padding: 0 30px;
+overflow-x: auto;
+}
+.semester-tab-button {
+padding: 12px 24px;
+background: none;
+border: none;
+cursor: pointer;
+font-size: 14px;
+font-weight: 600;
+color: #999;
+transition: all 0.3s ease;
+white-space: nowrap;
+border-bottom: 3px solid transparent;
+}
+.semester-tab-button:hover {
+color: #667eea;
+}
+.semester-tab-button.active {
+color: #667eea;
+border-bottom-color: #667eea;
+}
+/* 탭 콘텐츠 */
+.tab-content {
+display: none;
+padding: 0;
+animation: fadeIn 0.3s ease;
+}
+.tab-content.active {
+display: block;
+}
+/* 학기 콘텐츠 */
+.semester-content {
+display: none;
+padding: 40px 30px;
+animation: fadeIn 0.3s ease;
+}
+.semester-content.active {
+display: block;
+}
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+/* 학기 섹션 */
+.semester-section {
+margin-bottom: 50px;
+}
+.semester-title {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 16px 20px;
+border-radius: 10px;
+font-size: 18px;
+font-weight: 700;
+margin-bottom: 25px;
+box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+/* 필수/택 구분 */
+.subject-category {
+margin-bottom: 35px;
+}
+.category-label {
+display: inline-block;
+background: #f0f4ff;
+color: #667eea;
+padding: 8px 14px;
+border-radius: 6px;
+font-size: 12px;
+font-weight: 700;
+margin-bottom: 15px;
+border: 2px solid #667eea;
+letter-spacing: 0.5px;
+}
+.category-label.required {
+background: #fff3e0;
+color: #ff9800;
+border-color: #ff9800;
+}
+.category-label.elective {
+background: #e8f5e9;
+color: #4caf50;
+border-color: #4caf50;
+}
+/* 카드 그리드 */
+.subject-list {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+gap: 16px;
+margin-bottom: 20px;
+}
+/* 과목 카드 */
+.subject-item {
+position: relative;
+perspective: 1000px;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+.subject-item.required {
+cursor: default;
+}
+.subject-item.elective:hover {
+transform: translateY(-8px);
+}
+.subject-item.disabled {
+opacity: 0.6;
+pointer-events: none;
+}
+.subject-card {
+background: white;
+border: 2px solid #eee;
+border-radius: 12px;
+padding: 16px;
+transition: all 0.3s ease;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+display: flex;
+flex-direction: column;
+gap: 10px;
+height: 100%;
+position: relative;
+overflow: hidden;
+}
+/* 카드 배경 그라데이션 효과 */
+.subject-card::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 4px;
+background: linear-gradient(90deg, #667eea, #764ba2);
+transform: scaleX(0);
+transform-origin: left;
+transition: transform 0.3s ease;
+}
+.subject-item.elective .subject-card:hover {
+border-color: #667eea;
+box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+}
+.subject-item.elective .subject-card:hover::before {
+transform: scaleX(1);
+}
+/* 필수 카드 스타일 */
+.subject-item.required .subject-card {
+background: linear-gradient(135deg, #fff9e6 0%, #fff3e0 100%);
+border-color: #ffe0b2;
+opacity: 0.95;
+}
+.subject-item.required .subject-card::before {
+background: linear-gradient(90deg, #ff9800, #f57c00);
+}
+/* 선택 과목 완료 상태 */
+.subject-item.elective.completed .subject-card {
+background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+border-color: #4caf50;
+box-shadow: 0 8px 24px rgba(76, 175, 80, 0.25);
+}
+.subject-item.elective.completed .subject-card::before {
+background: linear-gradient(90deg, #4caf50, #45a049);
+transform: scaleX(1);
+}
+/* 첫 번째 줄: 체크박스 + 과목명 */
+.card-row-1 {
+display: flex;
+gap: 12px;
+align-items: center;
+}
+.checkbox-wrapper {
+display: flex;
+align-items: center;
+justify-content: center;
+width: 22px;
+height: 22px;
+min-width: 22px;
+flex-shrink: 0;
+}
+.subject-item input[type="checkbox"] {
+width: 18px;
+height: 18px;
+cursor: pointer;
+accent-color: #667eea;
+transition: all 0.2s ease;
+}
+.subject-item.required input[type="checkbox"] {
+cursor: not-allowed;
+opacity: 0.7;
+accent-color: #ff9800;
+}
+.subject-item.elective:hover input[type="checkbox"] {
+transform: scale(1.1);
+}
+.subject-name {
+font-weight: 700;
+font-size: 16px;
+color: #333;
+line-height: 1.3;
+word-break: break-word;
+flex: 1;
+}
+.subject-item.required .subject-name {
+color: #e65100;
+}
+.subject-item.elective.completed .subject-name {
+color: #2e7d32;
+}
+/* 두 번째 줄: 영역 + 상태 + 학점 */
+.card-row-2 {
+display: flex;
+justify-content: flex-start;
+align-items: center;
+gap: 10px;
+padding-top: 10px;
+border-top: 1px solid rgba(0, 0, 0, 0.08);
+flex-wrap: wrap;
+}
+.subject-field {
+font-size: 12px;
+color: #666;
+font-weight: 600;
+letter-spacing: 0.3px;
+background: rgba(102, 126, 234, 0.1);
+padding: 4px 10px;
+border-radius: 4px;
+white-space: nowrap;
+}
+.subject-item.required .subject-field {
+color: #ff9800;
+background: rgba(255, 152, 0, 0.1);
+}
+.subject-item.elective.completed .subject-field {
+color: #4caf50;
+background: rgba(76, 175, 80, 0.1);
+}
+.subject-status {
+font-size: 12px;
+font-weight: 700;
+color: #999;
+text-transform: uppercase;
+letter-spacing: 0.3px;
+white-space: nowrap;
+}
+.subject-item.required .subject-status {
+color: #ff9800;
+}
+.subject-item.elective.completed .subject-status {
+color: #4caf50;
+}
+.subject-credit {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 5px 12px;
+border-radius: 6px;
+font-size: 12px;
+font-weight: 700;
+text-align: center;
+white-space: nowrap;
+margin-left: auto;
+}
+.subject-item.required .subject-credit {
+background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
+.subject-item.elective.completed .subject-credit {
+background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+}
+/* 선택 제한 알림 */
+.selection-limit {
+font-size: 13px;
+color: #f57c00;
+font-weight: 700;
+margin-top: 12px;
+padding: 12px;
+background: #fff3e0;
+border-left: 4px solid #ff9800;
+border-radius: 4px;
+display: none;
+}
+.selection-limit.show {
+display: block;
+animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+from {
+opacity: 0;
+transform: translateX(-10px);
+}
+to {
+opacity: 1;
+transform: translateX(0);
+}
+}
+/* 선택 제한 힌트 */
+.selection-hint {
+font-size: 12px;
+color: #666;
+margin-top: 12px;
+padding: 10px 12px;
+background: #f9f9f9;
+border-left: 3px solid #667eea;
+border-radius: 4px;
+font-weight: 500;
+}
+/* 중복 선택 불가 알림 */
+.duplicate-warning {
+font-size: 12px;
+color: #c62828;
+margin-top: 12px;
+padding: 10px 12px;
+background: #ffebee;
+border-left: 3px solid #c62828;
+border-radius: 4px;
+font-weight: 600;
+display: none;
+}
+.duplicate-warning.show {
+display: block;
+animation: slideIn 0.3s ease;
+}
+/* 학기별 학점 요약 */
+.semester-credit-summary {
+background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+padding: 20px 30px;
+margin-top: 30px;
+border-radius: 10px;
+border-left: 5px solid #667eea;
+display: flex;
+justify-content: space-around;
+align-items: center;
+flex-wrap: wrap;
+gap: 20px;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.credit-info {
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+.credit-label {
+font-size: 11px;
+color: #999;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+margin-bottom: 8px;
+}
+.credit-value {
+font-size: 24px;
+font-weight: 800;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+/* 학점 요약 */
+.summary {
+background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+padding: 30px;
+margin-top: 40px;
+border-radius: 12px;
+border-left: 5px solid #667eea;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.summary h3 {
+font-size: 18px;
+margin-bottom: 20px;
+color: #333;
+font-weight: 700;
+}
+.summary-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+gap: 15px;
+}
+.summary-item {
+background: white;
+padding: 20px;
+border-radius: 10px;
+text-align: center;
+border: 2px solid #eee;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+transition: all 0.3s ease;
+}
+.summary-item:hover {
+border-color: #667eea;
+box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+transform: translateY(-4px);
+}
+.summary-label {
+font-size: 11px;
+color: #999;
+margin-bottom: 10px;
+text-transform: uppercase;
+font-weight: 700;
+letter-spacing: 0.5px;
+}
+.summary-value {
+font-size: 28px;
+font-weight: 800;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+/* 점검표 스타일 */
+.checklist-container {
+padding: 40px 30px;
+}
+.checklist-title {
+font-size: 24px;
+font-weight: 700;
+color: #333;
+margin-bottom: 30px;
+text-align: center;
+}
+/* 부족 학점 경고 배너 */
+.credit-warning-banner {
+background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+border-left: 5px solid #c62828;
+padding: 20px;
+border-radius: 10px;
+margin-bottom: 30px;
+display: none;
+}
+.credit-warning-banner.show {
+display: block;
+animation: slideDown 0.3s ease;
+}
+.warning-title {
+font-size: 18px;
+font-weight: 700;
+color: #c62828;
+margin-bottom: 15px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.warning-content {
+color: #b71c1c;
+font-size: 14px;
+line-height: 1.6;
+}
+.warning-table {
+width: 100%;
+margin-top: 15px;
+border-collapse: collapse;
+}
+.warning-table tr {
+background: rgba(255, 255, 255, 0.6);
+}
+.warning-table th,
+.warning-table td {
+padding: 10px;
+border: 1px solid #ef9a9a;
+text-align: center;
+font-size: 13px;
+}
+.warning-table th {
+background: rgba(255, 255, 255, 0.9);
+font-weight: 700;
+color: #c62828;
+}
+.warning-table td {
+color: #333;
+}
+.checklist-table {
+width: 100%;
+border-collapse: collapse;
+background: white;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+border-radius: 10px;
+overflow: hidden;
+margin-bottom: 30px;
+}
+.checklist-table thead {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+}
+.checklist-table th {
+padding: 16px;
+text-align: center;
+font-weight: 700;
+border-bottom: 2px solid #ddd;
+font-size: 14px;
+}
+.checklist-table td {
+padding: 16px;
+border-bottom: 1px solid #eee;
+text-align: center;
+vertical-align: middle;
+}
+.checklist-table tbody tr:hover {
+background: #f9f9f9;
+}
+.checklist-table tbody tr:last-child td {
+border-bottom: none;
+}
+.subject-col {
+text-align: left;
+font-weight: 600;
+color: #333;
+}
+.category-col {
+color: #666;
+font-size: 13px;
+}
+.credit-col {
+font-size: 16px;
+font-weight: 700;
+color: #667eea;
+}
+.applied-credit-col {
+font-size: 16px;
+font-weight: 700;
+color: #4caf50;
+}
+.status-col {
+font-weight: 700;
+padding: 8px 12px;
+border-radius: 6px;
+display: inline-block;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+.status-col.pass {
+background: #e8f5e9;
+color: #2e7d32;
+}
+.status-col.fail {
+background: #ffebee;
+color: #c62828;
+}
+.status-col:hover {
+transform: scale(1.05);
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+/* 점검표 총합 */
+.checklist-summary {
+background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+padding: 20px 30px;
+border-radius: 10px;
+border-left: 5px solid #667eea;
+margin-top: 20px;
+display: flex;
+justify-content: space-around;
+gap: 20px;
+flex-wrap: wrap;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.checklist-summary-item {
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+.checklist-summary-label {
+font-size: 11px;
+color: #999;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+margin-bottom: 8px;
+}
+.checklist-summary-value {
+font-size: 28px;
+font-weight: 800;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+.checklist-summary-value.warning {
+background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+/* 상세 정보 모달 */
+.modal {
+display: none;
+position: fixed;
+z-index: 1000;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.4);
+animation: fadeIn 0.3s ease;
+}
+.modal.show {
+display: block;
+}
+.modal-content {
+background-color: white;
+margin: 5% auto;
+padding: 30px;
+border-radius: 12px;
+max-width: 500px;
+max-height: 80vh;
+overflow-y: auto;
+box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+animation: slideDown 0.3s ease;
+}
+@keyframes slideDown {
+from {
+transform: translateY(-50px);
+opacity: 0;
+}
+to {
+transform: translateY(0);
+opacity: 1;
+}
+}
+.modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+border-bottom: 2px solid #f0f0f0;
+padding-bottom: 15px;
+}
+.modal-header h2 {
+font-size: 20px;
+color: #333;
+margin: 0;
+}
+.modal-close {
+font-size: 28px;
+font-weight: bold;
+color: #999;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+.modal-close:hover {
+color: #333;
+}
+.modal-body {
+margin-bottom: 20px;
+}
+.modal-info {
+background: #f9f9f9;
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 15px;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+.modal-info:hover {
+background: #f0f0f0;
+transform: scale(1.02);
+}
+.modal-info-row {
+display: flex;
+justify-content: space-between;
+margin-bottom: 10px;
+font-size: 14px;
+}
+.modal-info-row:last-child {
+margin-bottom: 0;
+}
+.modal-info-label {
+font-weight: 600;
+color: #666;
+}
+.modal-info-value {
+color: #333;
+font-weight: 700;
+}
+.modal-reason {
+background: #ffebee;
+border-left: 4px solid #c62828;
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 15px;
+}
+.modal-reason-title {
+font-weight: 700;
+color: #c62828;
+margin-bottom: 8px;
+font-size: 14px;
+}
+.modal-reason-content {
+color: #666;
+font-size: 13px;
+line-height: 1.6;
+}
+.modal-reason-content ul {
+margin: 10px 0 0 20px;
+padding: 0;
+}
+.modal-reason-content li {
+margin-bottom: 8px;
+}
+.modal-button {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 12px 24px;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+font-weight: 700;
+transition: all 0.3s ease;
+width: 100%;
+}
+.modal-button:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+/* 선택 과목 목록 */
+.selected-courses-container {
+background: #f9f9f9;
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 15px;
+display: none;
+}
+.selected-courses-container.show {
+display: block;
+}
+.selected-courses-title {
+font-weight: 700;
+color: #667eea;
+margin-bottom: 10px;
+font-size: 14px;
+}
+.selected-courses-list {
+list-style: none;
+margin: 0;
+padding: 0;
+}
+.selected-courses-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 8px;
+background: white;
+border-radius: 4px;
+margin-bottom: 6px;
+font-size: 13px;
+}
+.selected-courses-item:last-child {
+margin-bottom: 0;
+}
+.selected-courses-name {
+font-weight: 600;
+color: #333;
+flex: 1;
+}
+.selected-courses-grade {
+font-size: 11px;
+color: #999;
+background: #f0f0f0;
+padding: 2px 8px;
+border-radius: 3px;
+margin: 0 6px;
+white-space: nowrap;
+}
+.selected-courses-credit {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 2px 8px;
+border-radius: 3px;
+font-size: 12px;
+font-weight: 700;
+white-space: nowrap;
+}
+.selected-courses-empty {
+color: #999;
+font-style: italic;
+text-align: center;
+padding: 10px;
+}
+/* 버튼 */
+.button-group {
+display: flex;
+gap: 12px;
+justify-content: center;
+padding: 30px;
+background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+border-top: 1px solid #ddd;
+flex-wrap: wrap;
+}
+button.reset-btn {
+padding: 12px 28px;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+font-size: 15px;
+font-weight: 700;
+transition: all 0.3s ease;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+color: white;
+}
+button.reset-btn:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+button.reset-btn:active {
+transform: translateY(0);
+}
+/* 튜토리얼과 도움말 모달 */
+.tutorial-modal {
+display: none;
+position: fixed;
+z-index: 1001;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.5);
+animation: fadeIn 0.3s ease;
+overflow-y: auto;
+}
+.tutorial-modal.show {
+display: block;
+}
+.tutorial-content {
+background: white;
+margin: 30px auto;
+padding: 40px;
+border-radius: 16px;
+max-width: 700px;
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+animation: slideDown 0.3s ease;
+}
+.tutorial-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 30px;
+border-bottom: 3px solid #667eea;
+padding-bottom: 15px;
+}
+.tutorial-header h2 {
+font-size: 28px;
+font-weight: 700;
+color: #333;
+margin: 0;
+}
+.tutorial-close {
+font-size: 32px;
+font-weight: bold;
+color: #999;
+cursor: pointer;
+transition: all 0.3s ease;
+line-height: 1;
+}
+.tutorial-close:hover {
+color: #333;
+}
+.tutorial-section {
+margin-bottom: 30px;
+}
+.tutorial-section h3 {
+font-size: 20px;
+font-weight: 700;
+color: #667eea;
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.tutorial-section p {
+color: #666;
+line-height: 1.8;
+margin-bottom: 12px;
+font-size: 15px;
+}
+.tutorial-section ul {
+margin-left: 20px;
+margin-bottom: 12px;
+color: #666;
+line-height: 1.8;
+font-size: 15px;
+}
+.tutorial-section li {
+margin-bottom: 8px;
+}
+.tutorial-step {
+background: #f0f4ff;
+border-left: 4px solid #667eea;
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 12px;
+}
+.tutorial-step strong {
+color: #667eea;
+font-weight: 700;
+}
+.help-section {
+background: #fff3e0;
+border-left: 4px solid #ff9800;
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 15px;
+}
+.help-section h4 {
+color: #ff9800;
+font-weight: 700;
+margin-bottom: 8px;
+}
+.help-section p {
+color: #666;
+font-size: 14px;
+margin: 0;
+}
+.faq-item {
+background: #f5f5f5;
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 12px;
+border: 1px solid #ddd;
+}
+.faq-question {
+font-weight: 700;
+color: #333;
+cursor: pointer;
+display: flex;
+justify-content: space-between;
+align-items: center;
+user-select: none;
+}
+.faq-arrow {
+transition: transform 0.3s ease;
+}
+.faq-arrow.open {
+transform: rotate(180deg);
+}
+.faq-answer {
+display: none;
+margin-top: 12px;
+padding-top: 12px;
+border-top: 1px solid #ddd;
+color: #666;
+font-size: 14px;
+line-height: 1.6;
+}
+.faq-answer.show {
+display: block;
+}
+/* 모바일 반응형 */
+@media (max-width: 1024px) {
+.subject-list {
+grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+gap: 14px;
+}
+.header h1 {
+font-size: 26px;
+}
+}
+@media (max-width: 768px) {
+.header {
+padding: 30px 15px;
+}
+.header h1 {
+font-size: 22px;
+}
+.header-buttons {
+width: 100%;
+}
+.help-btn, .tutorial-btn {
+flex: 1;
+}
+.info-text {
+font-size: 13px;
+}
+.semester-tabs {
+padding: 0 15px;
+}
+.semester-content {
+padding: 30px 15px;
+}
+.subject-list {
+grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+gap: 14px;
+}
+.subject-card {
+padding: 14px;
+gap: 8px;
+}
+.semester-credit-summary {
+padding: 15px 20px;
+gap: 15px;
+}
+.summary-grid {
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+}
+.summary-item {
+padding: 15px;
+}
+.summary-value {
+font-size: 24px;
+}
+.button-group {
+padding: 20px 15px;
+}
+button.reset-btn {
+flex: 1;
+min-width: 120px;
+}
+.subject-name {
+font-size: 14px;
+}
+.subject-credit {
+margin-left: 0;
+}
+.checklist-container {
+padding: 30px 15px;
+}
+.checklist-table th,
+.checklist-table td {
+padding: 12px;
+font-size: 12px;
+}
+.modal-content {
+margin: 10% auto;
+padding: 20px;
+max-width: 90%;
+}
+.tutorial-content {
+margin: 50px 20px;
+padding: 30px 20px;
+max-width: 95%;
+}
+.warning-table th,
+.warning-table td {
+padding: 8px;
+font-size: 12px;
+}
+}
+@media (max-width: 480px) {
+body {
+padding: 10px;
+}
+.container {
+border-radius: 12px;
+}
+.header {
+padding: 20px 10px;
+}
+.header h1 {
+font-size: 18px;
+}
+.header p {
+font-size: 13px;
+}
+.header-buttons {
+flex-direction: column;
+gap: 10px;
+}
+.help-btn, .tutorial-btn {
+padding: 10px 16px;
+font-size: 14px;
+}
+.info-banner {
+padding: 10px 15px;
+}
+
+.info-text {
+font-size: 12px;
+}
+.tabs {
+font-size: 13px;
+}
+.tab-button {
+padding: 12px;
+}
+.semester-tabs {
+padding: 0 10px;
+}
+.semester-tab-button {
+padding: 10px 16px;
+font-size: 13px;
+}
+.semester-content {
+padding: 20px 10px;
+}
+.subject-list {
+grid-template-columns: 1fr;
+gap: 12px;
+}
+.subject-card {
+padding: 12px;
+gap: 8px;
+}
+.card-row-1 {
+gap: 10px;
+}
+.card-row-2 {
+gap: 6px;
+}
+.subject-name {
+font-size: 13px;
+}
+.subject-field {
+font-size: 11px;
+padding: 3px 8px;
+}
+.subject-status {
+font-size: 11px;
+}
+.subject-credit {
+font-size: 11px;
+padding: 4px 10px;
+margin-left: auto;
+}
+.semester-credit-summary {
+padding: 15px 10px;
+gap: 15px;
+}
+.credit-label {
+font-size: 10px;
+}
+.credit-value {
+font-size: 20px;
+}
+.summary-grid {
+grid-template-columns: 1fr;
+}
+.summary-item {
+padding: 12px;
+}
+.summary {
+padding: 20px;
+}
+.checklist-container {
+padding: 20px 10px;
+}
+.checklist-table th,
+.checklist-table td {
+padding: 10px 5px;
+font-size: 11px;
+}
+.subject-col {
+text-align: center;
+}
+.modal-content {
+margin: 20% auto;
+padding: 15px;
+max-width: 95%;
+}
+.modal-header h2 {
+font-size: 16px;
+}
+.tutorial-content {
+margin: 40px 10px;
+padding: 20px 15px;
+max-width: 100%;
+}
+.tutorial-header h2 {
+font-size: 22px;
+}
+.tutorial-section h3 {
+font-size: 16px;
+}
+.tutorial-section p,
+.tutorial-section ul {
+font-size: 13px;
+}
+.credit-warning-banner {
+padding: 15px;
+}
+.warning-title {
+font-size: 16px;
+}
+.warning-content,
+.warning-table td {
+font-size: 12px;
+}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div class="header-content">
+<h1>📚 과목 이수 체크리스트</h1>
+<p>필수 과목은 자동 이수, 선택 과목만 선택하세요</p>
+</div>
+<div class="header-buttons">
+<button class="tutorial-btn" onclick="openTutorial()">📖 튜토리얼</button>
+<button class="help-btn" onclick="openHelp()">❓ 도움말</button>
+</div>
+</div>
+
+<!-- 정보 배너 -->
+<div class="info-banner">
+  <span class="info-text">✨ 양곡고등학교 학생들을 위해 개발된 웹 애플리케이션입니다.</span>
+</div>
+
+<!-- 학년 탭 네비게이션 -->
+<div class="tabs">
+<button class="tab-button active" data-year="1">1학년</button>
+<button class="tab-button" data-year="2">2학년</button>
+<button class="tab-button" data-year="3">3학년</button>
+<button class="tab-button" data-year="checklist">점검표</button>
+</div>
+<!-- 1학년 -->
+<div class="tab-content active" data-year="1">
+<!-- 1학년 학기 탭 -->
+<div class="semester-tabs">
+<button class="semester-tab-button active" data-year="1" data-semester="1">1학기</button>
+<button class="semester-tab-button" data-year="1" data-semester="2">2학기</button>
+</div>
+<!-- 1학년 1학기 -->
+<div class="semester-content active" data-year="1" data-semester="1">
+<div id="year-1-sem-1"></div>
+<!-- 학기별 학점 요약 -->
+<div class="semester-credit-summary">
+<div class="credit-info">
+<div class="credit-label">총 학점</div>
+<div class="credit-value" id="semester-total-1-1">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">신청 학점</div>
+<div class="credit-value" id="semester-completed-1-1">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">이수율</div>
+<div class="credit-value" id="semester-progress-1-1">0%</div>
+</div>
+</div>
+</div>
+<!-- 1학년 2학기 -->
+<div class="semester-content" data-year="1" data-semester="2">
+<div id="year-1-sem-2"></div>
+<!-- 학기별 학점 요약 -->
+<div class="semester-credit-summary">
+<div class="credit-info">
+<div class="credit-label">총 학점</div>
+<div class="credit-value" id="semester-total-1-2">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">신청 학점</div>
+<div class="credit-value" id="semester-completed-1-2">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">이수율</div>
+<div class="credit-value" id="semester-progress-1-2">0%</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 2학년 -->
+<div class="tab-content" data-year="2">
+<!-- 2학년 학기 탭 -->
+<div class="semester-tabs">
+<button class="semester-tab-button active" data-year="2" data-semester="1">1학기</button>
+<button class="semester-tab-button" data-year="2" data-semester="2">2학기</button>
+</div>
+<!-- 2학년 1학기 -->
+<div class="semester-content active" data-year="2" data-semester="1">
+<div id="year-2-sem-1"></div>
+<!-- 학기별 학점 요약 -->
+<div class="semester-credit-summary">
+<div class="credit-info">
+<div class="credit-label">총 학점</div>
+<div class="credit-value" id="semester-total-2-1">29</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">신청 학점</div>
+<div class="credit-value" id="semester-completed-2-1">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">이수율</div>
+<div class="credit-value" id="semester-progress-2-1">0%</div>
+</div>
+</div>
+</div>
+<!-- 2학년 2학기 -->
+<div class="semester-content" data-year="2" data-semester="2">
+<div id="year-2-sem-2"></div>
+<!-- 학기별 학점 요약 -->
+<div class="semester-credit-summary">
+<div class="credit-info">
+<div class="credit-label">총 학점</div>
+<div class="credit-value" id="semester-total-2-2">29</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">신청 학점</div>
+<div class="credit-value" id="semester-completed-2-2">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">이수율</div>
+<div class="credit-value" id="semester-progress-2-2">0%</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 3학년 -->
+<div class="tab-content" data-year="3">
+<!-- 3학년 학기 탭 -->
+<div class="semester-tabs">
+<button class="semester-tab-button active" data-year="3" data-semester="1">1학기</button>
+<button class="semester-tab-button" data-year="3" data-semester="2">2학기</button>
+</div>
+<!-- 3학년 1학기 -->
+<div class="semester-content active" data-year="3" data-semester="1">
+<div id="year-3-sem-1"></div>
+<!-- 학기별 학점 요약 -->
+<div class="semester-credit-summary">
+<div class="credit-info">
+<div class="credit-label">총 학점</div>
+<div class="credit-value" id="semester-total-3-1">29</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">신청 학점</div>
+<div class="credit-value" id="semester-completed-3-1">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">이수율</div>
+<div class="credit-value" id="semester-progress-3-1">0%</div>
+</div>
+</div>
+</div>
+<!-- 3학년 2학기 -->
+<div class="semester-content" data-year="3" data-semester="2">
+<div id="year-3-sem-2"></div>
+<!-- 학기별 학점 요약 -->
+<div class="semester-credit-summary">
+<div class="credit-info">
+<div class="credit-label">총 학점</div>
+<div class="credit-value" id="semester-total-3-2">29</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">신청 학점</div>
+<div class="credit-value" id="semester-completed-3-2">0</div>
+</div>
+<div class="credit-info">
+<div class="credit-label">이수율</div>
+<div class="credit-value" id="semester-progress-3-2">0%</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 점검표 탭 -->
+<div class="tab-content" data-year="checklist">
+<div class="checklist-container">
+<!-- 부족 학점 경고 배너 -->
+<div class="credit-warning-banner" id="creditWarningBanner">
+<div class="warning-title">
+⚠️ 총 신청 학점 부족
+</div>
+<div class="warning-content">
+<div style="margin-bottom: 15px;">
+현재 신청 학점: <strong id="bannerCurrentCredit">0</strong>학점 / 목표: <strong>174</strong>학점<br>
+부족한 학점: <strong id="bannerShortage">0</strong>학점
+</div>
+<table class="warning-table">
+<tr>
+<th>학년/학기</th>
+<th>신청학점</th>
+<th>상태</th>
+</tr>
+<tbody id="bannerTableBody">
+</tbody>
+</table>
+</div>
+</div>
+
+<h2 class="checklist-title">학점 배당 기준 점검표</h2>
+<table class="checklist-table">
+<thead>
+<tr>
+<th>교과(군)</th>
+<th>공통 과목</th>
+<th>필수 이수 학점</th>
+<th>신청 학점</th>
+<th>점검 결과</th>
+</tr>
+</thead>
+<tbody id="checklist-tbody">
+</tbody>
+</table>
+<div class="checklist-summary">
+<div class="checklist-summary-item">
+<div class="checklist-summary-label">필수 학점</div>
+<div class="checklist-summary-value">84</div>
+</div>
+<div class="checklist-summary-item">
+<div class="checklist-summary-label">총 신청 학점</div>
+<div class="checklist-summary-value" id="total-applied-credit">0</div>
+</div>
+<div class="checklist-summary-item">
+<div class="checklist-summary-label">목표 학점</div>
+<div class="checklist-summary-value">174</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 버튼 그룹 -->
+<div class="button-group">
+<button class="reset-btn" onclick="resetAll()">🔄 초기화</button>
+</div>
+</div>
+<!-- 모달 -->
+<div id="detailModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 id="modalTitle">상세 정보</h2>
+<span class="modal-close" onclick="closeModal()">&times;</span>
+</div>
+<div class="modal-body">
+<div class="modal-info" id="creditInfo" onclick="toggleSelectedCourses()">
+<div class="modal-info-row">
+<span class="modal-info-label">필수 이수 학점</span>
+<span class="modal-info-value" id="modalRequired">0학점</span>
+</div>
+<div class="modal-info-row">
+<span class="modal-info-label">현재 신청 학점</span>
+<span class="modal-info-value" id="modalCompleted">0학점</span>
+</div>
+<div class="modal-info-row">
+<span class="modal-info-label">부족 학점</span>
+<span class="modal-info-value" id="modalShortage">0학점</span>
+</div>
+</div>
+<div class="selected-courses-container" id="selectedCoursesContainer">
+<div class="selected-courses-title">✅ 선택한 과목 목록</div>
+<ul class="selected-courses-list" id="selectedCoursesList"></ul>
+</div>
+<div class="modal-reason" id="reasonContainer">
+<div class="modal-reason-title">❌ 점검이 필요한 이유</div>
+<div class="modal-reason-content" id="reasonContent"></div>
+</div>
+</div>
+<button class="modal-button" onclick="closeModal()">닫기</button>
+</div>
+</div>
+
+<!-- 튜토리얼 모달 -->
+<div id="tutorialModal" class="tutorial-modal">
+<div class="tutorial-content">
+<div class="tutorial-header">
+<h2>📖 튜토리얼</h2>
+<span class="tutorial-close" onclick="closeTutorial()">&times;</span>
+</div>
+<div class="tutorial-section">
+<h3>🎯 이 웹앱은?</h3>
+<p>양곡고등학교 교육과정의 과목 이수를 쉽게 관리할 수 있는 웹 애플리케이션입니다. 필수 과목은 자동으로 선택되고, 선택 과목만 직접 선택하면 학점이 자동으로 계산됩니다.</p>
+</div>
+<div class="tutorial-section">
+<h3>📚 주요 기능</h3>
+<div class="tutorial-step">
+<strong>1. 과목 관리</strong>
+<p>1학년부터 3학년까지의 필수 과목과 선택 과목을 한눈에 볼 수 있습니다.</p>
+</div>
+<div class="tutorial-step">
+<strong>2. 필수/선택 과목 구분</strong>
+<p>필수 과목(주황색)은 자동으로 선택되고, 선택 과목(초록색)은 자신이 선택할 수 있습니다.</p>
+</div>
+<div class="tutorial-step">
+<strong>3. 학점 자동 계산</strong>
+<p>과목을 선택하면 자동으로 학점이 계산되고, 이수율도 실시간으로 업데이트됩니다.</p>
+</div>
+<div class="tutorial-step">
+<strong>4. 점검표 확인</strong>
+<p>교과(군)별 필수 이수 학점을 충족했는지 한 번에 확인할 수 있습니다.</p>
+</div>
+</div>
+<div class="tutorial-section">
+<h3>🚀 사용 방법</h3>
+<ul>
+<li><strong>과목 선택:</strong> 선택 과목의 체크박스를 클릭하여 선택/해제합니다.</li>
+<li><strong>학기 선택:</strong> 위의 학기 탭을 클릭하여 다른 학기의 과목을 봅니다.</li>
+<li><strong>점검표 보기:</strong> 상단 탭에서 "점검표"를 클릭하여 필수 학점 충족 여부를 확인합니다.</li>
+<li><strong>데이터 저장:</strong> 모든 선택사항은 자동으로 저장됩니다.</li>
+<li><strong>초기화:</strong> "초기화" 버튼으로 모든 선택을 취소할 수 있습니다.</li>
+</ul>
+</div>
+<div class="tutorial-section">
+<h3>⚠️ 주의사항</h3>
+<ul>
+<li><strong>필수 과목:</strong> 필수 과목은 자동으로 이수되며 체크박스를 클릭할 수 없습니다.</li>
+<li><strong>선택 제한:</strong> 일부 과목 그룹은 선택할 수 있는 개수가 정해져 있습니다.</li>
+<li><strong>크로스 과목:</strong> 연극 같은 크로스 학기 과목은 1학기 또는 2학기 중 하나만 선택할 수 있습니다.</li>
+<li><strong>총 학점:</strong> 최소 174학점을 이수해야 합니다.</li>
+</ul>
+</div>
+<div class="tutorial-section">
+<h3>💡 팁</h3>
+<ul>
+<li>점검표의 교과(군)별 점검 결과를 클릭하면 상세 정보를 볼 수 있습니다.</li>
+<li>점검표에 들어왔을 때 총 신청 학점이 부족하면 경고 배너가 표시됩니다.</li>
+<li>선택 과목을 모두 선택했을 때 "✅ 이상없음"이 표시됩니다.</li>
+<li>모바일 기기에서도 쉽게 사용할 수 있도록 최적화되었습니다.</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 도움말 모달 -->
+<div id="helpModal" class="tutorial-modal">
+<div class="tutorial-content">
+<div class="tutorial-header">
+<h2>❓ 도움말</h2>
+<span class="tutorial-close" onclick="closeHelp()">&times;</span>
+</div>
+<div class="help-section">
+<h4>❓ 자주 묻는 질문 (FAQ)</h4>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+과목을 선택했는데 "최대 N개까지만 선택할 수 있습니다"는 메시지가 나와요
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+일부 과목 그룹은 선택할 수 있는 개수가 정해져 있습니다. 이미 선택한 과목이 있으면 다른 과목을 선택할 수 없습니다. 기존 선택을 해제한 후 다른 과목을 선택해보세요.
+</div>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+필수 과목은 선택할 수 없나요?
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+네, 필수 과목은 자동으로 선택되어 있으며 체크박스도 비활성화되어 있습니다. 필수 과목은 반드시 이수해야 하는 과목이므로 선택할 수 없도록 설계되었습니다.
+</div>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+데이터는 어디에 저장되나요?
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+모든 선택 데이터는 브라우저의 로컬스토리지에 저장됩니다. 즉, 같은 기기의 같은 브라우저에서 재방문하면 이전 선택사항이 자동으로 복원됩니다. 다른 기기나 브라우저를 사용하면 데이터가 없으므로 초기화될 수 있습니다.
+</div>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+연극 과목은 왜 2개를 선택할 수 없나요?
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+연극은 2학년 1학기와 2학년 2학기에 모두 개설 되는 과목입니다. 같은 과목을 두 번 이수할 수 없으므로, 1학기 또는 2학기 중 하나만 선택할 수 있도록 제한되어 있습니다.
+</div>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+선택을 초기화하면 되돌릴 수 있나요?
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+초기화 버튼을 클릭하면 모든 선택이 삭제됩니다. 이 작업은 되돌릴 수 없으므로 초기화하기 전에 신중하게 생각해주세요.
+</div>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+점검표의 "점검필요" 버튼을 클릭하면 뭐가 나오나요?
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+"점검필요"를 클릭하면 해당 교과(군)에 대한 상세 정보가 팝업됩니다. 필수 이수 학점, 현재 신청 학점, 부족 학점, 그리고 부족 학점을 채우는 방법을 확인할 수 있습니다.
+</div>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+총 174학점을 꼭 이수해야 하나요?
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+고등학교 교육과정의 기준에 따라 최소 174학점을 이수해야 합니다. 1학년부터 3학년까지 각 학기마다 29학점씩 이수해야 합니다.
+</div>
+</div>
+<div class="faq-item">
+<div class="faq-question" onclick="toggleFAQ(this)">
+모바일에서도 사용할 수 있나요?
+<span class="faq-arrow">▼</span>
+</div>
+<div class="faq-answer">
+네, 이 웹앱은 반응형 디자인으로 모바일, 태블릿, 데스크톱 모든 기기에서 사용할 수 있습니다.
+</div>
+</div>
+<div class="tutorial-section">
+<h3>📞 문제가 해결되지 않았나요?</h3>
+<div class="help-section">
+<h4>주의사항</h4>
+<p>• 브라우저 캐시를 삭제하거나 다른 브라우저를 시도해보세요<br>
+• 로컬스토리지를 사용하므로 브라우저 설정에서 쿠키/저장소가 활성화되어 있어야 합니다<br>
+• 최신 웹 브라우저(Chrome, Firefox, Safari, Edge 등)를 사용하는 것을 권장합니다</p>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// 과목 데이터 정의
+const subjects = {
+1: {
+1: {
+required: [
+{ name: '공통국어1', field: '국어', credit: 4 },
+{ name: '공통수학1', field: '수학', credit: 4 },
+{ name: '공통영어1', field: '영어', credit: 4 },
+{ name: '한국사1', field: '역사', credit: 3 },
+{ name: '통합사회1', field: '사회', credit: 3 },
+{ name: '통합과학1', field: '과학', credit: 3 },
+{ name: '체육1(석차 등급 없음)', field: '체육', credit: 2 },
+{ name: '과학탐구실험1(석차 등급 없음)', field: '과학', credit: 1 },
+{ name: '음악/미술(석차 등급 없음)', field: '예술', credit: 2, crossRegistration: true },
+{ name: '정보', field: '정보', credit: 3 }
+],
+elective: []
+},
+2: {
+required: [
+{ name: '공통국어2', field: '국어', credit: 4 },
+{ name: '공통수학2', field: '수학', credit: 4 },
+{ name: '공통영어2', field: '영어', credit: 4 },
+{ name: '한국사2', field: '역사', credit: 3 },
+{ name: '통합사회2', field: '사회', credit: 3 },
+{ name: '통합과학2', field: '과학', credit: 3 },
+{ name: '체육2(석차 등급 없음)', field: '체육', credit: 2 },
+{ name: '과학탐구실험2(석차 등급 없음)', field: '과학', credit: 1 },
+{ name: '음악/미술(석차 등급 없음)', field: '예술', credit: 2, crossRegistration: true },
+{ name: '소프트웨어와 생활', field: '정보', credit: 3 }
+],
+elective: []
+}
+},
+2: {
+1: {
+required: [
+{ name: '문학', field: '국어', credit: 3 },
+{ name: '대수', field: '수학', credit: 3 },
+{ name: '영어Ⅰ', field: '영어', credit: 3 },
+{ name: '스포츠 생활1(석차 등급 없음)', field: '체육', credit: 2 },
+{ name: '기술·가정/언어생활과 한자(교차이수)', field: '기술·가정', credit: 3 }
+],
+elective: [
+{ name: '음악 연주와 창작(석차 등급 없음)', field: '예술', credit: 3, group: 'group-2-1-art', limit: 1 },
+{ name: '미술 창작(석차 등급 없음)', field: '예술', credit: 3, group: 'group-2-1-art', limit: 1 },
+{ name: '연극(석차 등급 없음)', field: '예술', credit: 3, group: 'group-2-1-art', limit: 1, crossSemester: 'drama' },
+{ name: '한국지리 탐구', field: '사회', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '세계사', field: '역사', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '경제', field: '사회', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '정치', field: '사회', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '현대사회와 윤리', field: '사회', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '물리학', field: '과학', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '화학', field: '과학', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '생명과학', field: '과학', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '지구과학', field: '과학', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '세계 문화와 영어', field: '영어', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '기하', field: '수학', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '프로그래밍', field: '정보', credit: 3, group: 'group-2-1-main', limit: 4 },
+{ name: '인공지능과 피지컬컴퓨팅', field: '정보', credit: 3, group: 'group-2-1-main', limit: 4 }
+]
+},
+2: {
+required: [
+{ name: '화법과 언어', field: '국어', credit: 3 },
+{ name: '미적분Ⅰ', field: '수학', credit: 3 },
+{ name: '영어Ⅱ', field: '영어', credit: 3 },
+{ name: '스포츠 생활2(석차 등급 없음)', field: '체육', credit: 2 },
+{ name: '기술·가정/언어생활과 한자(교차이수)', field: '한문', credit: 3 }
+],
+elective: [
+{ name: '음악 감상과 비평(석차 등급 없음)', field: '예술', credit: 3, group: 'group-2-2-art', limit: 1 },
+{ name: '미술 감상과 비평(석차 등급 없음)', field: '예술', credit: 3, group: 'group-2-2-art', limit: 1 },
+{ name: '연극(석차 등급 없음)', field: '예술', credit: 3, group: 'group-2-2-art', limit: 1, crossSemester: 'drama' },
+{ name: '세계시민과 지리', field: '사회', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '역사로 탐구하는 현대 세계', field: '역사', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '사회와 문화', field: '사회', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '법과 사회', field: '사회', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '윤리와 사상', field: '사회', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '역학과 에너지', field: '과학', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '물질과 에너지', field: '과학', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '세포와 물질대사', field: '과학', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '지구시스템과학', field: '과학', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '미디어 영어', field: '영어', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '인공지능 수학', field: '수학', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '인공지능 기초', field: '정보', credit: 3, group: 'group-2-2-main', limit: 4 },
+{ name: '인공지능과 미래사회', field: '정보', credit: 3, group: 'group-2-2-main', limit: 4 }
+]
+}
+},
+3: {
+1: {
+required: [
+{ name: '독서와 작문', field: '국어', credit: 3 },
+{ name: '확률과 통계', field: '수학', credit: 3 },
+{ name: '스포츠 문화(석차 등급 없음)', field: '체육', credit: 2 }
+],
+elective: [
+{ name: '일본어', field: '제2외국어', credit: 3, group: 'group-3-1-lang', limit: 1 },
+{ name: '한문', field: '한문', credit: 3, group: 'group-3-1-lang', limit: 1 },
+{ name: '도시의 미래 탐구', field: '사회', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '동아시아 역사 기행', field: '역사', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '국제 관계의 이해', field: '사회', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '인문학과 윤리', field: '사회', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '전자기와 양자', field: '과학', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '화학 반응의 세계', field: '과학', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '생물의 유전', field: '과학', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '행성우주과학', field: '과학', credit: 3, group: 'group-3-1-main', limit: 3 },
+{ name: '주제 탐구 독서', field: '국어', credit: 3, group: 'group-3-1-sub', limit: 3 },
+{ name: '영어 독해와 작문', field: '영어', credit: 3, group: 'group-3-1-sub', limit: 3 },
+{ name: '미적분Ⅱ', field: '수학', credit: 3, group: 'group-3-1-sub', limit: 3 },
+{ name: '데이터 과학', field: '정보', credit: 3, group: 'group-3-1-sub', limit: 3 },
+{ name: '생태와 환경(석차 등급 없음)', field: '교양', credit: 3, group: 'group-3-1-sub', limit: 3 }
+]
+},
+2: {
+required: [
+{ name: '스포츠 과학(석차 등급 없음)', field: '체육', credit: 2 }
+],
+elective: [
+{ name: '일본 문화', field: '제2외국어', credit: 3, group: 'group-3-2-lang', limit: 1 },
+{ name: '한문 고전 읽기', field: '한문', credit: 3, group: 'group-3-2-lang', limit: 1 },
+{ name: '여행지리(석차 등급 없음)', field: '사회', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '사회문제 탐구(석차 등급 없음)', field: '사회', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '금융과 경제생활(석차 등급 없음)', field: '사회', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '윤리문제 탐구(석차 등급 없음)', field: '사회', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '과학의 역사와 문화(석차 등급 없음)', field: '과학', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '융합과학 탐구(석차 등급 없음)', field: '과학', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '기후변화와 환경생태(석차 등급 없음)', field: '과학', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '사물인터넷과 센서제어', field: '정보', credit: 3, group: 'group-3-2-main', limit: 4 },
+{ name: '문학과 영상', field: '국어', credit: 3, group: 'group-3-2-sub', limit: 4 },
+{ name: '심화 영어', field: '영어', credit: 3, group: 'group-3-2-sub', limit: 4 },
+{ name: '수학과제 탐구', field: '수학', credit: 3, group: 'group-3-2-sub', limit: 4 },
+{ name: '인간과 심리(석차 등급 없음)', field: '교양', credit: 3, group: 'group-3-2-sub', limit: 4 },
+{ name: '세계시민(석차 등급 없음)', field: '교양', credit: 3, group: 'group-3-2-sub', limit: 4 }
+]
+}
+}
+};
+
+// 점검표 기준 정의
+const checklistStandards = [
+{ id: 'korean', name: '국어', courses: '공통국어1, 공통국어2', required: 8, category: 'grade1', field: '국어' },
+{ id: 'math', name: '수학', courses: '공통수학1, 공통수학2', required: 8, category: 'grade1', field: '수학' },
+{ id: 'english', name: '영어', courses: '공통영어1, 공통영어2', required: 8, category: 'grade1', field: '영어' },
+{ id: 'history', name: '역사', courses: '한국사1, 한국사2', required: 6, category: 'grade1', field: '역사' },
+{ id: 'society', name: '사회', courses: '통합사회1, 통합사회2', required: 8, category: 'grade1', field: '사회' },
+{ id: 'science', name: '과학', courses: '통합과학1, 통합과학2, 과학탐구실험1, 과학탐구실험2', required: 10, category: 'grade1', field: '과학' },
+{ id: 'pe', name: '체육', courses: ' ', required: 10, category: 'allgrades', field: '체육' },
+{ id: 'art', name: '예술', courses: ' ', required: 10, category: 'allgrades', field: '예술' },
+{ id: 'tech', name: '기술·가정/정보/제2외국어/한문/교양', courses: ' ', required: 16, category: 'allgrades', field: 'multi' }
+];
+
+// 로컬스토리지 키
+const STORAGE_KEY = 'subjectChecklist';
+let currentModalItemId = null;
+
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', () => {
+renderAllSubjects();
+setupYearTabButtons();
+setupSemesterTabButtons();
+loadData();
+updateAllSummaries();
+renderChecklist();
+});
+
+// 모든 과목 렌더링
+function renderAllSubjects() {
+for (let year = 1; year <= 3; year++) {
+for (let semester = 1; semester <= 2; semester++) {
+renderSemester(year, semester);
+}
+}
+}
+
+// 학기별 렌더링
+function renderSemester(year, semester) {
+const containerId = `year-${year}-sem-${semester}`;
+const container = document.getElementById(containerId);
+const semesterData = subjects[year][semester];
+let html = '';
+
+// 필수 과목
+if (semesterData.required.length > 0) {
+html += `
+<div class="subject-category">
+<div class="category-label required">필수 과목</div>
+<div class="subject-list">
+${semesterData.required.map((subject, index) => {
+const note = subject.crossRegistration ? ' (교차이수)' : '';
+return `
+<div class="subject-item required" data-id="req-${year}-${semester}-${index}">
+<div class="subject-card">
+<div class="card-row-1">
+<div class="checkbox-wrapper">
+<input
+type="checkbox"
+checked
+disabled
+class="subject-checkbox"
+>
+</div>
+<div class="subject-name">${subject.name}${note}</div>
+</div>
+<div class="card-row-2">
+<span class="subject-field">${subject.field}</span>
+<span class="subject-status">필수</span>
+<span class="subject-credit">${subject.credit}학점</span>
+</div>
+</div>
+</div>
+`;
+}).join('')}
+</div>
+</div>
+`;
+}
+
+// 선택 과목
+if (semesterData.elective.length > 0) {
+const groupedElectives = {};
+semesterData.elective.forEach((subject, index) => {
+if (!groupedElectives[subject.group]) {
+groupedElectives[subject.group] = [];
+}
+groupedElectives[subject.group].push({ ...subject, index });
+});
+html += `
+<div class="subject-category">
+<div class="category-label elective">선택 과목</div>
+${Object.entries(groupedElectives).map(([group, groupSubjects]) => `
+<div>
+${groupSubjects.length > 1 ? `
+<div class="selection-hint">
+※ 다음 중 <strong>${groupSubjects[0].limit}개</strong> 선택
+</div>
+` : ''}
+<div class="subject-list">
+${groupSubjects.map((subject, idx) => `
+<div class="subject-item elective" data-id="elec-${year}-${semester}-${subject.index}" data-group="${group}">
+<div class="subject-card">
+<div class="card-row-1">
+<div class="checkbox-wrapper">
+<input
+type="checkbox"
+class="subject-checkbox"
+data-year="${year}"
+data-semester="${semester}"
+data-index="${subject.index}"
+data-group="${group}"
+data-limit="${subject.limit}"
+${subject.crossSemester ? `data-cross-semester="${subject.crossSemester}"` : ''}
+>
+</div>
+<div class="subject-name">${subject.name}</div>
+</div>
+<div class="card-row-2">
+<span class="subject-field">${subject.field}</span>
+<span class="subject-status">미선택</span>
+<span class="subject-credit">${subject.credit}학점</span>
+</div>
+</div>
+</div>
+`).join('')}
+</div>
+<div class="selection-limit" data-group="${group}"></div>
+<div class="duplicate-warning" data-cross-semester="${group}"></div>
+</div>
+`).join('')}
+</div>
+`;
+}
+
+container.innerHTML = html;
+
+// 선택 과목 체크박스 이벤트 리스너
+container.querySelectorAll('.subject-checkbox:not(:disabled)').forEach(checkbox => {
+checkbox.addEventListener('change', handleElectiveCheckboxChange);
+});
+}
+
+// 선택 과목 체크박스 변경 핸들러
+function handleElectiveCheckboxChange(event) {
+const checkbox = event.target;
+const group = checkbox.dataset.group;
+const limit = parseInt(checkbox.dataset.limit);
+const year = parseInt(checkbox.dataset.year);
+const semester = parseInt(checkbox.dataset.semester);
+const crossSemester = checkbox.dataset.crossSemester;
+
+// 같은 그룹의 체크박스 개수 확인
+const allGroupCheckboxes = document.querySelectorAll(
+`.subject-checkbox[data-group="${group}"]`
+);
+const checkedCount = Array.from(allGroupCheckboxes).filter(cb => cb.checked).length;
+
+// 크로스 학기 과목 (연극) 확인
+if (crossSemester && checkbox.checked) {
+const otherSemester = semester === 1 ? 2 : 1;
+const otherSemesterCheckbox = document.querySelector(
+`.subject-checkbox[data-year="${year}"][data-semester="${otherSemester}"][data-cross-semester="${crossSemester}"]`
+);
+if (otherSemesterCheckbox && otherSemesterCheckbox.checked) {
+checkbox.checked = false;
+showDuplicateWarning(crossSemester, group, year);
+return;
+}
+}
+
+// 제한을 초과했으면 체크 해제
+if (checkedCount > limit) {
+checkbox.checked = false;
+showSelectionLimitAlert(group, limit, allGroupCheckboxes);
+return;
+}
+
+// UI 업데이트
+const subjectItem = checkbox.closest('.subject-item');
+const statusSpan = subjectItem.querySelector('.subject-status');
+if (checkbox.checked) {
+subjectItem.classList.add('completed');
+statusSpan.textContent = '선택됨';
+} else {
+subjectItem.classList.remove('completed');
+statusSpan.textContent = '미선택';
+}
+
+// 선택 제한 메시지 업데이트
+updateSelectionLimitMessage(group, limit, allGroupCheckboxes);
+
+// 다른 학기 업데이트 (연극 경우)
+if (crossSemester && !checkbox.checked) {
+const otherSemester = semester === 1 ? 2 : 1;
+updateCrossSeasonStatus(year, otherSemester, crossSemester);
+}
+
+// 데이터 저장
+saveData();
+
+// 요약 업데이트
+updateSummary(year, semester);
+if (crossSemester) {
+const otherSemester = semester === 1 ? 2 : 1;
+updateSummary(year, otherSemester);
+}
+
+// 점검표 업데이트
+updateChecklist();
+}
+
+// 중복 경고
+function showDuplicateWarning(crossSemester, group, year) {
+const message = `연극은 1학기와 2학기 중 한 번만 선택할 수 있습니다.`;
+alert(message);
+}
+
+// 크로스 학기 상태 업데이트
+function updateCrossSeasonStatus(year, semester, crossSemester) {
+const checkboxes = document.querySelectorAll(
+`.subject-checkbox[data-year="${year}"][data-semester="${semester}"][data-cross-semester="${crossSemester}"]`
+);
+checkboxes.forEach(checkbox => {
+const subjectItem = checkbox.closest('.subject-item');
+if (checkbox.checked) {
+subjectItem.classList.add('disabled');
+} else {
+subjectItem.classList.remove('disabled');
+}
+});
+}
+
+// 선택 제한 메시지 표시
+function showSelectionLimitAlert(group, limit, checkboxes) {
+const message = `최대 ${limit}개까지만 선택할 수 있습니다.`;
+alert(message);
+updateSelectionLimitMessage(group, limit, checkboxes);
+}
+
+// 선택 제한 메시지 업데이트
+function updateSelectionLimitMessage(group, limit, checkboxes) {
+const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+const limitDiv = document.querySelector(`.selection-limit[data-group="${group}"]`);
+if (checkedCount >= limit) {
+limitDiv.textContent = `✅ ${limit}개를 모두 선택했습니다.`;
+limitDiv.classList.add('show');
+} else {
+limitDiv.classList.remove('show');
+}
+}
+
+// 학년 탭 버튼 설정
+function setupYearTabButtons() {
+document.querySelectorAll('.tab-button').forEach(button => {
+button.addEventListener('click', () => {
+const year = button.dataset.year;
+document.querySelectorAll('.tab-button').forEach(b => {
+b.classList.remove('active');
+});
+button.classList.add('active');
+document.querySelectorAll('.tab-content').forEach(content => {
+content.classList.remove('active');
+});
+document.querySelector(`.tab-content[data-year="${year}"]`).classList.add('active');
+
+// 점검표 탭 클릭 시
+if (year === 'checklist') {
+checkChecklistWarning();
+}
+
+// 학년 탭일 때만 학기 탭 활성화
+if (year !== 'checklist') {
+const semesterTabs = document.querySelectorAll(`.semester-tabs`);
+semesterTabs.forEach(tab => {
+const tabYear = tab.querySelector('.semester-tab-button').dataset.year;
+if (parseInt(tabYear) === parseInt(year)) {
+const firstButton = tab.querySelector('.semester-tab-button');
+firstButton.click();
+}
+});
+}
+});
+});
+}
+
+// 학기 탭 버튼 설정
+function setupSemesterTabButtons() {
+document.querySelectorAll('.semester-tab-button').forEach(button => {
+button.addEventListener('click', () => {
+const year = button.dataset.year;
+const semester = button.dataset.semester;
+// 같은 학년의 다른 학기 탭 비활성화
+document.querySelectorAll(`.semester-tab-button[data-year="${year}"]`).forEach(btn => {
+btn.classList.remove('active');
+});
+button.classList.add('active');
+// 같은 학년의 다른 학기 콘텐츠 숨기기
+document.querySelectorAll(`.semester-content[data-year="${year}"]`).forEach(content => {
+content.classList.remove('active');
+});
+document.querySelector(`.semester-content[data-year="${year}"][data-semester="${semester}"]`).classList.add('active');
+});
+});
+}
+
+// 점검표 전환 함수
+function checkChecklistWarning() {
+const totalApplied = calculateTotalAppliedCredits();
+const banner = document.getElementById('creditWarningBanner');
+
+if (totalApplied < 174) {
+const shortage = 174 - totalApplied;
+const creditsByYearSemester = calculateCreditsByYearSemester();
+
+document.getElementById('bannerCurrentCredit').textContent = totalApplied;
+document.getElementById('bannerShortage').textContent = shortage;
+
+// 테이블 채우기
+let tableHTML = '';
+for (let year = 1; year <= 3; year++) {
+for (let semester = 1; semester <= 2; semester++) {
+const credit = creditsByYearSemester[`${year}-${semester}`];
+const status = credit < 29 ? `⚠️ 부족 (${29 - credit}학점)` : '✅ 충족';
+tableHTML += `<tr><td>${year}학년 ${semester}학기</td><td><strong>${credit}</strong>학점</td><td>${status}</td></tr>`;
+}
+}
+document.getElementById('bannerTableBody').innerHTML = tableHTML;
+banner.classList.add('show');
+} else {
+banner.classList.remove('show');
+}
+}
+
+// 점검표 렌더링
+function renderChecklist() {
+const tbody = document.getElementById('checklist-tbody');
+tbody.innerHTML = checklistStandards.map(item => `
+<tr>
+<td class="subject-col">${item.name}</td>
+<td class="category-col">${item.courses}</td>
+<td class="credit-col">${item.required}학점</td>
+<td class="applied-credit-col" id="applied-${item.id}">0학점</td>
+<td>
+<span id="status-${item.id}" class="status-col fail" onclick="openModal('${item.id}')">점검필요</span>
+</td>
+</tr>
+`).join('');
+updateChecklist();
+}
+
+// 필드 기준 매칭 함수
+function matchesFieldCriteria(courseField, itemField) {
+if (itemField === 'multi') {
+return courseField === '정보' || courseField === '기술·가정' ||
+courseField === '제2외국어' || courseField === '한문' || courseField === '교양';
+}
+return courseField === itemField;
+}
+
+// 선택한 과목 목록 가져오기 (학년 학기 정보 포함)
+function getSelectedCourses(itemId) {
+const item = checklistStandards.find(s => s.id === itemId);
+const selectedCourses = [];
+// 1학년
+for (let sem = 1; sem <= 2; sem++) {
+const data = subjects[1][sem];
+data.required.forEach(course => {
+if (matchesFieldCriteria(course.field, item.field)) {
+selectedCourses.push({ name: course.name, credit: course.credit, year: 1, semester: sem });
+}
+});
+}
+// 2, 3학년
+for (let year = 2; year <= 3; year++) {
+for (let sem = 1; sem <= 2; sem++) {
+const data = subjects[year][sem];
+// 필수 과목
+data.required.forEach(course => {
+if (matchesFieldCriteria(course.field, item.field)) {
+selectedCourses.push({ name: course.name, credit: course.credit, year: year, semester: sem });
+}
+});
+// 선택 과목
+const checkboxes = document.querySelectorAll(`.subject-checkbox[data-year="${year}"][data-semester="${sem}"]`);
+data.elective.forEach((course, index) => {
+if (checkboxes[index] && checkboxes[index].checked) {
+if (matchesFieldCriteria(course.field, item.field)) {
+selectedCourses.push({ name: course.name, credit: course.credit, year: year, semester: sem });
+}
+}
+});
+}
+}
+return selectedCourses;
+}
+
+// 선택 과목 토글
+function toggleSelectedCourses() {
+const container = document.getElementById('selectedCoursesContainer');
+container.classList.toggle('show');
+if (container.classList.contains('show')) {
+const selectedCourses = getSelectedCourses(currentModalItemId);
+const coursesList = document.getElementById('selectedCoursesList');
+if (selectedCourses.length === 0) {
+coursesList.innerHTML = '<li class="selected-courses-empty">선택한 과목이 없습니다</li>';
+} else {
+coursesList.innerHTML = selectedCourses.map(course => `
+<li class="selected-courses-item">
+<span class="selected-courses-name">${course.name}</span>
+<span class="selected-courses-grade">${course.year}학년 ${course.semester}학기</span>
+<span class="selected-courses-credit">${course.credit}학점</span>
+</li>
+`).join('');
+}
+}
+}
+
+// 과목 이수 현황 계산
+function calculateCompletedCredits() {
+const completed = {
+korean: 0,
+math: 0,
+english: 0,
+history: 0,
+society: 0,
+science: 0,
+pe: 0,
+art: 0,
+tech: 0
+};
+// 1학년
+for (let sem = 1; sem <= 2; sem++) {
+const data = subjects[1][sem];
+data.required.forEach(course => {
+if (course.field === '국어') completed.korean += course.credit;
+if (course.field === '수학') completed.math += course.credit;
+if (course.field === '영어') completed.english += course.credit;
+if (course.field === '역사') completed.history += course.credit;
+if (course.field === '사회') completed.society += course.credit;
+if (course.field === '과학') completed.science += course.credit;
+if (course.field === '체육') completed.pe += course.credit;
+if (course.field === '예술') completed.art += course.credit;
+if (matchesFieldCriteria(course.field, 'multi')) completed.tech += course.credit;
+});
+}
+// 2, 3학년
+for (let year = 2; year <= 3; year++) {
+for (let sem = 1; sem <= 2; sem++) {
+const data = subjects[year][sem];
+// 필수 과목
+data.required.forEach(course => {
+if (course.field === '국어') completed.korean += course.credit;
+if (course.field === '수학') completed.math += course.credit;
+if (course.field === '영어') completed.english += course.credit;
+if (course.field === '역사') completed.history += course.credit;
+if (course.field === '사회') completed.society += course.credit;
+if (course.field === '과학') completed.science += course.credit;
+if (course.field === '체육') completed.pe += course.credit;
+if (course.field === '예술') completed.art += course.credit;
+if (matchesFieldCriteria(course.field, 'multi')) completed.tech += course.credit;
+});
+// 선택 과목
+const checkboxes = document.querySelectorAll(`.subject-checkbox[data-year="${year}"][data-semester="${sem}"]`);
+data.elective.forEach((course, index) => {
+if (checkboxes[index] && checkboxes[index].checked) {
+if (matchesFieldCriteria(course.field, 'multi')) {
+completed.tech += course.credit;
+} else if (course.field === '역사') {
+completed.history += course.credit;
+} else if (course.field === '사회') {
+completed.society += course.credit;
+} else if (course.field === '예술') {
+completed.art += course.credit;
+} else if (course.field === '과학') {
+completed.science += course.credit;
+} else if (course.field === '국어') {
+completed.korean += course.credit;
+} else if (course.field === '영어') {
+completed.english += course.credit;
+} else if (course.field === '수학') {
+completed.math += course.credit;
+}
+}
+});
+}
+}
+return completed;
+}
+
+// 전체 신청 학점 계산
+function calculateTotalAppliedCredits() {
+let total = 0;
+for (let year = 1; year <= 3; year++) {
+for (let sem = 1; sem <= 2; sem++) {
+const data = subjects[year][sem];
+// 필수 과목 학점
+data.required.forEach(course => {
+total += course.credit;
+});
+// 선택 과목 학점
+const checkboxes = document.querySelectorAll(`.subject-checkbox[data-year="${year}"][data-semester="${sem}"]`);
+data.elective.forEach((course, index) => {
+if (checkboxes[index] && checkboxes[index].checked) {
+total += course.credit;
+}
+});
+}
+}
+return total;
+}
+
+// 학기별 학점 계산 함수
+function calculateCreditsByYearSemester() {
+const credits = {};
+for (let year = 1; year <= 3; year++) {
+for (let semester = 1; semester <= 2; semester++) {
+credits[`${year}-${semester}`] = 0;
+const data = subjects[year][semester];
+// 필수 과목 학점
+data.required.forEach(course => {
+credits[`${year}-${semester}`] += course.credit;
+});
+// 선택 과목 학점
+const checkboxes = document.querySelectorAll(`.subject-checkbox[data-year="${year}"][data-semester="${semester}"]`);
+data.elective.forEach((course, index) => {
+if (checkboxes[index] && checkboxes[index].checked) {
+credits[`${year}-${semester}`] += course.credit;
+}
+});
+}
+}
+return credits;
+}
+
+// 교과(군)별 신청 학점 계산
+function calculateAppliedCreditsByField(itemId) {
+const item = checklistStandards.find(s => s.id === itemId);
+let total = 0;
+// 1학년
+for (let sem = 1; sem <= 2; sem++) {
+const data = subjects[1][sem];
+data.required.forEach(course => {
+if (matchesFieldCriteria(course.field, item.field)) {
+total += course.credit;
+}
+});
+}
+// 2, 3학년
+for (let year = 2; year <= 3; year++) {
+for (let sem = 1; sem <= 2; sem++) {
+const data = subjects[year][sem];
+// 필수 과목
+data.required.forEach(course => {
+if (matchesFieldCriteria(course.field, item.field)) {
+total += course.credit;
+}
+});
+// 선택 과목
+const checkboxes = document.querySelectorAll(`.subject-checkbox[data-year="${year}"][data-semester="${sem}"]`);
+data.elective.forEach((course, index) => {
+if (checkboxes[index] && checkboxes[index].checked) {
+if (matchesFieldCriteria(course.field, item.field)) {
+total += course.credit;
+}
+}
+});
+}
+}
+return total;
+}
+
+// 점검 필요 이유 생성
+function generateChecklistReason(itemId) {
+const completed = calculateCompletedCredits();
+const item = checklistStandards.find(s => s.id === itemId);
+if (!item) return '';
+const completedCredit = completed[itemId];
+const shortage = item.required - completedCredit;
+let reason = ``;
+if (itemId === 'korean') {
+reason = `국어 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>국어 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'math') {
+reason = `수학 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>수학 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'english') {
+reason = `영어 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>영어 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'history') {
+reason = `역사 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>역사 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'society') {
+reason = `사회 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>사회 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'science') {
+reason = `과학 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>과학 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'pe') {
+reason = `체육 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>체육 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'art') {
+reason = `예술 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>예술 영역 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+} else if (itemId === 'tech') {
+reason = `기술·가정, 정보, 제2외국어, 한문, 교양 영역의 과목을 최소 ${item.required}학점 이상 이수해야 합니다.`;
+reason += `현재 신청: ${completedCredit}학점 / 필요: ${item.required}학점`;
+reason += `<ul><li>부족 학점: ${shortage}학점</li><li>기술·가정, 정보, 제2외국어, 한문, 교양 영역의 과목을 통해 부족 학점을 채워야 합니다.</li></ul>`;
+}
+return reason;
+}
+
+// 모달 열기
+function openModal(itemId) {
+currentModalItemId = itemId;
+const item = checklistStandards.find(s => s.id === itemId);
+const completed = calculateCompletedCredits();
+const completedCredit = completed[itemId];
+const shortage = Math.max(0, item.required - completedCredit);
+document.getElementById('modalTitle').textContent = item.name;
+document.getElementById('modalRequired').textContent = `${item.required}학점`;
+document.getElementById('modalCompleted').textContent = `${completedCredit}학점`;
+document.getElementById('modalShortage').textContent = `${shortage}학점`;
+document.getElementById('reasonContent').innerHTML = generateChecklistReason(itemId);
+// 선택 과목 목록 초기화
+document.getElementById('selectedCoursesContainer').classList.remove('show');
+document.getElementById('selectedCoursesList').innerHTML = '';
+const reasonContainer = document.getElementById('reasonContainer');
+if (completedCredit >= item.required) {
+reasonContainer.style.display = 'none';
+} else {
+reasonContainer.style.display = 'block';
+}
+document.getElementById('detailModal').classList.add('show');
+}
+
+// 모달 닫기
+function closeModal() {
+document.getElementById('detailModal').classList.remove('show');
+currentModalItemId = null;
+}
+
+// 모달 외부 클릭 시 닫기
+window.onclick = function(event) {
+const modal = document.getElementById('detailModal');
+if (event.target === modal) {
+modal.classList.remove('show');
+currentModalItemId = null;
+}
+};
+
+// 점검표 업데이트
+function updateChecklist() {
+const completed = calculateCompletedCredits();
+const totalApplied = calculateTotalAppliedCredits();
+// 교과(군)별 신청 학점 업데이트
+checklistStandards.forEach(item => {
+const appliedCredit = calculateAppliedCreditsByField(item.id);
+document.getElementById(`applied-${item.id}`).textContent = `${appliedCredit}학점`;
+const statusCell = document.getElementById(`status-${item.id}`);
+if (completed[item.id] >= item.required) {
+statusCell.innerHTML = '✅ 이상없음';
+statusCell.classList.remove('fail');
+statusCell.classList.add('pass');
+statusCell.style.cursor = 'pointer';
+} else {
+statusCell.innerHTML = '❌ 점검필요';
+statusCell.classList.remove('pass');
+statusCell.classList.add('fail');
+statusCell.style.cursor = 'pointer';
+statusCell.onclick = () => openModal(item.id);
+}
+});
+// 총 신청 학점 업데이트
+document.getElementById('total-applied-credit').textContent = totalApplied;
+// 총 학점 부족 시 경고
+if (totalApplied < 174) {
+const appliedCredit = document.getElementById('total-applied-credit');
+appliedCredit.classList.add('warning');
+} else {
+const appliedCredit = document.getElementById('total-applied-credit');
+appliedCredit.classList.remove('warning');
+}
+}
+
+// 데이터 저장
+function saveData() {
+const data = {};
+document.querySelectorAll('.subject-checkbox:not(:disabled)').forEach(checkbox => {
+const key = `${checkbox.dataset.year}-${checkbox.dataset.semester}-${checkbox.dataset.index}`;
+data[key] = checkbox.checked;
+});
+localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// 데이터 로드
+function loadData() {
+const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+document.querySelectorAll('.subject-checkbox:not(:disabled)').forEach(checkbox => {
+const key = `${checkbox.dataset.year}-${checkbox.dataset.semester}-${checkbox.dataset.index}`;
+if (data[key]) {
+checkbox.checked = true;
+const subjectItem = checkbox.closest('.subject-item');
+subjectItem.classList.add('completed');
+const statusSpan = subjectItem.querySelector('.subject-status');
+if (statusSpan) {
+statusSpan.textContent = '선택됨';
+}
+// 크로스 학기 과목 체크
+const crossSemester = checkbox.dataset.crossSemester;
+if (crossSemester) {
+const year = parseInt(checkbox.dataset.year);
+const semester = parseInt(checkbox.dataset.semester);
+const otherSemester = semester === 1 ? 2 : 1;
+updateCrossSeasonStatus(year, otherSemester, crossSemester);
+}
+}
+});
+// 선택 제한 메시지 업데이트
+updateAllSelectionLimitMessages();
+}
+
+// 모든 선택 제한 메시지 업데이트
+function updateAllSelectionLimitMessages() {
+for (let year = 1; year <= 3; year++) {
+for (let semester = 1; semester <= 2; semester++) {
+const semesterData = subjects[year][semester];
+const groups = new Set(semesterData.elective.map(s => s.group));
+groups.forEach(group => {
+const checkboxes = document.querySelectorAll(
+`.subject-checkbox[data-group="${group}"]`
+);
+if (checkboxes.length > 0) {
+const limit = parseInt(checkboxes[0].dataset.limit);
+updateSelectionLimitMessage(group, limit, checkboxes);
+}
+});
+}
+}
+}
+
+// 학기별 요약 업데이트
+function updateSummary(year, semester) {
+let totalCredit = 29;
+let completedCredit = 0;
+const semesterData = subjects[year][semester];
+if (year === 1) {
+// 1학년: 동적으로 계산
+totalCredit = 0;
+semesterData.required.forEach(subject => {
+totalCredit += subject.credit;
+completedCredit += subject.credit;
+});
+semesterData.elective.forEach((subject, index) => {
+totalCredit += subject.credit;
+});
+} else {
+// 2, 3학년: 29학점 고정
+// 필수 과목 학점
+semesterData.required.forEach(subject => {
+completedCredit += subject.credit;
+});
+// 선택 과목 학점
+const checkboxes = document.querySelectorAll(
+`.subject-checkbox[data-year="${year}"][data-semester="${semester}"]`
+);
+semesterData.elective.forEach((subject, index) => {
+if (checkboxes[index] && checkboxes[index].checked) {
+completedCredit += subject.credit;
+}
+});
+}
+const progress = totalCredit > 0 ? Math.round((completedCredit / totalCredit) * 100) : 0;
+document.getElementById(`semester-total-${year}-${semester}`).textContent = totalCredit;
+document.getElementById(`semester-completed-${year}-${semester}`).textContent = completedCredit;
+document.getElementById(`semester-progress-${year}-${semester}`).textContent = `${progress}%`;
+}
+
+// 모든 요약 업데이트
+function updateAllSummaries() {
+for (let year = 1; year <= 3; year++) {
+for (let semester = 1; semester <= 2; semester++) {
+updateSummary(year, semester);
+}
+}
+}
+
+// 초기화
+function resetAll() {
+if (confirm('정말로 모든 선택을 초기화하시겠습니까?')) {
+document.querySelectorAll('.subject-checkbox:not(:disabled)').forEach(checkbox => {
+checkbox.checked = false;
+const subjectItem = checkbox.closest('.subject-item');
+if (subjectItem) {
+subjectItem.classList.remove('completed');
+subjectItem.classList.remove('disabled');
+const statusSpan = subjectItem.querySelector('.subject-status');
+if (statusSpan) {
+statusSpan.textContent = '미선택';
+}
+}
+});
+localStorage.removeItem(STORAGE_KEY);
+updateAllSummaries();
+updateAllSelectionLimitMessages();
+updateChecklist();
+}
+}
+
+// 튜토리얼 열기
+function openTutorial() {
+document.getElementById('tutorialModal').classList.add('show');
+}
+
+// 튜토리얼 닫기
+function closeTutorial() {
+document.getElementById('tutorialModal').classList.remove('show');
+}
+
+// 도움말 열기
+function openHelp() {
+document.getElementById('helpModal').classList.add('show');
+}
+
+// 도움말 닫기
+function closeHelp() {
+document.getElementById('helpModal').classList.remove('show');
+}
+
+// FAQ 토글
+function toggleFAQ(element) {
+const answer = element.nextElementSibling;
+const arrow = element.querySelector('.faq-arrow');
+answer.classList.toggle('show');
+arrow.classList.toggle('open');
+}
+
+// 모달 외부 클릭 시 닫기 (튜토리얼, 도움말)
+window.addEventListener('click', function(event) {
+const tutorialModal = document.getElementById('tutorialModal');
+const helpModal = document.getElementById('helpModal');
+if (event.target === tutorialModal) {
+tutorialModal.classList.remove('show');
+}
+if (event.target === helpModal) {
+helpModal.classList.remove('show');
+}
+});
+</script>
+</body>
+</html>
