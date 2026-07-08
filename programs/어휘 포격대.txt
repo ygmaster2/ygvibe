@@ -1,0 +1,1755 @@
+<code.gs>
+function doGet() {
+  return HtmlService.createTemplateFromFile('index')
+    .evaluate()
+    .setTitle('단어 포격단 (Word Artillery) - 랭킹 파손율 포함')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * 웹앱이 실행 중인 스프레드시트에서 데이터를 자동으로 추출하고 무작위 10문항을 고르는 함수
+ * 160개 이상의 문장을 안전하게 가져와 완벽한 무작위성을 보장합니다.
+ */
+function getQuizData() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      throw new Error("컨테이너 스프레드시트를 찾을 수 없습니다. 시트 내부에서 실행해주세요.");
+    }
+    
+    const sheet = ss.getSheets()[0]; 
+    const lastRow = sheet.getLastRow();
+    
+    // 시트에 데이터가 전혀 없을 경우 안전하게 모의 데이터 반환
+    if (lastRow < 2) {
+      return getSampleData();
+    } 
+    
+    // 9열까지의 모든 데이터를 한 번에 가져옵니다.
+    const range = sheet.getRange(2, 1, lastRow - 1, 9);
+    const values = range.getValues();
+    
+    // 1. 본문 데이터가 실제로 존재하는 유효한 문항만 엄격하게 필터링
+    let allQuizList = values
+      .filter(function(row) {
+        return row[2] && row[2].toString().trim() !== "";
+      })
+      .map(function(row, index) {
+        let ansNum = parseInt(row[7]);
+        if (isNaN(ansNum) || ansNum < 1) {
+          ansNum = 1;
+        }
+
+        return {
+          id: row[0] ? row[0].toString() : String(index + 1), 
+          source: row[1] ? row[1].toString() : "EBS 수특",  
+          sentence: row[2].toString().trim(),                  
+          options: [
+            row[3] ? row[3].toString().trim() : "보기1",
+            row[4] ? row[4].toString().trim() : "보기2",
+            row[5] ? row[5].toString().trim() : "보기3",
+            row[6] ? row[6].toString().trim() : "보기4"
+          ], 
+          originalAnswerIdx: ansNum - 1,                        
+          feedback: row[8] ? row[8].toString().trim() : "정답입니다! 문맥상 알맞은 어휘입니다." 
+        };
+      });
+    
+    if (allQuizList.length === 0) {
+      return getSampleData();
+    }
+    
+    // 2. 전체 리스트를 피셔-예이츠 알고리즘으로 섞음
+    for (let i = allQuizList.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = allQuizList[i];
+      allQuizList[i] = allQuizList[j];
+      allQuizList[j] = temp;
+    }
+    
+    // 3. 무작위로 완벽하게 섞인 전체 범위에서 최대 10문항만 추출
+    const selectedQuizCount = Math.min(10, allQuizList.length);
+    const finalQuizList = allQuizList.slice(0, selectedQuizCount);
+    
+    return finalQuizList;
+  } catch (e) {
+    Logger.log("Error in getQuizData: " + e.toString());
+    throw new Error(e.message || e.toString());
+  }
+}
+
+function getSampleData() {
+  return [
+    {
+      id: "예시1",
+      source: "시스템 가이드",
+      sentence: "시트 데이터 로드에 실패하여 샘플 무기고가 개방되었습니다. 구글 시트에 [ ? ] 데이터를 입력해주세요.",
+      options: ["정상", "오류", "테스트", "포탄"],
+      originalAnswerIdx: 2,
+      feedback: "구글 시트의 첫 번째 탭에 데이터가 비어있거나 권한 설정이 필요합니다."
+    }
+  ];
+}
+
+/**
+ * 랭킹 등록 시스템 시트 확인 및 자동 레이아웃 설정
+ * 지정된 구글 시트에 'Ranking' 탭을 개설하고 구조를 보정합니다.
+ */
+function getRankingSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let rankSheet = ss.getSheetByName("Ranking");
+  if (!rankSheet) {
+    // 랭킹 시트가 없을 경우 성벽 파손율 열을 포함하여 자동 개설
+    rankSheet = ss.insertSheet("Ranking");
+    rankSheet.appendRow(["등록 일시", "플레이어 이름", "누적 스코어", "성벽 파손율"]);
+    // 열 디자인 서식 설정
+    rankSheet.getRange("A1:D1").setFontWeight("bold").setBackground("#1e293b").setFontColor("#ffffff");
+    rankSheet.setColumnWidth(1, 180);
+    rankSheet.setColumnWidth(2, 150);
+    rankSheet.setColumnWidth(3, 120);
+    rankSheet.setColumnWidth(4, 120);
+  }
+  return rankSheet;
+}
+
+/**
+ * 신규 랭킹 스코어 및 성벽 파손율 저장 함수
+ * @param {string} name - 플레이어 이니셜
+ * @param {number} score - 획득한 누적 점수
+ * @param {number} damage - 최종 성벽 파손율 (정수값)
+ */
+function submitScore(name, score, damage) {
+  try {
+    const sheet = getRankingSheet();
+    const cleanName = name ? name.toString().trim().substring(0, 10) : "AAA";
+    const cleanScore = parseInt(score);
+    const cleanDamage = parseInt(damage) || 0; // 성벽 파손율 수치 파싱 보완
+    const now = new Date();
+    const formattedDate = Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+    
+    // 데이터 줄 마지막 행에 추가 기재 (성벽 파손율을 4번째 열에 배치)
+    sheet.appendRow([formattedDate, cleanName, cleanScore, cleanDamage]);
+    return { success: true };
+  } catch(e) {
+    Logger.log("Error in submitScore: " + e.toString());
+    return { success: false, error: e.toString() };
+  }
+}
+
+/**
+ * 상위 100명의 랭킹 데이터를 내림차순 정렬하여 읽어오는 함수
+ * 파손율을 포함하여 클라이언트 측으로 전송합니다.
+ */
+function getTopRankings() {
+  try {
+    const sheet = getRankingSheet();
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return [];
+    }
+    
+    // 4열(성벽 파손율)까지로 로드 영역 확장
+    const range = sheet.getRange(2, 1, lastRow - 1, 4);
+    const values = range.getRangeValues ? range.getRangeValues() : range.getValues();
+    
+    // 스코어 기준으로 완벽한 내림차순 정렬 수행
+    const sortedData = values.map(function(row) {
+      return {
+        date: row[0] ? Utilities.formatDate(new Date(row[0]), Session.getScriptTimeZone(), "MM/dd HH:mm") : "",
+        name: row[1] ? row[1].toString() : "AAA",
+        score: parseInt(row[2]) || 0,
+        damage: row[3] !== undefined ? parseInt(row[3]) : 0 // 기존 파손율 데이터가 존재하지 않던 플레이어는 0% 기본 보정
+      };
+    }).sort(function(a, b) {
+      return b.score - a.score;
+    });
+    
+    // 최대 상위 100명의 랭킹 배열 분할 반환
+    return sortedData.slice(0, 100);
+  } catch(e) {
+    Logger.log("Error in getTopRankings: " + e.toString());
+    return [];
+  }
+}
+
+<index.html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+KR:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    :root {
+      --slate-900: #0f172a;
+      --indigo-950: #1e1b4b;
+      --neon-blue: #38bdf8;
+      --neon-red: #f43f5e;
+      --neon-green: #10b981;
+      --neon-gold: #fbbf24;
+      --panel-bg: rgba(15, 23, 42, 0.85);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, var(--slate-900) 0%, var(--indigo-950) 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #f8fafc;
+      padding: 10px;
+      overflow: hidden; /* 모바일 브라우저의 불필요한 스크롤 방지 */
+    }
+
+    /* 흔들림 애니메이션 (오답/타격 시 동적 사용) */
+    .shake { animation: screen-shake 0.4s linear; }
+    .penalty-shake { animation: penalty-shake-anim 0.5s linear infinite; }
+    
+    @keyframes screen-shake {
+      0% { transform: translate(0, 0); }
+      10% { transform: translate(-6px, 4px); }
+      30% { transform: translate(6px, -4px); }
+      50% { transform: translate(-4px, -2px); }
+      70% { transform: translate(4px, 4px); }
+      90% { transform: translate(-2px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+    
+    @keyframes penalty-shake-anim {
+      0% { transform: translate(2px, 1px) rotate(0deg); }
+      20% { transform: translate(-1px, -2px) rotate(-1deg); }
+      40% { transform: translate(-3px, 0px) rotate(1deg); }
+      60% { transform: translate(0px, 2px) rotate(0deg); }
+      80% { transform: translate(1px, -1px) rotate(1deg); }
+      100% { transform: translate(2px, 1px) rotate(0deg); }
+    }
+
+    .game-viewport {
+      width: 100%;
+      max-width: 830px;
+      height: 95vh;
+      height: 95dvh; /* 모바일 동적 브라우저 바 대응 */
+      max-height: 750px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 28px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-hud {
+      background: rgba(0,0,0,0.4);
+      padding: 12px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Orbitron', sans-serif;
+      flex-shrink: 0;
+    }
+    .hud-label { font-size: 13px; color: var(--neon-blue); letter-spacing: 1px; }
+    .hud-val { font-size: 20px; font-weight: 900; color: #fff; text-shadow: 0 0 8px var(--neon-blue); }
+
+    /* 사운드 제어 컴포넌트 */
+    .sound-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 5px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-sound-toggle {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      transition: color 0.2s;
+    }
+    .btn-sound-toggle:hover {
+      color: var(--neon-blue);
+    }
+    .vol-slider {
+      width: 60px;
+      accent-color: var(--neon-blue);
+      cursor: pointer;
+      height: 4px;
+    }
+
+    /* 🎮 분할 레이아웃 디자인 (세로 타이머 + 메인 스테이지) */
+    .game-body-layout {
+      display: flex;
+      position: relative;
+      width: 100%;
+      flex: 1;
+      min-height: 0; /* 자식 요소 크기 수축을 위한 가이드라인 */
+    }
+
+    /* 수직 타이머 트랙 디자인 (좌측에 기하학적으로 배치) */
+    .timer-track-vertical {
+      width: 16px;
+      background: #0f172a;
+      position: relative;
+      border-right: 2px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end; /* 아래쪽을 기준으로 시간이 차오르고 비워지도록 설정 */
+      flex-shrink: 0;
+    }
+    .timer-fill-vertical {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, var(--neon-blue) 0%, var(--neon-gold) 100%);
+      transition: height 0.1s linear, background-color 0.2s ease;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+    }
+    .timer-fill-vertical.danger {
+      background: linear-gradient(180deg, var(--neon-red) 0%, #991b1b 100%);
+      box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+    }
+    .timer-fill-vertical.slashed {
+      background: #ffffff !important;
+      box-shadow: 0 0 15px #ffffff;
+    }
+
+    .stage-area {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 0;
+    }
+    
+    /* 로딩 화면 */
+    #loading-screen {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--slate-900); z-index: 100;
+      display: flex; justify-content: center; align-items: center;
+      flex-direction: column; padding: 30px; text-align: center;
+    }
+    #loading-text { font-size: 22px; font-weight: bold; line-height: 1.6; font-family: 'Orbitron', 'Noto Sans KR'; }
+
+    /* 대형 요새 성벽 그래픽 구역 */
+    .siege-wall-zone {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 15px;
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 0;
+    }
+
+    /* 정보창 성벽 가림 방지 분리형 구조 */
+    .fortress-status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 0 2px 8px 2px;
+      flex-shrink: 0;
+    }
+    .fortress-status-label {
+      font-family: 'Orbitron'; font-size: 13px; font-weight: 900; color: var(--neon-blue);
+      letter-spacing: 0.5px;
+    }
+    .fortress-hp-text-box {
+      font-family: 'Orbitron'; font-size: 13px; font-weight: 900; color: #cbd5e1;
+      background: rgba(17, 24, 39, 0.8); border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 4px 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+
+    /* 웅장하고 높은 중세 성벽 뷰포트 (세로 유연 대응) */
+    .fortress-graphic-container {
+      width: 100%;
+      flex: 1;
+      min-height: 100px;
+      max-height: 180px;
+      background: #111827;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #374151;
+      transition: all 0.5s ease;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
+    }
+    
+    /* SVG 상태 제어 클래스 (10% 단위 최적화) */
+    .wall-svg-state {
+      position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+      display: none; transition: all 0.4s ease;
+    }
+    
+    .state-100 #svg-100 { display: block; }
+    .state-90 #svg-90 { display: block; }
+    .state-80 #svg-80 { display: block; }
+    .state-70 #svg-70 { display: block; }
+    .state-60 #svg-60 { display: block; }
+    .state-50 #svg-50 { display: block; }
+    .state-40 #svg-40 { display: block; }
+    .state-30 #svg-30 { display: block; }
+    .state-20 #svg-20 { display: block; }
+    .state-10 #svg-10 { display: block; }
+    .state-0 #svg-0 { display: block; }
+
+    .fortress-overlay-cracks {
+      position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+      pointer-events: none; transition: all 0.4s ease; opacity: 0; z-index: 2;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+    }
+
+    /* 💥 대포(Cannon) 기하학적 배치 (3배 스케일 업) */
+    #siege-cannon {
+      position: absolute;
+      left: 5px;
+      bottom: -25px; /* 대형 대포 지지 바퀴를 성채 바닥면에 밀착 */
+      width: 180px;
+      height: 180px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    #cannon-barrel {
+      transform-origin: 30px 75px;
+      transform: rotate(-25deg);
+      transition: transform 0.15s ease-out;
+    }
+    
+    /* 포격 격발 반동 애니메이션 */
+    @keyframes cannon-recoil {
+      0% { transform: rotate(-25deg) translate(0, 0); }
+      15% { transform: rotate(-35deg) translate(-12px, 5px); }
+      100% { transform: rotate(-25deg) translate(0, 0); }
+    }
+    .recoil-active {
+      animation: cannon-recoil 0.35s ease-out forwards;
+    }
+
+    /* 💥 포탄 비행 오브젝트 (1.5배 스케일 업) */
+    .cannonball {
+      position: absolute;
+      width: 21px;
+      height: 21px;
+      background: radial-gradient(circle, #fff 20%, var(--neon-blue) 60%, #0284c7 100%);
+      box-shadow: 0 0 18px var(--neon-blue), 0 0 36px var(--neon-blue);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 25;
+      transform: translate(-50%, -50%);
+      left: 15%; /* 대포 팁 위치에 맞춤 설정 */
+      top: 65%;
+      transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), top 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    /* 💥 포탄 폭발 효과 범위 (1.5배 스케일 업) */
+    .explosion-blast {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: radial-gradient(circle, #fff 0%, var(--neon-gold) 40%, rgba(244,63,94,0.8) 70%, rgba(0,0,0,0) 100%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 21;
+      transform: translate(-50%, -50%) scale(1);
+      animation: blast-expand 0.4s ease-out forwards;
+    }
+    @keyframes blast-expand {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(15); opacity: 0; }
+    }
+
+    /* 폭발 파편 입자 (1.5배 스케일 업) */
+    .spark-particle {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      background: var(--neon-gold);
+      box-shadow: 0 0 12px var(--neon-gold);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 22;
+      animation: spark-fly 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+    @keyframes spark-fly {
+      0% { transform: translate(-50%, -50%) translate(0, 0); opacity: 1; }
+      100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)); opacity: 0; }
+    }
+
+    /* 오답 시 대포 과열 연기 이펙트 (1.5배 스케일 업) */
+    .smoke-particle {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: rgba(148, 163, 184, 0.6);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 22;
+      animation: smoke-dissolve 0.6s ease-out forwards;
+    }
+    @keyframes smoke-dissolve {
+      0% { transform: translate(-50%, -50%) scale(1) translate(0, 0); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(3.75) translate(var(--tx), var(--ty)); opacity: 0; }
+    }
+
+    /* 🎆 완전 승리 보너스 폭죽 파편 이펙트 */
+    .victory-firework {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 26;
+      animation: firework-shoot 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+    @keyframes firework-shoot {
+      0% { transform: translate(0, 100px) scale(1); opacity: 1; }
+      50% { transform: translate(var(--tx), var(--ty)) scale(1.5); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+    }
+
+    /* 텍스트 렌더링 구조 보완 및 줄바꿈 차단 */
+    .enemy-sentence {
+      font-size: clamp(16px, 3.8vw, 20px);
+      font-weight: 700;
+      line-height: 1.6;
+      color: #f1f5f9;
+      text-align: center;
+      padding: 10px 15px;
+      word-break: keep-all; /* 단어 단위 줄바꿈 유지 */
+      overflow-wrap: break-word; /* 긴 단어나 기호 누수 차단 */
+      flex-shrink: 0;
+      min-height: 65px;
+      max-height: 100px;
+      overflow-y: auto;
+      display: block; /* 줄바꿈 깨짐 현상 억제를 위해 Block으로 설정 */
+    }
+    
+    .shell-ammo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .ammo-btn {
+      background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 15px 10px;
+      border-radius: 14px;
+      font-size: clamp(14px, 3.5vw, 17px);
+      font-weight: 700;
+      color: #f1f5f9;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      outline: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .ammo-btn:hover:not(:disabled) { background: linear-gradient(135deg, #475569 0%, #334155 100%); border-color: var(--neon-blue); transform: scale(1.02); box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
+    .ammo-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .ammo-destroyed { animation: ammo-pop 0.3s forwards; pointer-events: none; }
+    @keyframes ammo-pop {
+      0% { background: var(--neon-red); transform: scale(1); }
+      100% { background: var(--neon-red); transform: scale(0); opacity: 0; }
+    }
+
+    #modal {
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(15, 23, 42, 0.95); justify-content: center; align-items: center; z-index: 10;
+      overflow-y: auto; padding: 15px;
+    }
+    .modal-content {
+      background-color: #1e293b; padding: 25px; border-radius: 24px;
+      width: 100%; max-width: 550px; text-align: center; border: 2px solid var(--neon-blue);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+      max-height: 95vh; overflow-y: auto;
+    }
+    .modal-content h2 { margin-bottom: 8px; color: var(--neon-blue); font-family: 'Orbitron', 'Noto Sans KR'; font-size: 22px; }
+    .modal-content p { font-size: 16px; line-height: 1.5; margin-bottom: 15px; color: #cbd5e1; }
+    
+    /* 랭킹 스코어 제출용 입력 영역 스타일 */
+    .ranking-input-zone {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px dashed var(--neon-blue);
+      border-radius: 14px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    .ranking-input-label {
+      font-size: 13px;
+      color: var(--neon-gold);
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .ranking-form-wrapper {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .player-name-input {
+      background: #0f172a;
+      border: 2px solid #475569;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 15px;
+      color: #fff;
+      font-family: 'Orbitron', 'Noto Sans KR';
+      width: 150px;
+      text-align: center;
+      text-transform: uppercase;
+      outline: none;
+    }
+    .player-name-input:focus {
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+    
+    .btn-submit-ranking {
+      background: linear-gradient(135deg, var(--neon-blue) 0%, #0369a1 100%) !important;
+      box-shadow: 0 5px 15px rgba(56, 189, 248, 0.3) !important;
+      padding: 10px 20px !important;
+      font-size: 14px !important;
+    }
+
+    /* 랭킹 전광판 테이블 스타일 */
+    .ranking-board-container {
+      margin-top: 15px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .ranking-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .ranking-table th {
+      background: #0f172a;
+      position: sticky;
+      top: 0;
+      padding: 8px;
+      color: var(--neon-blue);
+      font-family: 'Orbitron';
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+    .ranking-table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: 'Orbitron', 'Noto Sans KR';
+    }
+    .ranking-table tr:nth-child(even) {
+      background: rgba(255,255,255,0.02);
+    }
+    .rank-num { font-weight: bold; color: var(--neon-gold); }
+    .rank-highlight { background: rgba(56, 189, 248, 0.15) !important; font-weight: bold; }
+    
+    .modal-content button {
+      background: linear-gradient(135deg, var(--neon-green) 0%, #047857 100%);
+      color: white; border: none; padding: 12px 30px;
+      font-size: 15px; font-weight: bold; border-radius: 10px;
+      cursor: pointer; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+      transition: all 0.2s ease;
+      margin-top: 10px;
+    }
+    .modal-content button:hover {
+      transform: scale(1.03);
+    }
+    .modal-content button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .ranking-loading-text {
+      padding: 15px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    /* 📱 초소형 스마트폰 및 일반 모바일 브라우저 최적화 스킨 매핑 */
+    @media (max-width: 600px) {
+      body {
+        padding: 5px;
+      }
+      .game-viewport {
+        height: calc(100vh - 10px);
+        height: calc(100dvh - 10px);
+        border-radius: 20px;
+      }
+      .top-hud {
+        padding: 8px 15px;
+      }
+      .hud-label {
+        font-size: 11px;
+      }
+      .hud-val {
+        font-size: 17px;
+      }
+      .sound-controls {
+        gap: 8px;
+        padding: 4px 8px;
+      }
+      .vol-slider {
+        width: 45px;
+      }
+      .timer-track-vertical {
+        width: 12px;
+      }
+      .stage-area {
+        padding: 12px;
+      }
+      .siege-wall-zone {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 14px;
+      }
+      .fortress-status-label {
+        font-size: 11px;
+      }
+      .fortress-hp-text-box {
+        font-size: 11px;
+        padding: 3px 6px;
+      }
+      .fortress-graphic-container {
+        min-height: 80px;
+        max-height: 130px; /* 세로 공간 대폭 확보 */
+        margin-bottom: 8px;
+        border-width: 2px;
+      }
+      
+      /* 대형 대포 모바일 반응형 수치 최적화 */
+      #siege-cannon {
+        width: 135px;
+        height: 135px;
+        left: 0px;
+        bottom: -20px;
+      }
+
+      .enemy-sentence {
+        min-height: 48px;
+        padding: 2px 0;
+      }
+      .shell-ammo-grid {
+        gap: 8px;
+      }
+      .ammo-btn {
+        padding: 11px 6px;
+        border-radius: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-viewport" id="game-viewport">
+  <div id="penalty-alert-text"><i class="fa-solid fa-triangle-exclamation"></i> OVERHEATED: TIME CUT IN HALF & JAMMED (1s)</div>
+
+  <div id="loading-screen">
+    <div id="loading-text">
+      <i class="fa-solid fa-crosshairs fa-spin" style="color: var(--neon-blue); margin-bottom:20px; font-size:45px;"></i><br>
+      Castle Siege LOADING...<br>
+      <span id="loading-subtext" style="font-size:14px; color:#94a3b8; font-weight:normal;">구글 연동 및 사운드 버퍼 로딩 중 (최대 5~10초 소요)...</span>
+    </div>
+  </div>
+
+  <div class="top-hud">
+    <div>
+      <span class="hud-label">STAGE</span>
+      <div class="hud-val" id="stage-display">00</div>
+    </div>
+    <!-- 사운드 제어 패널 -->
+    <div class="sound-controls">
+      <button class="btn-sound-toggle" onclick="toggleMute()" id="mute-btn" title="사운드 ON/OFF">
+        <i class="fa-solid fa-volume-high"></i>
+      </button>
+      <input type="range" class="vol-slider" id="volume-slider" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume(this.value)">
+    </div>
+    <div>
+      <span class="hud-label">SCORE</span>
+      <div class="hud-val" id="score-display">00000</div>
+    </div>
+  </div>
+
+  <!-- 🎮 좌우 레이아웃 구조 (수직 타이머 및 스테이지 영역) -->
+  <div class="game-body-layout">
+    
+    <!-- 왼쪽에 장착된 고화질 세로 타이머 트랙 -->
+    <div class="timer-track-vertical">
+      <div class="timer-fill-vertical" id="time-bar"></div>
+    </div>
+
+    <!-- 우측 메인 포격 대시보드 및 성벽 그래픽 -->
+    <div class="stage-area">
+      <div class="siege-wall-zone">
+        <!-- 상단 분리형 상태 헤더 -->
+        <div class="fortress-status-header">
+          <span class="fortress-status-label"><i class="fa-solid fa-chess-rook"></i> SECTOR TARGET</span>
+          <div class="fortress-hp-text-box" id="fortress-hp-text">DEFENSE WALL ACTIVE</div>
+        </div>
+
+        <!-- 대형 성채 그래픽 컨테이너 (동적 상태 스킨 부여) -->
+        <div class="fortress-graphic-container state-100" id="fortress-wall">
+          
+          <!-- 1) 100% 아주 단단하고 웅장한 중세 요새 성채 -->
+          <svg id="svg-100" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#4B5563" stroke="#1F2937" stroke-width="2.5">
+              <rect x="50" y="100" width="400" height="100" />
+              <rect x="60" y="75" width="30" height="25" /><rect x="110" y="75" width="30" height="25" />
+              <rect x="160" y="75" width="30" height="25" /><rect x="210" y="75" width="30" height="25" />
+              <rect x="260" y="75" width="30" height="25" /><rect x="310" y="75" width="30" height="25" />
+              <rect x="360" y="75" width="30" height="25" /><rect x="410" y="75" width="30" height="25" />
+              <rect x="0" y="30" width="60" height="170" /><rect x="-5" y="10" width="70" height="20" />
+              <rect x="440" y="30" width="60" height="170" /><rect x="435" y="10" width="70" height="20" />
+              <path d="M 210 200 L 210 130 A 40 40 0 0 1 290 130 L 290 200 Z" fill="#78350F" />
+            </g>
+            <path d="M50 120 L450 120 M50 145 L450 145 M50 170 L450 170" stroke="#111827" stroke-width="2" opacity="0.35" />
+            <path d="M210 150 L290 150 M210 175 L290 175 M250 130 L250 200" stroke="#111827" stroke-width="2.5" opacity="0.5" />
+            <line x1="30" y1="10" x2="30" y2="-15" stroke="#E5E7EB" stroke-width="2.5" />
+            <path d="M30 -15 L30 -2 L52 -8 Z" fill="var(--neon-blue)" />
+            <line x1="470" y1="10" x2="470" y2="-15" stroke="#E5E7EB" stroke-width="2.5" />
+            <path d="M470 -15 L470 -2 L492 -8 Z" fill="var(--neon-blue)" />
+          </svg>
+
+          <!-- 2) 90% 성탑 깃발이 파손되고 아주 미세한 기포 균열 발생 -->
+          <svg id="svg-90" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#4B5563" stroke="#1F2937" stroke-width="2.5">
+              <rect x="50" y="100" width="400" height="100" />
+              <rect x="60" y="75" width="30" height="25" /><rect x="110" y="75" width="30" height="25" />
+              <rect x="160" y="75" width="30" height="25" /><rect x="210" y="75" width="30" height="25" />
+              <rect x="260" y="75" width="30" height="25" /><rect x="310" y="75" width="30" height="25" />
+              <rect x="360" y="75" width="30" height="25" /><rect x="410" y="75" width="30" height="25" />
+              <rect x="0" y="30" width="60" height="170" /><rect x="-5" y="10" width="70" height="20" />
+              <rect x="440" y="30" width="60" height="170" /><rect x="435" y="10" width="70" height="20" />
+              <path d="M 210 200 L 210 130 A 40 40 0 0 1 290 130 L 290 200 Z" fill="#78350F" />
+            </g>
+            <path d="M 330 110 L 345 125" stroke="#111827" stroke-width="3" />
+            <line x1="470" y1="10" x2="470" y2="-15" stroke="#E5E7EB" stroke-width="2.5" />
+            <path d="M470 -15 L470 -2 L492 -8 Z" fill="var(--neon-blue)" />
+          </svg>
+
+          <!-- 3) 80% 좌측 깃발이 날아가고 중앙 성돌 틈새 1군데 뚜렷한 실금 -->
+          <svg id="svg-80" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#4B5563" stroke="#1F2937" stroke-width="2.5">
+              <rect x="50" y="100" width="400" height="100" />
+              <rect x="60" y="75" width="30" height="25" /><rect x="110" y="75" width="30" height="25" />
+              <rect x="160" y="75" width="30" height="25" /><rect x="210" y="75" width="30" height="25" />
+              <rect x="260" y="75" width="30" height="25" /><rect x="310" y="75" width="30" height="25" />
+              <rect x="360" y="75" width="30" height="25" /><rect x="410" y="75" width="30" height="25" />
+              <rect x="0" y="30" width="60" height="170" /><rect x="-5" y="10" width="70" height="20" />
+              <rect x="440" y="30" width="60" height="170" /><rect x="435" y="10" width="70" height="20" />
+              <path d="M 210 200 L 210 130 A 40 40 0 0 1 290 130 L 290 200 Z" fill="#78350F" />
+            </g>
+            <path d="M 120 120 L 135 145 M 330 110 L 345 125" stroke="#111827" stroke-width="3.5" />
+          </svg>
+
+          <!-- 4) 70% 성벽 위 장식 머리 1개가 떨어져 나가고 실금이 두 군데로 확장 -->
+          <svg id="svg-70" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#4B5563" stroke="#1F2937" stroke-width="2.5">
+              <rect x="50" y="100" width="400" height="100" />
+              <rect x="60" y="75" width="30" height="25" /><rect x="160" y="75" width="30" height="25" />
+              <rect x="260" y="75" width="30" height="25" /><rect x="360" y="75" width="30" height="25" />
+              <rect x="410" y="75" width="30" height="25" />
+              <rect x="0" y="45" width="60" height="155" /><rect x="-5" y="25" width="70" height="20" />
+              <rect x="440" y="30" width="60" height="170" /><rect x="435" y="10" width="70" height="20" />
+              <path d="M 210 200 L 210 130 A 40 40 0 0 1 290 130 L 290 200 Z" fill="#78350F" />
+            </g>
+            <path d="M 120 100 L 135 135 L 125 175 M 340 100 L 325 140 L 335 185" stroke="#111827" stroke-width="4.5" stroke-linecap="round" />
+          </svg>
+
+          <!-- 5) 60% 성벽 머리 장식 3개 유실, 좌측 성탑 머리가 무너지고 벽에 깊은 사선 실금 생성 -->
+          <svg id="svg-60" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#4B5563" stroke="#1F2937" stroke-width="2.5">
+              <rect x="50" y="100" width="400" height="100" />
+              <rect x="60" y="75" width="30" height="25" /><rect x="260" y="75" width="30" height="25" />
+              <rect x="410" y="75" width="30" height="25" />
+              <rect x="0" y="55" width="60" height="145" />
+              <rect x="440" y="30" width="60" height="170" /><rect x="435" y="10" width="70" height="20" />
+              <path d="M 210 200 L 210 130 A 40 40 0 0 1 290 130 L 290 200 Z" fill="#78350F" />
+            </g>
+            <path d="M 90 100 L 115 155 L 105 190 M 340 100 L 320 150 L 340 190" stroke="#111827" stroke-width="5" stroke-linecap="round" />
+            <circle cx="20" cy="40" r="8" fill="#1F2937" />
+          </svg>
+
+          <!-- 6) 50% 성벽 반파, 좌측 방어 성탑 몸통 윗부분이 통째로 붕괴 -->
+          <svg id="svg-50" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#374151" stroke="#111827" stroke-width="3">
+              <path d="M 0 200 L 0 80 L 60 80 L 60 110 L 160 110 L 200 140 L 310 140 L 340 100 L 440 100 L 440 60 L 500 60 L 500 200 Z" />
+              <rect x="435" y="40" width="70" height="20" />
+              <path d="M 215 200 L 215 145 A 35 35 0 0 1 265 145 L 265 200 Z" fill="#451A03" />
+            </g>
+            <circle cx="90" cy="180" r="14" fill="#1F2937" stroke="#111827" stroke-width="2" />
+            <circle cx="120" cy="190" r="9" fill="#1F2937" stroke="#111827" stroke-width="2" />
+            <circle cx="180" cy="185" r="16" fill="#1F2937" stroke="#111827" stroke-width="2" />
+            <circle cx="320" cy="188" r="12" fill="#1F2937" stroke="#111827" stroke-width="2" />
+            <path d="M 250 140 L 245 200 M 440 100 L 430 150 L 445 200" stroke="#111827" stroke-width="5.5" stroke-linecap="round" />
+          </svg>
+
+          <!-- 7) 40% 우측 방어성탑까지 지붕 붕괴, 성문 아치가 찌그러져 붕괴 조짐 -->
+          <svg id="svg-40" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#374151" stroke="#111827" stroke-width="3">
+              <path d="M 0 200 L 0 100 L 60 100 L 60 120 L 160 120 L 200 150 L 310 150 L 330 110 L 440 110 L 440 80 L 500 80 L 500 200 Z" />
+              <path d="M 220 200 L 220 155 A 30 30 0 0 1 260 155 L 260 200 Z" fill="#2d1502" />
+            </g>
+            <circle cx="80" cy="185" r="15" fill="#111827" />
+            <circle cx="140" cy="190" r="14" fill="#111827" />
+            <circle cx="180" cy="185" r="18" fill="#111827" />
+            <circle cx="330" cy="188" r="16" fill="#111827" />
+            <circle cx="430" cy="182" r="15" fill="#111827" />
+            <path d="M 240 155 L 235 200" stroke="#000" stroke-width="6" />
+          </svg>
+
+          <!-- 8) 30% 성탑들이 날아가고 중앙 요새 뼈대와 우측 탑 기초 석조 잔해 보강 (시각 피드백 확보) -->
+          <svg id="svg-30" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#1F2937" stroke="#111827" stroke-width="3">
+              <!-- 성벽 기초 둔덕 및 우측 견고한 석조 성벽 잔해 결합 -->
+              <path d="M 0 200 L 0 160 L 90 145 L 140 170 L 210 170 L 230 155 L 280 155 L 310 180 L 380 180 L 420 135 L 470 135 L 470 200 Z" />
+            </g>
+            <circle cx="50" cy="180" r="20" fill="#111827" />
+            <circle cx="85" cy="185" r="14" fill="#111827" />
+            <circle cx="130" cy="190" r="16" fill="#111827" />
+            <circle cx="210" cy="192" r="11" fill="#111827" />
+            <circle cx="310" cy="186" r="18" fill="#111827" />
+            <circle cx="350" cy="192" r="12" fill="#111827" />
+            <circle cx="440" cy="180" r="17" fill="#111827" />
+            <!-- 균열 보완선 -->
+            <path d="M 440 135 L 430 175 L 445 200" stroke="#000" stroke-width="6" stroke-linecap="round" />
+            <path d="M 70 145 L 85 170" stroke="#000" stroke-width="7" stroke-linecap="round" />
+          </svg>
+
+          <!-- 9) 20% 중앙 성벽 완전 붕괴 속에서 단단한 성문 철창 프레임 기둥 & 우측 성탑 석조 일부 생존 -->
+          <svg id="svg-20" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#1F2937" stroke="#111827" stroke-width="3">
+              <!-- 기초 석조 둔덕 기반 -->
+              <path d="M 0 200 L 0 175 L 70 165 L 120 185 L 380 185 L 430 150 L 465 150 L 465 200 Z" />
+              <!-- 성문 기둥 잔해 뼈대 배치 -->
+              <rect x="200" y="160" width="12" height="40" fill="#334155" stroke="#0f172a" />
+              <rect x="288" y="160" width="12" height="40" fill="#334155" stroke="#0f172a" />
+              <!-- 성문 상단 아치 뼈대 가로 프레임 배치 -->
+              <rect x="200" y="155" width="100" height="8" rx="2" fill="#1e293b" stroke="#0f172a" />
+            </g>
+            <circle cx="40" cy="185" r="22" fill="#111827" />
+            <circle cx="95" cy="192" r="16" fill="#111827" />
+            <circle cx="445" cy="175" r="18" fill="#111827" />
+            <path d="M 445 150 L 435 200" stroke="#000" stroke-width="6" />
+          </svg>
+
+          <!-- 10) 10% (90% 이상 파손) 성문 철창 기둥 잔해와 우측 탑 끝자락 뼈대만 아슬아슬하게 방어 생존 -->
+          <svg id="svg-10" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <g fill="#111827" stroke="#000" stroke-width="3">
+              <path d="M 0 200 Q 120 185 250 192 T 500 200 Z" />
+              <!-- 마지막 타격을 받을 수 있도록 성문 상단 찌그러진 보루 가로 프레임 유지 -->
+              <rect x="210" y="170" width="80" height="8" rx="2" fill="#1e293b" stroke="#000" stroke-width="2" transform="rotate(8, 250, 174)" />
+              <rect x="205" y="174" width="10" height="26" fill="#334155" stroke="#000" stroke-width="2" />
+              <!-- 우측 기초 뼈대 석조 잔해 -->
+              <rect x="430" y="170" width="25" height="30" fill="#334155" stroke="#000" stroke-width="2" />
+            </g>
+            <circle cx="60" cy="194" r="15" fill="#090d16" />
+            <circle cx="442" cy="185" r="12" fill="#090d16" />
+          </svg>
+
+          <!-- 11) 0% 완전히 정밀 폭격으로 붕괴되어 연기와 거대한 돌무더기만 남은 완전 폐허 -->
+          <svg id="svg-0" class="wall-svg-state" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <path d="M 0 200 Q 130 175 250 185 T 500 200 Z" fill="#0F172A" stroke="#111827" stroke-width="3" />
+            <circle cx="40" cy="190" r="16" fill="#111827" />
+            <circle cx="100" cy="192" r="12" fill="#111827" />
+            <circle cx="160" cy="188" r="22" fill="#111827" />
+            <circle cx="200" cy="194" r="15" fill="#111827" />
+            <circle cx="250" cy="190" r="24" fill="#111827" />
+            <circle cx="300" cy="193" r="13" fill="#111827" />
+            <circle cx="360" cy="189" r="21" fill="#111827" />
+            <circle cx="410" cy="195" r="14" fill="#111827" />
+            <circle cx="460" cy="191" r="19" fill="#111827" />
+            <path d="M 0 196 L 500 196" stroke="#000" stroke-width="4.5" opacity="0.85" />
+          </svg>
+
+          <div class="fortress-overlay-cracks" id="fortress-cracks"></div>
+
+          <!-- 💥 대포 그래픽 전술 추가 (배경과 분리되어 반동 제어) -->
+          <div id="siege-cannon">
+            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+              <!-- 포신 (반동 타겟) -->
+              <g id="cannon-barrel">
+                <rect x="25" y="45" width="45" height="15" rx="3" fill="#475569" stroke="#0f172a" stroke-width="2.5" />
+                <rect x="65" y="42" width="8" height="21" rx="2" fill="#1e293b" stroke="#0f172a" stroke-width="2" />
+                <circle cx="30" cy="52" r="3.5" fill="#fbbf24" />
+              </g>
+              <!-- 포차 지지대 및 바퀴 -->
+              <path d="M 15 82 L 45 82 L 30 62 Z" fill="#334155" stroke="#0f172a" stroke-width="2" />
+              <circle cx="30" cy="72" r="11" fill="#1e293b" stroke="#0f172a" stroke-width="2.5" />
+              <circle cx="30" cy="72" r="4" fill="#64748b" />
+            </svg>
+          </div>
+        </div>
+        
+        <div class="enemy-sentence" id="quiz-box">
+          데이터 동기화 대기 중...
+        </div>
+      </div>
+
+      <div class="shell-ammo-grid">
+        <button class="ammo-btn" onclick="fireShell(0)">포탄 1</button>
+        <button class="ammo-btn" onclick="fireShell(1)">포탄 2</button>
+        <button class="ammo-btn" onclick="fireShell(2)">포탄 3</button>
+        <button class="ammo-btn" onclick="fireShell(3)">포탄 4</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal">
+  <div class="modal-content">
+    <h2 id="modal-title">WALL CRUSHED!</h2>
+    <p id="modal-source" style="color: var(--neon-gold); font-size: 14px; font-family:'Orbitron'; margin-bottom:10px;"></p>
+    <p id="modal-feedback">해설 브리핑</p>
+    
+    <!-- 랭킹 제출용 폼 (게임 완수 시 동적 등장) -->
+    <div id="ranking-section" style="display: none;">
+      <div class="ranking-input-zone">
+        <span class="ranking-input-label"><i class="fa-solid fa-trophy"></i> 전설의 명예의 전당 등록</span>
+        <div class="ranking-form-wrapper">
+          <input type="text" id="player-name-input" class="player-name-input" maxlength="10" placeholder="이니셜 (최대10자)" value="AAA">
+          <button id="btn-submit-score" class="btn-submit-ranking" onclick="submitPlayerScore()">기록 등재 ⚔️</button>
+        </div>
+        <p id="ranking-status" style="font-size:12px; color:var(--neon-blue); margin-top:10px; margin-bottom:0; display:none;"></p>
+      </div>
+      
+      <!-- 명예의 전당 Top 100 전광판 -->
+      <h3 style="font-family: 'Orbitron'; color: var(--neon-gold); margin-top: 15px; font-size: 16px; letter-spacing: 1px;"><i class="fa-solid fa-crown"></i> TOP 100 HALL OF FAME</h3>
+      <div class="ranking-board-container">
+        <div id="ranking-loader" class="ranking-loading-text"><i class="fa-solid fa-spinner fa-spin"></i> 실시간 스코어 판넬을 갱신 중입니다...</div>
+        <table class="ranking-table" id="ranking-table" style="display: none;">
+          <thead>
+            <tr>
+              <th style="width: 15%;">RANK</th>
+              <th style="width: 25%;">PLAYER</th>
+              <th style="width: 25%;">SCORE</th>
+              <th style="width: 15%;">DMG</th>
+              <th style="width: 20%;">DATE</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-list">
+            <!-- 동적 랭킹 데이터 삽입부 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: center;">
+      <button id="modal-btn" onclick="nextStage()">NEXT ATTACK ⚔️</button>
+      <button id="btn-retry" style="display: none; background: linear-gradient(135deg, var(--neon-blue) 0%, #1d4ed8 100%);" onclick="location.reload()">재작전 개시 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let quizData = [];
+  let currentIdx = 0;
+  let score = 0;
+  let maxTime = 100;
+  let currentTime = 100;
+  let timerInterval = null;
+  let isAnswered = false;
+  let isPenaltyState = false; 
+  
+  let totalWallDamage = 0; 
+  let damagePerStage = 0;
+  let hasSubmitted = false; // 랭킹 스코어 중복 제출 방지 플래그
+  let lastBonusTier = 50; // 중복 보너스 지급 방지용 파손 한계값 홀더 (60%, 70%, 80%, 90%, 100% 누적 측정)
+
+  // 🔊 오디오 음원 자산 사전 버퍼 연동 (보안 SSL https 프로토콜 주소로 전면 개정)
+  const audioAssets = {
+    bgm: new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'),
+    correct: new Audio('https://actions.google.com/sounds/v1/explosions/cannon_fire.ogg'),
+    incorrect: new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg'),
+    victory: new Audio('https://actions.google.com/sounds/v1/cartoon/slide_whistle_to_drum_pop.ogg')
+  };
+
+  let isMuted = false;
+  let currentVolume = 0.5;
+
+  audioAssets.bgm.loop = true;
+
+  window.onload = function() {
+    let connectionTimeout = setTimeout(function() {
+      showLoadError("⚠️ [서버 연결 지연 및 권한 미승인]<br><br>1. 배포 설정 시 '액세스 사용자'를 <b>[모든 사용자]</b>로 채택했는지 확인하세요.<br>2. 코드가 반영된 이후 <b>[새 배포]</b> 링크로 접속했는지 확인하세요.");
+    }, 8000);
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(data) {
+          clearTimeout(connectionTimeout); 
+          quizData = data;
+          if(quizData.length > 0) {
+            damagePerStage = 100 / quizData.length;
+          }
+          document.getElementById('loading-screen').style.display = 'none';
+          initStage();
+          
+          document.body.addEventListener('click', startBgmOnFirstInteract, { once: true });
+        })
+        .withFailureHandler(function(error) {
+          clearTimeout(connectionTimeout);
+          showLoadError("❌ 구글 서버 통신 거부 (권한 오류):<br><br>" + error.message);
+        })
+        .getQuizData();
+    } else {
+      clearTimeout(connectionTimeout);
+      showLoadError("⚠️ 구글 보안 샌드박스 탐지:<br>반드시 구글 시트 안에서 배포된 정식 웹앱 링크(macros/s/...)로 우회 접속해야 정상 작동합니다.");
+    }
+  };
+
+  function startBgmOnFirstInteract() {
+    if(!isMuted) {
+      changeVolume(currentVolume);
+      audioAssets.bgm.play().catch(err => console.log("BGM 오토플레이 차단 극복: " + err));
+    }
+  }
+
+  function toggleMute() {
+    isMuted = !isMuted;
+    const muteBtn = document.getElementById('mute-btn');
+    
+    if (isMuted) {
+      muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark" style="color:var(--neon-red);"></i>';
+      Object.keys(audioAssets).forEach(key => {
+        audioAssets[key].pause();
+      });
+    } else {
+      muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+      changeVolume(currentVolume);
+      audioAssets.bgm.play().catch(() => {});
+    }
+  }
+
+  function changeVolume(val) {
+    currentVolume = parseFloat(val);
+    
+    if(isMuted) {
+      isMuted = false;
+      document.getElementById('mute-btn').innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+    }
+    
+    audioAssets.bgm.volume = currentVolume * 0.15;
+    audioAssets.correct.volume = currentVolume * 0.8;
+    audioAssets.incorrect.volume = currentVolume * 0.5;
+    audioAssets.victory.volume = currentVolume * 0.7;
+  }
+
+  function playSound(type) {
+    if(isMuted) return;
+    
+    const sfx = audioAssets[type];
+    if(sfx) {
+      changeVolume(currentVolume);
+      sfx.currentTime = 0;
+      sfx.play().catch(e => console.log("SFX 재생 차단 회피: " + e));
+    }
+  }
+
+  function showLoadError(msg) {
+    const txtDom = document.getElementById('loading-text');
+    txtDom.style.color = "var(--neon-red)";
+    txtDom.style.fontSize = "16px";
+    txtDom.style.textAlign = "left";
+    txtDom.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="font-size:35px; color:var(--neon-red); display:block; text-align:center; margin-bottom:15px;"></i>` + msg;
+  }
+
+  let currentShuffledOptions = [];
+  let currentCorrectIndexInShuffle = -1;
+
+  function initStage() {
+    if (!quizData || quizData.length === 0 || currentIdx >= quizData.length) {
+      gameOver();
+      return;
+    }
+
+    isAnswered = false;
+    isPenaltyState = false;
+    currentTime = maxTime;
+    
+    document.getElementById('penalty-alert-text').style.display = "none";
+    document.getElementById('game-viewport').classList.remove('penalty-shake');
+    
+    renderWallVisual();
+
+    const currentQuiz = quizData[currentIdx];
+    document.getElementById('stage-display').innerText = String(currentIdx + 1).padStart(2, '0');
+    
+    let rawSentence = currentQuiz.sentence || "문장 데이터 로드 에러";
+    
+    // 괄호와 물음표가 줄바꿈에 밀려 깨지지 않고 한 덩어리로 존재하도록 inline-block & nowrap 처리
+    let formattedSentence = rawSentence.replace(/\[\s?\?\s?\]/g, 
+      `<span style="color:var(--neon-gold); text-shadow:0 0 10px rgba(251,191,36,0.6); font-weight:900; display:inline-block; white-space:nowrap; padding: 0 4px;">[ ? ]</span>`
+    );
+    
+    document.getElementById('quiz-box').innerHTML = formattedSentence;
+    
+    const rawOptions = [...currentQuiz.options];
+    const correctText = rawOptions[currentQuiz.originalAnswerIdx];
+    
+    currentShuffledOptions = rawOptions.map((text, idx) => ({ text, originalIdx: idx }));
+    for (let i = currentShuffledOptions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [currentShuffledOptions[i], currentShuffledOptions[j]] = [currentShuffledOptions[j], currentShuffledOptions[i]];
+    }
+    
+    currentCorrectIndexInShuffle = currentShuffledOptions.findIndex(item => item.text === correctText);
+    
+    const buttons = document.querySelectorAll('.ammo-btn');
+    buttons.forEach((btn, idx) => {
+      btn.innerText = currentShuffledOptions[idx].text;
+      btn.className = 'ammo-btn';
+      btn.disabled = false;
+      btn.style.visibility = 'visible';
+    });
+
+    const timeBar = document.getElementById('time-bar');
+    timeBar.className = 'timer-fill-vertical';
+    timeBar.style.height = '100%';
+    
+    clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 100);
+  }
+
+  function updateTimer() {
+    if(isAnswered) return; 
+    
+    currentTime -= 1.4; 
+    if(currentTime <= 30) {
+      document.getElementById('time-bar').classList.add('danger');
+    }
+    
+    if (currentTime <= 0) {
+      currentTime = 0;
+      document.getElementById('time-bar').style.height = `0%`;
+      clearInterval(timerInterval);
+      handleTimeOutBreak();
+      return;
+    }
+    document.getElementById('time-bar').style.height = `${currentTime}%`;
+  }
+
+  /* 🏰 10% 단위 성벽 정밀 비주얼 상태 계산 및 부여 */
+  function renderWallVisual() {
+    const wallDom = document.getElementById('fortress-wall');
+    const crackDom = document.getElementById('fortress-cracks');
+    const infoDom = document.getElementById('fortress-hp-text');
+    
+    let currentFortressHp = Math.max(0, Math.ceil(100 - totalWallDamage));
+    
+    wallDom.className = "fortress-graphic-container";
+    
+    // 10% 단위 동적 클래스 부여 (state-100, state-90, ..., state-0)
+    if (currentFortressHp <= 0) {
+      wallDom.classList.add("state-0");
+    } else if (currentFortressHp <= 10) {
+      wallDom.classList.add("state-10");
+    } else if (currentFortressHp <= 20) {
+      wallDom.classList.add("state-20");
+    } else if (currentFortressHp <= 30) {
+      wallDom.classList.add("state-30");
+    } else if (currentFortressHp <= 40) {
+      wallDom.classList.add("state-40");
+    } else if (currentFortressHp <= 50) {
+      wallDom.classList.add("state-50");
+    } else if (currentFortressHp <= 60) {
+      wallDom.classList.add("state-60");
+    } else if (currentFortressHp <= 70) {
+      wallDom.classList.add("state-70");
+    } else if (currentFortressHp <= 80) {
+      wallDom.classList.add("state-80");
+    } else if (currentFortressHp <= 90) {
+      wallDom.classList.add("state-90");
+    } else {
+      wallDom.classList.add("state-100");
+    }
+    
+    crackDom.style.opacity = totalWallDamage / 100;
+    crackDom.style.background = `rgba(0, 0, 0, ${totalWallDamage * 0.005})`;
+    
+    if(currentFortressHp <= 0) {
+      infoDom.innerText = "FORTRESS BREACHED 💥";
+      infoDom.style.color = "var(--neon-red)";
+      infoDom.style.borderColor = "var(--neon-red)";
+    } else {
+      infoDom.innerText = `FORTRESS DEFENSE: ${currentFortressHp}%`;
+      infoDom.style.color = totalWallDamage > 60 ? "var(--neon-gold)" : "#cbd5e1";
+      infoDom.style.borderColor = totalWallDamage > 60 ? "var(--neon-gold)" : "rgba(255, 255, 255, 0.15)";
+    }
+  }
+
+  /* 💥 대포 격발 및 포탄 비행 / 폭발 이펙트 연출 함수 */
+  function animateCannonballFire(onImpact) {
+    const container = document.getElementById('fortress-wall');
+    const ball = document.createElement('div');
+    ball.className = 'cannonball';
+    container.appendChild(ball);
+
+    // 대포 반동 트리거
+    const barrel = document.getElementById('cannon-barrel');
+    barrel.classList.add('recoil-active');
+    setTimeout(() => {
+      barrel.classList.remove('recoil-active');
+    }, 350);
+
+    // 프레임 플로우 강제 매핑 후 비행 표적지로 이동
+    ball.offsetWidth; 
+    ball.style.left = '50%';
+    ball.style.top = '55%';
+
+    // 비행 완료 시점(350ms) 명중 처리 및 폭발 스파크 파편 소환
+    setTimeout(() => {
+      ball.remove();
+      triggerExplosionEffect();
+      onImpact();
+    }, 350);
+  }
+
+  /* 💥 성벽 충돌 충격파 및 네온 스파크 스폰 함수 */
+  function triggerExplosionEffect() {
+    const container = document.getElementById('fortress-wall');
+    
+    // 1. 구형 에너지 폭발 잔상 생성
+    const blast = document.createElement('div');
+    blast.className = 'explosion-blast';
+    blast.style.left = '50%';
+    blast.style.top = '55%';
+    container.appendChild(blast);
+    setTimeout(() => blast.remove(), 400);
+
+    // 2. 사방 무작위 불꽃 입자 소환 (스파크 비행 거리 1.5배 비산 보정)
+    for (let i = 0; i < 12; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'spark-particle';
+      spark.style.left = '50%';
+      spark.style.top = '55%';
+      
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 52 + Math.random() * 82;
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance;
+      
+      spark.style.setProperty('--tx', `${tx}px`);
+      spark.style.setProperty('--ty', `${ty}px`);
+      
+      container.appendChild(spark);
+      setTimeout(() => spark.remove(), 500);
+    }
+  }
+
+  /* 💨 오답 시 포탄 불발 및 과열 그을음 연기 입자 소환 함수 */
+  function triggerMisfireEffect() {
+    const container = document.getElementById('fortress-wall');
+    
+    for (let i = 0; i < 6; i++) {
+      const smoke = document.createElement('div');
+      smoke.className = 'smoke-particle';
+      smoke.style.left = '15%';
+      smoke.style.top = '65%';
+      
+      const angle = -Math.random() * Math.PI / 2;
+      const distance = 18 + Math.random() * 30;
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance;
+      
+      smoke.style.setProperty('--tx', `${tx}px`);
+      smoke.style.setProperty('--ty', `${ty}px`);
+      
+      container.appendChild(smoke);
+      setTimeout(() => smoke.remove(), 600);
+    }
+  }
+
+  /* 🎆 축하 및 완전 격파 시 승리의 폭죽 이펙트 트리거 함수 */
+  function triggerVictoryFireworks(intensity = 15) {
+    const container = document.getElementById('fortress-wall');
+    const colors = ['#38bdf8', '#fbbf24', '#f43f5e', '#10b981', '#a855f7', '#ff7849'];
+    
+    // 강도(intensity)에 따른 폭죽 다발 생성
+    for (let i = 0; i < intensity; i++) {
+      setTimeout(() => {
+        const fireworkCount = 10;
+        const centerX = 20 + Math.random() * 60; // 20% ~ 80% 가로축
+        const centerY = 30 + Math.random() * 40; // 30% ~ 70% 세로축
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+        for (let j = 0; j < fireworkCount; j++) {
+          const particle = document.createElement('div');
+          particle.className = 'victory-firework';
+          particle.style.left = `${centerX}%`;
+          particle.style.top = `${centerY}%`;
+          particle.style.background = randomColor;
+          particle.style.boxShadow = `0 0 12px ${randomColor}, 0 0 24px ${randomColor}`;
+
+          const angle = (j / fireworkCount) * Math.PI * 2 + (Math.random() * 0.4);
+          const distance = 40 + Math.random() * 70;
+          const tx = Math.cos(angle) * distance;
+          const ty = Math.sin(angle) * distance;
+
+          particle.style.setProperty('--tx', `${tx}px`);
+          particle.style.setProperty('--ty', `${ty}px`);
+
+          container.appendChild(particle);
+          setTimeout(() => particle.remove(), 800);
+        }
+      }, i * 180);
+    }
+  }
+
+  function fireShell(chosenIdx) {
+    if(isAnswered || isPenaltyState) return;
+
+    const buttons = document.querySelectorAll('.ammo-btn');
+
+    if (chosenIdx === currentCorrectIndexInShuffle) {
+      isAnswered = true;
+      clearInterval(timerInterval);
+      buttons.forEach(btn => btn.disabled = true); // 포격 연출 중 추가 클릭 봉쇄
+
+      animateCannonballFire(() => {
+        const prevDamage = totalWallDamage;
+        totalWallDamage += damagePerStage;
+        if (totalWallDamage > 100) {
+          totalWallDamage = 100;
+        }
+
+        let earnedBonus = 0;
+        let bonusTierReached = 0;
+
+        // 💥 [개정] 성벽 파손율 구간 점수 계산 알고리즘 (60%~100% 구간 보너스 획득 감지)
+        const currentDamageCeil = Math.ceil(totalWallDamage);
+        
+        if (currentDamageCeil >= 100 && lastBonusTier < 100) {
+          bonusTierReached = 100;
+          earnedBonus = 5000;
+          lastBonusTier = 100;
+        } else if (currentDamageCeil >= 90 && lastBonusTier < 90) {
+          bonusTierReached = 90;
+          earnedBonus = 4000;
+          lastBonusTier = 90;
+        } else if (currentDamageCeil >= 80 && lastBonusTier < 80) {
+          bonusTierReached = 80;
+          earnedBonus = 3000;
+          lastBonusTier = 80;
+        } else if (currentDamageCeil >= 70 && lastBonusTier < 70) {
+          bonusTierReached = 70;
+          earnedBonus = 2000;
+          lastBonusTier = 70;
+        } else if (currentDamageCeil >= 60 && lastBonusTier < 60) {
+          bonusTierReached = 60;
+          earnedBonus = 1000;
+          lastBonusTier = 60;
+        }
+
+        // 보너스 점수 적립 및 화려한 승리 효과 트리거
+        if (earnedBonus > 0) {
+          score += earnedBonus;
+          
+          // 파괴 구간별 축포 강도 설정 (보너스가 클수록 폭죽 다발 스폰 확대)
+          const fireworkIntensity = bonusTierReached === 100 ? 18 : Math.floor(bonusTierReached / 10);
+          triggerVictoryFireworks(fireworkIntensity);
+        }
+
+        renderWallVisual();
+        playSound('correct');
+
+        const viewport = document.getElementById('game-viewport');
+        viewport.classList.add('shake');
+        
+        setTimeout(() => {
+          viewport.classList.remove('shake');
+          
+          // 구간 보너스 획득에 따른 알림 전용 텍스트 조율
+          if (earnedBonus > 0) {
+            if (bonusTierReached === 100) {
+              showFeedbackModal(true, `🏰 성채 완전 함락!! 최종 완파 보너스 [ +5,000 PTS ] 적립 완료! 🎉`);
+            } else {
+              showFeedbackModal(true, `⚔️ 전술적 돌파 성공!! 성벽 파손 ${bonusTierReached}% 보너스 [ +${earnedBonus.toLocaleString()} PTS ] 적립 완료! 🎉`);
+            }
+          } else {
+            showFeedbackModal(true);
+          }
+        }, 400);
+
+        let damageScore = Math.max(25, Math.floor(currentTime));
+        score += damageScore * 10;
+        document.getElementById('score-display').innerText = String(score).padStart(5, '0');
+      });
+    } else {
+      triggerPenaltyLock(chosenIdx);
+    }
+  }
+
+  function triggerPenaltyLock(failedIdx) {
+    isPenaltyState = true;
+    
+    const buttons = document.querySelectorAll('.ammo-btn');
+    buttons[failedIdx].classList.add('ammo-destroyed');
+    buttons.forEach(btn => btn.disabled = true);
+
+    triggerMisfireEffect();
+    playSound('incorrect');
+
+    currentTime = Math.max(0, currentTime / 2);
+    document.getElementById('time-bar').style.height = `${currentTime}%`;
+
+    const timeBar = document.getElementById('time-bar');
+    timeBar.classList.add('slashed');
+    setTimeout(() => {
+      timeBar.classList.remove('slashed');
+    }, 200);
+    
+    document.getElementById('penalty-alert-text').style.display = "block";
+    document.getElementById('game-viewport').classList.add('penalty-shake');
+    
+    setTimeout(function() {
+      isPenaltyState = false;
+      document.getElementById('penalty-alert-text').style.display = "none";
+      document.getElementById('game-viewport').classList.remove('penalty-shake');
+      
+      if (currentTime > 0) {
+        buttons.forEach(btn => {
+          if(!btn.classList.contains('ammo-destroyed')) {
+            btn.disabled = false;
+          }
+        });
+      }
+    }, 1000);
+  }
+
+  function handleTimeOutBreak() {
+    isAnswered = true;
+    playSound('incorrect');
+
+    const buttons = document.querySelectorAll('.ammo-btn');
+    buttons.forEach(btn => btn.disabled = true);
+    
+    const viewport = document.getElementById('game-viewport');
+    viewport.classList.add('shake');
+    setTimeout(() => {
+      viewport.classList.remove('shake');
+      showFeedbackModal(false); 
+    }, 400);
+  }
+
+  function showFeedbackModal(isSuccess, extraMessage = '') {
+    const currentQuiz = quizData[currentIdx];
+    const modal = document.getElementById('modal');
+    
+    document.getElementById('ranking-section').style.display = 'none';
+    document.getElementById('btn-retry').style.display = 'none';
+    document.getElementById('modal-btn').style.display = 'inline-block';
+
+    if(isSuccess) {
+      document.getElementById('modal-title').innerText = "WALL CRUSHED! ⚔️";
+      document.getElementById('modal-title').style.color = "var(--neon-green)";
+    } else {
+      document.getElementById('modal-title').innerText = "TIME OVER! DEFENSE HELD 🛡️";
+      document.getElementById('modal-title').style.color = "var(--neon-red)";
+    }
+    
+    document.getElementById('modal-source').innerText = `SOURCE: ${currentQuiz.source}`;
+    
+    // 추가 메시지(예: 구간 보너스 획득 소식) 결합
+    let feedbackContent = currentQuiz.feedback;
+    if (extraMessage) {
+      feedbackContent = `${extraMessage}\n\n${feedbackContent}`;
+    }
+    document.getElementById('modal-feedback').innerText = feedbackContent;
+    
+    if(currentIdx === quizData.length - 1) {
+      document.getElementById('modal-btn').innerText = "FINAL OPERATION REPORT 🏆";
+    } else {
+      document.getElementById('modal-btn').innerText = "NEXT ATTACK MOVE ⚔️";
+    }
+    
+    modal.style.display = 'flex';
+  }
+
+  function nextStage() {
+    document.getElementById('modal').style.display = 'none';
+    currentIdx++;
+    initStage();
+  }
+
+  function gameOver() {
+    clearInterval(timerInterval);
+    const modal = document.getElementById('modal');
+    
+    audioAssets.bgm.pause();
+    playSound('victory');
+
+    let finishTitle = totalWallDamage >= 95 ? "COMPLETE TACTICAL VICTORY! 🏆" : "OPERATION CONCLUDED ⚔️";
+    
+    document.getElementById('modal-title').innerText = finishTitle;
+    document.getElementById('modal-title').style.color = "var(--neon-gold)";
+    document.getElementById('modal-source').innerText = "MISSION REPORT";
+    document.getElementById('modal-feedback').innerText = `모든 공성 포격 작전이 마감되었습니다.\n\n최종 성벽 파손율: ${Math.ceil(totalWallDamage)}%\n누적 최종 스코어: ${score} PTS`;
+    
+    document.getElementById('modal-btn').style.display = 'none';
+    document.getElementById('btn-retry').style.display = 'inline-block';
+    
+    document.getElementById('ranking-section').style.display = 'block';
+    hasSubmitted = false;
+    document.getElementById('player-name-input').disabled = false;
+    document.getElementById('btn-submit-score').disabled = false;
+    document.getElementById('ranking-status').style.display = 'none';
+    
+    modal.style.display = 'flex';
+
+    fetchRankings();
+  }
+
+  function fetchRankings() {
+    document.getElementById('ranking-loader').style.display = 'block';
+    document.getElementById('ranking-table').style.display = 'none';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(rankings) {
+          const tbody = document.getElementById('ranking-list');
+          tbody.innerHTML = '';
+          
+          if(rankings.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">아직 등록된 명예로운 스코어가 없습니다. 첫 도전을 새겨보세요!</td></tr>';
+          } else {
+            rankings.forEach((player, index) => {
+              const tr = document.createElement('tr');
+              
+              let rankStyle = '';
+              if (index === 0) rankStyle = 'style="color:#ffd700; font-weight:bold;"';
+              else if (index === 1) rankStyle = 'style="color:#c0c0c0; font-weight:bold;"';
+              else if (index === 2) rankStyle = 'style="color:#cd7f32; font-weight:bold;"';
+
+              const isRecentUser = !hasSubmitted && player.name === document.getElementById('player-name-input').value.toUpperCase() && player.score === score;
+              if (isRecentUser) {
+                tr.className = 'rank-highlight';
+              }
+
+              const displayDmg = player.damage !== undefined ? player.damage : 0;
+
+              tr.innerHTML = `
+                <td class="rank-num" ${rankStyle}>${index + 1}</td>
+                <td>${escapeHtml(player.name)}</td>
+                <td style="color:var(--neon-blue); font-weight:bold;">${player.score.toLocaleString()}</td>
+                <td style="color:var(--neon-red); font-weight:bold;">${displayDmg}%</td>
+                <td style="font-size:11px; color:#64748b;">${player.date}</td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+          
+          document.getElementById('ranking-loader').style.display = 'none';
+          document.getElementById('ranking-table').style.display = 'table';
+        })
+        .withFailureHandler(function() {
+          const tbody = document.getElementById('ranking-list');
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--neon-red);">랭킹 데이터 로딩 실패</td></tr>';
+          document.getElementById('ranking-loader').style.display = 'none';
+          document.getElementById('ranking-table').style.display = 'table';
+        })
+        .getTopRankings();
+    } else {
+      document.getElementById('ranking-loader').style.display = 'none';
+      document.getElementById('ranking-table').style.display = 'table';
+      const tbody = document.getElementById('ranking-list');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">[로컬 환경] 명예의 전당은 구글 웹앱 실행 상태에서 작동합니다.</td></tr>';
+    }
+  }
+
+  function submitPlayerScore() {
+    const nameInput = document.getElementById('player-name-input');
+    const pName = nameInput.value.trim().toUpperCase();
+    
+    if(!pName) {
+      alertCustom("플레이어 이름을 입력해 주세요!");
+      return;
+    }
+    
+    if(hasSubmitted) return;
+
+    const statusText = document.getElementById('ranking-status');
+    statusText.innerText = "⚡ 명예의 전당 장막에 기록을 새기는 중...";
+    statusText.style.color = "var(--neon-gold)";
+    statusText.style.display = "block";
+    
+    nameInput.disabled = true;
+    document.getElementById('btn-submit-score').disabled = true;
+
+    const currentDmgRate = Math.ceil(totalWallDamage);
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if(res.success) {
+            statusText.innerText = "🏆 기록 등재 완료! 최상단 랭킹보드가 즉시 반영됩니다.";
+            statusText.style.color = "var(--neon-green)";
+            hasSubmitted = true;
+            fetchRankings();
+          } else {
+            statusText.innerText = "❌ 저장 오류: " + res.error;
+            statusText.style.color = "var(--neon-red)";
+            nameInput.disabled = false;
+            document.getElementById('btn-submit-score').disabled = false;
+          }
+        })
+        .withFailureHandler(function(err) {
+          statusText.innerText = "❌ 구글 통신 장애 발생: " + err.message;
+          statusText.style.color = "var(--neon-red)";
+          nameInput.disabled = false;
+          document.getElementById('btn-submit-score').disabled = false;
+        })
+        .submitScore(pName, score, currentDmgRate);
+    } else {
+      statusText.innerText = "⚠️ 연동되지 않은 가상 환경에서는 점수를 등록할 수 없습니다.";
+      statusText.style.color = "var(--neon-red)";
+    }
+  }
+
+  function alertCustom(text) {
+    const statusText = document.getElementById('ranking-status');
+    statusText.innerText = "⚠️ " + text;
+    statusText.style.color = "var(--neon-red)";
+    statusText.style.display = "block";
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+</script>
+
+</body>
+</html>

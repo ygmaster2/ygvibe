@@ -1,0 +1,354 @@
+<code.gs>
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('정기시험 감독표 조회')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function getSheetData() {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var title = sheet.getRange("A1").getDisplayValue();
+    
+    // F1 셀 시간 확인
+    var openTimeCell = sheet.getRange("F1").getValue();
+    var isOpened = true;
+    var openTimeStr = "";
+
+    if (openTimeCell !== "" && openTimeCell !== null) {
+      var openDate = new Date(openTimeCell);
+      if (!isNaN(openDate.getTime())) {
+        var now = new Date();
+        if (now < openDate) {
+          isOpened = false;
+          var y = openDate.getFullYear();
+          var m = openDate.getMonth() + 1;
+          var d = openDate.getDate();
+          var h = openDate.getHours();
+          var min = openDate.getMinutes();
+          var minFormatted = min < 10 ? '0' + min : min;
+          openTimeStr = y + "년 " + m + "월 " + d + "일 " + h + "시 " + minFormatted + "분";
+          
+          // 공개 전이면 남은 시간 계산을 위해 openTimestamp(밀리초)를 같이 보냄
+          return { 
+            isOpened: false, 
+            title: title, 
+            openTimeStr: openTimeStr, 
+            openTimestamp: openDate.getTime() 
+          };
+        }
+      }
+    }
+
+    // E1 셀의 값을 확인하여 3교시인지 4교시인지 판별 (A1:F 범위로 확장)
+    var periodTypeCell = sheet.getRange("E1").getDisplayValue();
+    var maxPeriod = (periodTypeCell.indexOf("4교") !== -1) ? 4 : 3;
+    
+    // 4교시까지 고려하여 범위를 A1:F로 확장하여 가져옴
+    var data = sheet.getRange("A1:F").getDisplayValues();
+    
+    return { isOpened: true, title: title, data: data, maxPeriod: maxPeriod };
+    
+  } catch (error) {
+    return { isError: true, message: error.message };
+  }
+}
+
+// [추가된 기능] 시트의 마지막 수정 시간을 가져오는 함수
+function getLastModifiedTime() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var file = DriveApp.getFileById(ss.getId());
+  return file.getLastUpdated().getTime();
+}
+
+
+<index.html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* 전체 폰트를 진하게(bold) 속성 유지 */
+    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-weight: bold; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; background-color: #f9f9f9; }
+    .header-container { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 800px; margin-bottom: 15px; }
+    h1 { font-size: 28px; font-weight: bold; margin: 0 0 15px 0; text-align: center; color: #333; }
+    .search-box { width: 100%; text-align: center; margin-top: 10px; }
+    .search-box input { width: 200px; padding: 8px 12px; font-size: 15px; font-weight: bold; border: 2px solid #4CAF50; border-radius: 5px; outline: none; }
+    
+    /* 업데이트 알림 버튼 (초기엔 숨김) 및 반짝이는 애니메이션 효과 */
+    #updateAlertBtn { display: none; background-color: #FF9800; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); animation: blinkAlert 1.5s infinite; }
+    @keyframes blinkAlert { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
+    
+    table { border-collapse: collapse; border: 2px solid #000; width: 100%; max-width: 800px; text-align: center; font-size: 15px; background-color: #fff; font-weight: bold; }
+    th, td { border: 1px solid #000; padding: 3px 4px; vertical-align: middle; font-weight: bold; }
+    thead th { background-color: #F8CBAD; font-weight: bold; }
+    thead th.time-row { font-size: 12px; padding: 4px; }
+    td.col-num { background-color: #C6E0B4; }
+    td.col-room { background-color: #FFF2CC; }
+    td.col-room.corridor { background-color: #FFFF00; }
+    
+    /* 복도 배정 선생님 셀 노란색 유지 */
+    td.corridor-data { background-color: #FFFF00; }
+    
+    td.highlight { background-color: #FF7B7B !important; color: white; font-weight: bold; transform: scale(1.05); }
+    .footer-notes { width: 100%; max-width: 800px; margin-top: 15px; font-size: 14px; line-height: 1.6; font-weight: bold; }
+    
+    #loading { font-size: 20px; margin: 50px; text-align: center; font-weight: bold; color: #4CAF50; }
+    #errorBox { display: none; color: red; font-weight: bold; margin: 50px; text-align: center; border: 2px solid red; padding: 20px; background-color: #fff; }
+    
+    #closedMessage { display: none; text-align: center; margin-top: 50px; width: 100%; max-width: 600px; }
+    #closedMessage h2 { color: #d32f2f; margin-bottom: 30px; }
+    .info-box { background-color: #fff; border: 2px solid #ddd; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .info-box p { font-size: 16px; margin: 10px 0; color: #555; }
+    .info-box strong { color: #000; }
+    .timer-box { background-color: #4CAF50; color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .timer-box p { margin: 0 0 10px 0; font-size: 18px; font-weight: bold; }
+    #countdownTimer { font-size: 40px; font-weight: bold; letter-spacing: 2px; font-family: monospace; }
+    
+    #mainContent { display: none; width: 100%; flex-direction: column; align-items: center; }
+  </style>
+</head>
+<body>
+
+  <div id="loading">데이터를 불러오는 중입니다...</div>
+  <div id="errorBox"></div>
+
+  <div id="closedMessage">
+    <h1 id="closedTitle"></h1>
+    <h2>🔒 시험 감독표 공개 전입니다.</h2>
+    
+    <div class="info-box">
+      <p><strong>🕒 현재 시간 :</strong> <span id="currentTimeText"></span></p>
+      <p><strong>🎯 공개 시간 :</strong> <span id="openTimeText"></span></p>
+    </div>
+
+    <div class="timer-box">
+      <p>공개까지 남은 시간</p>
+      <div id="countdownTimer">00:00:00</div>
+    </div>
+  </div>
+
+  <div id="mainContent">
+    <div class="header-container">
+      <h1 id="pageTitle"></h1>
+      
+      <button id="updateAlertBtn" onclick="reloadTableData()">🔄 시간표가 변경되었습니다! 클릭하여 새로고침</button>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="선생님 이름 검색🔍" onkeyup="searchName()">
+      </div>
+    </div>
+    
+    <table id="examTable">
+      <thead id="tableHeader">
+        </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    
+    <div class="footer-notes">
+      * 교시별 감독 시간표를 <u>꼭</u> 확인 바랍니다. 이상이 있는 경우 즉시 수업계 교사에게 알려 주세요.<br>
+      * 감독 시간을 변경할 때는 수업계 교사에게 알려(변경 사유 포함) 주세요.
+    </div>
+  </div>
+
+  <script>
+    var timerInterval; 
+    var updateInterval = null; // 업데이트 감지 타이머
+    var currentModifiedTime = null; // 시트 마지막 수정 시간 저장용
+
+    window.onload = function() {
+      fetchData(); 
+    };
+
+    function fetchData() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('closedMessage').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'none';
+      
+      google.script.run
+        .withSuccessHandler(buildUI)
+        .withFailureHandler(function(error) {
+          showError("서버 연결 오류: " + error.message);
+        })
+        .getSheetData();
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').style.display = 'none';
+      var errorBox = document.getElementById('errorBox');
+      errorBox.style.display = 'block';
+      errorBox.innerHTML = "문제가 발생했습니다!<br><br>" + msg;
+    }
+
+    function buildUI(response) {
+      document.getElementById('loading').style.display = 'none';
+
+      if (!response || response.isError) {
+        showError(response ? response.message : "응답이 없습니다.");
+        return;
+      }
+
+      // 시간표 공개 전 (타이머 작동)
+      if (response.isOpened === false) {
+        document.getElementById('closedMessage').style.display = 'block';
+        document.getElementById('closedTitle').innerText = response.title;
+        document.getElementById('openTimeText').innerText = response.openTimeStr;
+        
+        startCountdown(response.openTimestamp);
+        return;
+      }
+
+      // 시간표 공개 후 (메인 화면)
+      document.getElementById('mainContent').style.display = 'flex';
+      document.getElementById('pageTitle').innerText = response.title;
+      
+      // === [핵심] 공개 시간 이후에만 업데이트 감지 시작 (30초 간격) ===
+      if (!updateInterval) {
+        pollForUpdates(); // 최초 1회 실행하여 현재 시간 세팅
+        updateInterval = setInterval(pollForUpdates, 30000); 
+      }
+
+      var data = response.data;
+      var maxPeriod = response.maxPeriod || 3; // 기본값은 3교시
+      
+      // 1단계: 교시 수에 맞게 헤더 동적 생성
+      var headerHTML = '';
+      if (maxPeriod === 4) {
+        headerHTML += '<tr>';
+        headerHTML += '  <th rowspan="2" style="width: 8%;">순번</th>';
+        headerHTML += '  <th rowspan="2" style="width: 12%;">시험실</th>';
+        headerHTML += '  <th style="width: 20%;">1교시</th>';
+        headerHTML += '  <th style="width: 20%;">2교시</th>';
+        headerHTML += '  <th style="width: 20%;">3교시</th>';
+        headerHTML += '  <th style="width: 20%;">4교시</th>';
+        headerHTML += '</tr>';
+        headerHTML += '<tr>';
+        headerHTML += '  <th class="time-row">09:20-10:10</th>';
+        headerHTML += '  <th class="time-row">10:25-11:15</th>';
+        headerHTML += '  <th class="time-row">11:30-12:20</th>';
+        headerHTML += '  <th class="time-row">12:35-13:25</th>'; // 필요 시 4교시 시간 수정 가능
+        headerHTML += '</tr>';
+      } else {
+        headerHTML += '<tr>';
+        headerHTML += '  <th rowspan="2" style="width: 8%;">순번</th>';
+        headerHTML += '  <th rowspan="2" style="width: 17%;">시험실</th>';
+        headerHTML += '  <th style="width: 25%;">1교시</th>';
+        headerHTML += '  <th style="width: 25%;">2교시</th>';
+        headerHTML += '  <th style="width: 25%;">3교시</th>';
+        headerHTML += '</tr>';
+        headerHTML += '<tr>';
+        headerHTML += '  <th class="time-row">09:20-10:10</th>';
+        headerHTML += '  <th class="time-row">10:25-11:15</th>';
+        headerHTML += '  <th class="time-row">11:30-12:20</th>';
+        headerHTML += '</tr>';
+      }
+      document.getElementById('tableHeader').innerHTML = headerHTML;
+
+      // 2단계: 데이터 행 생성
+      var tbody = document.getElementById('tableBody');
+      var html = '';
+
+      for (var i = 3; i < data.length; i++) {
+        var row = data[i];
+        if (!row[0] && !row[1]) continue;
+
+        var num = row[0];
+        var room = row[1];
+        var isCorridor = room.indexOf('복도') !== -1;
+        
+        var dataClass = isCorridor ? 'corridor-data' : '';
+
+        html += '<tr>';
+        html += '<td class="col-num">' + num + '</td>';
+        html += '<td class="col-room ' + (isCorridor ? 'corridor' : '') + '">' + room + '</td>';
+        
+        // maxPeriod 수만큼 반복하여 열을 생성 (p=1 -> row[2], p=2 -> row[3] ...)
+        for (var p = 1; p <= maxPeriod; p++) {
+          var val = String(row[p + 1] || "").replace(/\n/g, '<br>');
+          html += '<td class="searchable ' + dataClass + '">' + val + '</td>';
+        }
+        
+        html += '</tr>';
+      }
+      tbody.innerHTML = html;
+      
+      // 검색어가 남아있다면 검색 결과 유지
+      searchName();
+    }
+
+    // [추가된 기능] 서버(시트)의 마지막 수정 시간을 확인
+    function pollForUpdates() {
+      google.script.run
+        .withSuccessHandler(function(serverTime) {
+          if (currentModifiedTime === null) {
+            currentModifiedTime = serverTime; // 처음 켤 때 기준 시간 세팅
+          } else if (serverTime > currentModifiedTime) {
+            // 시트가 수정됨! 새로고침 버튼 띄우기
+            document.getElementById('updateAlertBtn').style.display = 'block';
+          }
+        })
+        .getLastModifiedTime();
+    }
+
+    // [추가된 기능] 새로고침 버튼을 눌렀을 때 실행
+    function reloadTableData() {
+      document.getElementById('updateAlertBtn').style.display = 'none'; // 버튼 숨기기
+      currentModifiedTime = null; // 시간 초기화
+      fetchData(); // 데이터 다시 불러오기
+    }
+
+    function startCountdown(targetTime) {
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(function() {
+        var now = new Date().getTime();
+        var distance = targetTime - now;
+
+        var currDate = new Date();
+        document.getElementById('currentTimeText').innerText = currDate.toLocaleString('ko-KR');
+
+        if (distance <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById('countdownTimer').innerText = "00:00:00";
+          document.getElementById('loading').style.display = 'block';
+          document.getElementById('loading').innerText = "시간이 되었습니다! 시간표를 여는 중... 🚀";
+          fetchData(); 
+          return;
+        }
+
+        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        hours = hours < 10 ? "0" + hours : hours;
+        minutes = minutes < 10 ? "0" + minutes : hours; // 기존 버그 수정 (minutes 매핑)
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        var timerText = "";
+        if (days > 0) {
+          timerText = days + "일 " + hours + ":" + minutes + ":" + seconds;
+        } else {
+          timerText = hours + ":" + minutes + ":" + seconds;
+        }
+
+        document.getElementById('countdownTimer').innerText = timerText;
+      }, 1000);
+    }
+
+    function searchName() {
+      var input = document.getElementById("searchInput").value.trim();
+      var cells = document.getElementsByClassName("searchable");
+      for (var i = 0; i < cells.length; i++) {
+        var cell = cells[i];
+        cell.classList.remove("highlight");
+        if (input !== "" && cell.innerHTML.indexOf(input) !== -1) {
+          cell.classList.add("highlight");
+        }
+      }
+    }
+  </script>
+</body>
+</html> 

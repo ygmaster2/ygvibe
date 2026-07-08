@@ -1,0 +1,408 @@
+<code.gs>
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('마법천자문: BGM 배틀')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function getHanjaList() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('HanjaData') || ss.getSheets()[0];
+    const data = sheet.getDataRange().getValues();
+    
+    // 1. A2부터 A10까지(혹은 그 이상 적힌 행까지) 입력된 체력들을 리스트로 긁어모읍니다.
+    const enemyHpList = [];
+    for (let i = 1; i < data.length; i++) {
+      let hpValue = parseInt(data[i][0]); // data[i][0]은 A열을 의미합니다.
+      if (!isNaN(hpValue) && hpValue > 0) {
+        enemyHpList.push(hpValue);
+      }
+    }
+
+    // 2. [핵심 로직] 추출한 체력 배열에서 무작위(랜덤)로 딱 하나를 뽑아냅니다!
+    let randomMaxHP = 200; // 시트가 빌 때를 대비한 기본값
+    if (enemyHpList.length > 0) {
+      const randomIndex = Math.floor(Math.random() * enemyHpList.length);
+      randomMaxHP = enemyHpList[randomIndex];
+    }
+
+    if (data.length <= 1) return { success: false, error: "데이터가 없습니다." };
+    
+    // 질문자님의 원본 문법을 100% 보존합니다.
+    const list = data.slice(1).filter(row => row[1] && row[2]).map(row => ({
+      char: String(row[1]).trim(),
+      sound: String(row[2]).trim(),
+      meaning: String(row[3] || "정보 없음").trim(),
+      power: parseInt(row[4]) || 20,
+      level: String(row[5] || "").trim()
+    }));
+
+    // 3. 기존 HTML이 악착같이 요구하던 'enemyMaxHP'라는 이름에다가 
+    // 위에서 랜덤으로 추출한 체력 값을 그대로 태워서 보냅니다.
+    return { 
+      success: true, 
+      list: list, 
+      enemyMaxHP: randomMaxHP 
+    };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+<index.html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { text-align: center; font-family: 'Courier New', Courier, monospace; background: #222; margin: 0; padding: 5px; color: #333; overflow: hidden; }
+        
+        /* 통합 오버레이 (시작, 승리, 패배 화면) */
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; border-radius: 12px;
+            display: none;
+        }
+        .large-message { font-size: 32px; font-weight: bold; margin-bottom: 20px; text-shadow: 2px 2px 4px #000; }
+        .large-image-frame {
+            border: 5px solid white; border-radius: 12px; background: white; padding: 10px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+            display: flex; justify-content: center; align-items: center;
+            min-width: 150px; min-height: 150px; margin-bottom: 25px;
+        }
+        .large-sprite { width: 120px; image-rendering: pixelated; }
+        
+        .action-btn {
+            padding: 18px 40px; font-size: 22px; cursor: pointer; font-weight: bold; border-radius: 10px;
+            box-shadow: 0 4px 0 #333; transition: 0.2s;
+        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #000; }
+        .action-btn:active { transform: translateY(2px); box-shadow: 0 0 0 #333; }
+        
+        #start-click-btn { background: #ef4444; color: white; border: 4px solid white; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        #start-click-btn:hover { background: #dc2626; }
+        
+        .restart-btn { background: white; color: #333; border: 4px solid #333; }
+
+        #game-screen { 
+            max-width: 480px; margin: 0 auto; background: #f8f8f8; 
+            border: 6px solid #333; border-radius: 12px; position: relative; 
+            height: 95vh; min-height: 820px; display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        #enemy-area { height: 38%; position: relative; background: linear-gradient(to bottom, #87CEEB, #fff); border-bottom: 4px solid #aaa; }
+        #player-area { height: 22%; position: relative; background: #ddd; }
+        
+        .status-box { position: absolute; background: white; border: 3px solid #333; border-radius: 6px; padding: 8px; width: 210px; z-index: 5; }
+        .enemy-status { top: 20px; left: 15px; text-align: left; }
+        .player-status { bottom: 20px; right: 15px; text-align: right; }
+
+        #enemy-sprite { position: absolute; top: 60px; right: 30px; width: 130px; image-rendering: pixelated; }
+        #player-sprite { position: absolute; bottom: 5px; left: 15px; width: 160px; image-rendering: pixelated; }
+        
+        #hanja-display { 
+            position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 110px; font-weight: bold; color: #d32f2f; text-shadow: 4px 4px 0px white; z-index: 10;
+        }
+
+        .hp-container { width: 100%; height: 12px; background: #555; border: 2px solid #333; margin: 4px 0; border-radius: 3px; }
+        .hp-bar { height: 100%; width: 100%; transition: width 0.6s ease-in-out; }
+        
+        #ui-area { height: 40%; background: #fff; border-top: 6px solid #333; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; }
+        #msg-box { background: #f0f0f0; border: 3px solid #ccc; padding: 10px; font-weight: bold; min-height: 55px; font-size: 16px; margin-bottom: 10px; line-height: 1.4; border-radius: 4px; }
+        
+        .input-wrap { margin-bottom: 10px; }
+        input { padding: 12px; font-size: 20px; border: 3px solid #333; width: 95%; text-align: center; outline: none; border-radius: 8px; }
+        
+        #convert-list { 
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; 
+            overflow-y: auto; flex-grow: 1; padding: 5px; background: #fafafa; border-radius: 8px;
+        }
+        .meaning-btn { 
+            background: #fff; border: 4px solid #333; padding: 10px 14px; 
+            font-weight: bold; cursor: pointer; border-radius: 10px; 
+            font-size: 18px; transition: 0.2s; box-shadow: 0 4px 0 #333;
+            min-width: 110px;
+        }
+        .meaning-btn:hover { background: #333; color: white; transform: translateY(-2px); box-shadow: 0 6px 0 #000; }
+        .meaning-btn:active { transform: translateY(2px); box-shadow: 0 0 0 #333; }
+
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% {transform:translateX(0)} 25% {transform:translateX(-10px)} 75% {transform:translateX(10px)} }
+        
+        .flash-red { animation: flash-red 0.5s; }
+        @keyframes flash-red { 0%, 100% {background:rgba(255,0,0,0)} 50% {background:rgba(255,0,0,0.5)} }
+        
+        .win-glow { color: #66bb6a; text-shadow: 0 0 20px #66bb6a, 0 0 30px #66bb6a; }
+        .lose-glow { color: #ff5252; text-shadow: 0 0 20px #ff5252, 0 0 30px #ff5252; }
+    </style>
+</head>
+<body>
+
+<div id="game-screen">
+    <div id="overlay">
+        <div id="large-message-box" class="large-message">데이터 로딩 중...</div>
+        <div class="large-image-frame"><img id="large-sprite" class="large-sprite" src=""></div>
+        <div id="action-btn-box">
+            <button id="start-click-btn" class="action-btn" onclick="initMusicAndStart()" style="display:none;">배틀 시작 (BGM ON)</button>
+            <button id="restart-btn" class="action-btn restart-btn" onclick="resetGame()" style="display:none;">다시 도전</button>
+        </div>
+    </div>
+
+    <audio id="bgm" loop preload="auto">
+        <source src="https://raw.githubusercontent.com/unisummer-Ryu/hanja-game-bgm/refs/heads/main/bgm.m4a" type="audio/mp4">
+    </audio>
+
+    <div id="enemy-area">
+        <div id="flash-red-layer" style="position:absolute; width:100%; height:100%; z-index:4; pointer-events:none;"></div>
+        <div class="status-box enemy-status">
+            <div style="font-weight:bold; font-size: 14px;">ENEMY MONSTER</div>
+            <div class="hp-container"><div id="enemy-hp-bar" class="hp-bar" style="background:#ff5252;"></div></div>
+            <div id="enemy-hp-text" style="font-size:12px; font-weight: bold;">100 / 100</div>
+        </div>
+        <div id="hanja-display">?</div>
+        <img id="enemy-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10.png">
+    </div>
+
+    <div id="player-area">
+        <div id="flash-red-layer-player" style="position:absolute; width:100%; height:100%; z-index:4; pointer-events:none;"></div>
+        <img id="player-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/25.png">
+        <div class="status-box player-status">
+            <div style="font-weight:bold; font-size: 14px;">YOU (LEARNER)</div>
+            <div class="hp-container"><div id="player-hp-bar" class="hp-bar" style="background:#66bb6a;"></div></div>
+            <div id="player-hp-text" style="font-size:12px; font-weight: bold;">100 / 100</div>
+        </div>
+    </div>
+
+    <div id="ui-area">
+        <div id="msg-box">준비 중...</div>
+        <div id="defense-ui" class="input-wrap"><input type="text" id="defense-input" placeholder="한자의 '음' 입력"></div>
+        <div id="attack-ui" class="input-wrap" style="display:none;"><input type="text" id="attack-input" placeholder="반격 주문 입력" oninput="showMeaningButtons()"></div>
+        <div id="convert-list"></div>
+    </div>
+</div>
+
+<script>
+    let hanjaList = [], enemyMaxHP = 100, enemyHP = 100, playerHP = 100, quiz = null, isProcessed = false;
+    
+    let enemySpriteUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10.png"; 
+    let playerSpriteUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/25.png"; 
+    let playerFrontSpriteUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"; 
+    
+    const bgm = document.getElementById('bgm');
+    const msgBox = document.getElementById('msg-box'), dInput = document.getElementById('defense-input'), aInput = document.getElementById('attack-input'), candBox = document.getElementById('convert-list'), hanjaText = document.getElementById('hanja-display'), enemySprite = document.getElementById('enemy-sprite'), playerSprite = document.getElementById('player-sprite'), flashRedLayer = document.getElementById('flash-red-layer'), flashRedLayerPlayer = document.getElementById('flash-red-layer-player'), overlay = document.getElementById('overlay'), largeMessageBox = document.getElementById('large-message-box'), largeSprite = document.getElementById('large-sprite'), startClickBtn = document.getElementById('start-click-btn'), restartBtn = document.getElementById('restart-btn');
+
+    window.onload = () => {
+        largeMessageBox.innerText = "데이터 로딩 중...";
+        largeMessageBox.classList.remove('win-glow', 'lose-glow');
+        largeSprite.src = "";
+        restartBtn.style.display = "none";
+        overlay.style.display = "flex";
+
+        google.script.run.withSuccessHandler(res => {
+            if(res.success) {
+                hanjaList = res.list;
+                enemyMaxHP = res.enemyMaxHP;
+                enemyHP = enemyMaxHP; 
+                updateHP(); 
+                
+                largeMessageBox.innerText = "로딩 완료!";
+                largeSprite.src = enemySpriteUrl;
+                startClickBtn.style.display = "block";
+            }
+        }).getHanjaList();
+        dInput.addEventListener('keypress', e => { if(e.key === 'Enter') handleDefense(); });
+    };
+
+    function initMusicAndStart() {
+        overlay.style.display = "none";
+        startClickBtn.style.display = "none";
+        bgm.volume = 0.3; 
+        bgm.play().catch(e => console.log("재생 차단됨: ", e));
+        nextRound();
+    }
+
+    // [수정] 다시 도전을 눌렀을 때 완전히 게임판을 초기화하고 재시작하는 함수
+    // [수정 완료] 다시 도전을 눌렀을 때 구글에서 새로운 랜덤 체력을 받아와 완전 초기화하는 함수
+function resetGame() {
+    // 1. 구글 서버에서 데이터를 새로 받아오는 동안 임시 메시지 표시
+    overlay.style.display = "flex";
+    restartBtn.style.display = "none";
+    if (document.getElementById('large-message-box')) {
+        document.getElementById('large-message-box').innerText = "새로운 적의 체력을 불러오는 중...";
+    }
+
+    // 2. 구글 서버(Code.gs)를 호출하여 새로운 랜덤 체력을 뽑아옵니다.
+    google.script.run.withSuccessHandler(res => {
+        if (res && res.success) {
+            // 한자 목록 최신화
+            hanjaList = res.list;
+            
+            // [핵심] 구글 서버가 새로 뽑아준 무작위 체력을 게임에 주입!
+            enemyMaxHP = res.enemyMaxHP; 
+            enemyHP = enemyMaxHP;
+            playerHP = 100;
+            
+            // 화면 UI 갱신 (기존 함수명이 updateHP 또는 updateHPDisplay 일 수 있으니 체크)
+            if (typeof updateHP === 'function') updateHP();
+            if (typeof updateHPDisplay === 'function') updateHPDisplay();
+            
+            // 대기화면 숨기기
+            overlay.style.display = "none";
+            
+            // 오디오 초기화 후 재생
+            bgm.currentTime = 0;
+            bgm.play().catch(e => console.log("재생 오류:", e));
+            
+            // 다음 라운드 시작
+            nextRound();
+        } else {
+            alert("체력을 불러오지 못했습니다: " + (res ? res.error : "알 수 없는 오류"));
+        }
+    }).getHanjaList();
+}
+
+    function nextRound() {
+        if(enemyHP <= 0 || playerHP <= 0) return;
+        isProcessed = false;
+        document.getElementById('attack-ui').style.display = "none";
+        document.getElementById('defense-ui').style.display = "block";
+        dInput.value = ""; dInput.focus(); aInput.value = ""; candBox.innerHTML = "";
+        quiz = hanjaList[Math.floor(Math.random() * hanjaList.length)];
+        hanjaText.innerText = quiz.char;
+        msgBox.innerText = "적의 한자 공격! 음을 입력해 방어하라!";
+    }
+
+    function handleDefense() {
+        if(isProcessed) return;
+
+        if(dInput.value.trim() === quiz.sound) {
+            msgBox.innerHTML = "<span style='color:blue'>🛡️ 방어 성공!</span><br>반격할 음을 입력하고 뜻을 고르세요!";
+            document.getElementById('defense-ui').style.display = "none";
+            document.getElementById('attack-ui').style.display = "block";
+            aInput.focus();
+        } else {
+            // [수정] 방어 실패 시 다른 한자로 넘어가기 전 어떤 한자였는지 확실히 인지시켜 줍니다.
+            isProcessed = true;
+            playerHP -= 15; 
+            updateHP();
+            playerSprite.classList.add('shake');
+            flashRedLayerPlayer.classList.add('flash-red');
+            
+            // 틀린 한자의 뜻과 음을 상세히 표기
+            msgBox.innerHTML = `<span style='color:red;'>💥 방어 실패! 피해를 입었습니다.</span><br>정답은 <b>[${quiz.meaning} ${quiz.sound}]</b> 입니다.`;
+            
+            setTimeout(() => {
+                playerSprite.classList.remove('shake');
+                flashRedLayerPlayer.classList.remove('flash-red');
+                if(playerHP <= 0) { 
+                    gameOver();
+                } else {
+                    nextRound();
+                }
+            }, 1800); // 정답을 눈으로 확인할 수 있도록 대기 시간을 조금 늘렸습니다.
+        }
+    }
+
+    function showMeaningButtons() {
+        const query = aInput.value.trim();
+        candBox.innerHTML = "";
+        if(!query) return;
+        const matches = hanjaList.filter(h => h.sound === query);
+        if(matches.length === 0) return;
+        
+        const isCrit = matches.length >= 2;
+        matches.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = 'meaning-btn';
+            
+            let levelBadge = item.level ? ` [${item.level}]` : "";
+            btn.innerText = item.meaning + (isCrit ? " (x2)" : "") + levelBadge;
+            
+            btn.onclick = () => {
+                if(!isProcessed) {
+                    if(item.char === quiz.char) {
+                        executeAttack(item, isCrit);
+                    } else {
+                        isProcessed = true;
+                        playerHP -= 15; 
+                        updateHP();
+                        playerSprite.classList.add('shake');
+                        flashRedLayerPlayer.classList.add('flash-red');
+                        
+                        // [수정] 공격 단계에서 오답을 골랐을 때도 정확한 정답을 알려주고 다음으로 전환
+                        msgBox.innerHTML = `<span style='color:red;'>⚠️ 공격 실패! 반격당함!</span><br>원래 정답은 <b>[${quiz.meaning} ${quiz.sound}]</b> 입니다.`;
+                        
+                        setTimeout(() => {
+                            playerSprite.classList.remove('shake');
+                            flashRedLayerPlayer.classList.remove('flash-red');
+                            if(playerHP <= 0) { 
+                                gameOver();
+                            } else {
+                                candBox.innerHTML = "";
+                                nextRound();
+                            }
+                        }, 1800);
+                    }
+                }
+            };
+            candBox.appendChild(btn);
+        });
+    }
+
+    function executeAttack(item, isCrit) {
+        isProcessed = true;
+        let damage = isCrit ? item.power * 2 : item.power;
+        enemyHP -= damage; 
+        updateHP();
+        
+        enemySprite.classList.add('shake');
+        flashRedLayer.classList.add('flash-red');
+        msgBox.innerHTML = isCrit ? "💥 크리티컬! 효과가 뛰어났다!" : "🔥 반격 성공!";
+        
+        setTimeout(() => {
+            enemySprite.classList.remove('shake');
+            flashRedLayer.classList.remove('flash-red');
+            if(enemyHP <= 0) { 
+                gameWin();
+            } else {
+                nextRound();
+            }
+        }, 2000);
+    }
+
+    function updateHP() {
+        let enemyPercentage = (Math.max(0, enemyHP) / enemyMaxHP) * 100;
+        document.getElementById('enemy-hp-bar').style.width = enemyPercentage + "%";
+        document.getElementById('player-hp-bar').style.width = Math.max(0, playerHP) + "%";
+        document.getElementById('enemy-hp-text').innerText = Math.max(0, enemyHP) + " / " + enemyMaxHP;
+        document.getElementById('player-hp-text').innerText = Math.max(0, playerHP) + " / 100";
+    }
+    
+    function gameWin() {
+        bgm.pause(); 
+        overlay.style.display = "flex";
+        startClickBtn.style.display = "none";
+        
+        largeMessageBox.innerText = "첫번째 적 격파! 스테이지 클리어!";
+        largeMessageBox.className = "large-message win-glow";
+        largeSprite.src = enemySpriteUrl; 
+        restartBtn.style.display = "block";
+    }
+    
+    function gameOver() {
+        bgm.pause(); 
+        overlay.style.display = "flex";
+        startClickBtn.style.display = "none";
+        
+        largeMessageBox.innerText = "배틀 패배... 수련이 필요합니다.";
+        largeMessageBox.className = "large-message lose-glow";
+        largeSprite.src = playerFrontSpriteUrl; 
+        restartBtn.style.display = "block";
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,491 @@
+<code.gs>
+// 1. 웹앱 접속 시 index.html 화면을 띄워주는 함수
+function doGet() {
+  return HtmlService.createTemplateFromFile('Index')
+      .evaluate()
+      .setTitle('영어 듣기 RPG 게임')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+}
+
+// 2. 스프레드시트에서 실시간으로 단어 데이터를 읽어오는 함수
+function getVocabData() {
+  // 현재 연결된 스프레드시트 활성화
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // 데이터가 시작되는 5번째 줄부터 33번째 줄까지 가져옵니다.
+  // B열(영어번호), C열(영어단어), D열(한글발음), E열(한국어뜻)
+  var startRow = 2;
+  var endRow = 75;
+  var numRows = endRow - startRow + 1;
+  
+  var range = sheet.getRange(startRow, 2, numRows, 4); // B열(2)부터 4개의 열
+  var values = range.getValues();
+  
+  var vocabList = [];
+  
+  for (var i = 0; i < values.length; i++) {
+    var enWord = values[i][1]; // C열 (영어 단어)
+    var koMeaning = values[i][3]; // E열 (한국어 뜻)
+    
+    // 데이터가 비어있지 않은 경우에만 배열에 추가
+    if (enWord && koMeaning) {
+      vocabList.push({
+        en: enWord.toString().trim(),
+        ko: koMeaning.toString().trim()
+      });
+    }
+  }
+  
+  return vocabList;
+}
+
+
+<index.hrml>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>영어 단어 듣기 평가 RPG 게임</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #1e1e24;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 650px;
+            background-color: #2a2a35;
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            padding: 25px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffcc00;
+            margin-top: 0;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .battle-stage {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            background-color: #15151a;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #444;
+        }
+
+        .character {
+            width: 45%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .char-avatar {
+            font-size: 45px;
+            margin-bottom: 5px;
+            transition: transform 0.2s ease;
+        }
+
+        .char-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .hp-bar-container {
+            width: 100%;
+            background-color: #555;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 16px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .hp-bar {
+            height: 100%;
+            width: 100%;
+            transition: width 0.4s ease, background-color 0.3s ease;
+        }
+
+        #player-hp-bar { background-color: #2ecc71; }
+        #enemy-hp-bar { background-color: #e74c3c; }
+
+        .hp-text {
+            font-size: 12px;
+            margin-top: 3px;
+            color: #ccc;
+        }
+
+        .quiz-section {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #333344;
+            border-radius: 12px;
+        }
+
+        .audio-btn {
+            background-color: #ff9f43;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255,159,67,0.4);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .audio-btn:hover {
+            background-color: #ffaa54;
+            transform: translateY(-2px);
+        }
+
+        .choices-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .choice-btn {
+            background-color: #4834d4;
+            color: white;
+            border: 2px solid #686de0;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .choice-btn:hover {
+            background-color: #686de0;
+            border-color: #8186ef;
+        }
+
+        .feedback-log {
+            min-height: 40px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #00d2d3;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        .start-btn, .restart-btn {
+            background-color: #10ac84;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(16,172,132,0.4);
+            margin-top: 20px;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            color: #ffcc00;
+        }
+
+        .hit { animation: shake 0.3s ease-in-out; }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(4px); }
+            100% { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <audio id="backup-audio" style="display:none;"></audio>
+
+        <div id="loading-screen" class="screen active">
+            <p class="loading-text">📊 스프레드시트에서 영단어를 불러오는 중입니다...</p>
+        </div>
+
+        <div id="start-screen" class="screen">
+            <h1>⚔️ 영어 단어 듣기 RPG ⚔️</h1>
+            <p style="color: #aaa; line-height: 1.6;">
+                원어민의 발음을 잘 듣고 올바른 한국어 뜻을 선택하세요!<br>
+                정답을 맞추면 <b>몬스터에게 데미지(10 HP)</b>를 주며,<br>
+                틀리면 <b>플레이어가 데미지(10 HP)</b>를 입습니다.
+            </p>
+            <button class="start-btn" onclick="startGame()">게임 시작하기</button>
+        </div>
+
+        <div id="battle-screen" class="screen">
+            <h1 id="stage-title">STAGE 1</h1>
+            
+            <div class="battle-stage">
+                <div class="character" id="player-char">
+                    <div class="char-avatar">🧙‍♂️</div>
+                    <div class="char-name">용사 (나)</div>
+                    <div class="hp-bar-container">
+                        <div id="player-hp-bar" class="hp-bar"></div>
+                    </div>
+                    <div id="player-hp-text" class="hp-text">100 / 100</div>
+                </div>
+                
+                <div class="character" id="enemy-char">
+                    <div class="char-avatar" id="enemy-icon">👹</div>
+                    <div class="char-name" id="enemy-name">영어 괴물</div>
+                    <div class="hp-bar-container">
+                        <div id="enemy-hp-bar" class="hp-bar"></div>
+                    </div>
+                    <div id="enemy-hp-text" class="hp-text">100 / 100</div>
+                </div>
+            </div>
+
+            <div class="quiz-section">
+                <p style="margin-top:0; color:#ddd; font-size:14px;">아래 스피커 버튼을 눌러 발음을 들으세요!</p>
+                <button class="audio-btn" onclick="speakCurrentWord()">
+                    🔊 발음 다시 듣기
+                </button>
+                <div class="choices-grid" id="choices-container"></div>
+            </div>
+
+            <div class="feedback-log" id="feedback-text">발음을 듣고 알맞은 정답을 고르세요!</div>
+        </div>
+
+        <div id="gameover-screen" class="screen">
+            <h1 id="result-title">GAME OVER</h1>
+            <p id="result-desc" style="font-size: 18px; margin: 20px 0;"></p>
+            <button class="restart-btn" onclick="resetGame()">다시 도전하기</button>
+        </div>
+    </div>
+
+    <script>
+        // [핵심 추가] 카카오톡 내부 브라우저면 아예 첫 줄에서 자동으로 외부 브라우저(크롬 등)로 탈출시킵니다.
+        if (/KAKAOTALK/i.test(navigator.userAgent)) {
+            var currentUrl = window.location.href;
+            window.location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(currentUrl);
+        }
+
+        let vocabList = [];
+        let playerHp = 100;
+        let enemyHp = 100;
+        let maxHp = 100;
+        let currentWord = null;
+        let usedWords = [];
+
+        const monsterTypes = [
+            { name: "초급 리스닝 슬라임", icon: "💧", hp: 40 },
+            { name: "중급 스피킹 골렘", icon: "🗿", hp: 60 },
+            { name: "보스 리스닝 드래곤", icon: "🐉", hp: 100 }
+        ];
+        let currentStage = 0;
+
+        window.onload = function() {
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    vocabList = data;
+                    if(vocabList.length === 0) {
+                        alert("시트에서 영단어를 가져오지 못했습니다. 5~33행에 데이터가 있는지 확인하세요.");
+                        return;
+                    }
+                    showScreen('start-screen');
+                })
+                .withFailureHandler(function(err) {
+                    alert("데이터 로드 오류: " + err.message);
+                })
+                .getVocabData();
+        };
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                var u = new SpeechSynthesisUtterance('');
+                window.speechSynthesis.speak(u);
+            }
+            
+            playerHp = 100;
+            currentStage = 0;
+            usedWords = [];
+            initStage();
+            showScreen('battle-screen');
+        }
+
+        function initStage() {
+            if (currentStage >= monsterTypes.length) {
+                endGame(true);
+                return;
+            }
+            let monster = monsterTypes[currentStage];
+            enemyHp = monster.hp;
+            maxHp = monster.hp;
+            
+            document.getElementById('stage-title').innerText = `STAGE ${currentStage + 1}`;
+            document.getElementById('enemy-name').innerText = monster.name;
+            document.getElementById('enemy-icon').innerText = monster.icon;
+            
+            updateHpBars();
+            nextQuestion();
+        }
+
+        function updateHpBars() {
+            const playerPercent = Math.max(0, (playerHp / 100) * 100);
+            document.getElementById('player-hp-bar').style.width = playerPercent + '%';
+            document.getElementById('player-hp-text').innerText = `${playerHp} / 100`;
+
+            const enemyPercent = Math.max(0, (enemyHp / maxHp) * 100);
+            document.getElementById('enemy-hp-bar').style.width = enemyPercent + '%';
+            document.getElementById('enemy-hp-text').innerText = `${enemyHp} / ${maxHp}`;
+        }
+
+        function nextQuestion() {
+            if (vocabList.length === usedWords.length) usedWords = [];
+
+            let availableWords = vocabList.filter(w => !usedWords.includes(w.en));
+            currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            usedWords.push(currentWord.en);
+
+            let choices = [currentWord.ko];
+            let otherWords = vocabList.filter(w => w.ko !== currentWord.ko);
+            
+            while(choices.length < 4 && otherWords.length > 0) {
+                let randIndex = Math.floor(Math.random() * otherWords.length);
+                let choice = otherWords.splice(randIndex, 1)[0].ko;
+                if(!choices.includes(choice)) choices.push(choice);
+            }
+
+            choices.sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('choices-container');
+            container.innerHTML = '';
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerText = choice;
+                btn.onclick = () => checkAnswer(choice);
+                container.appendChild(btn);
+            });
+
+            setTimeout(() => { speakCurrentWord(); }, 400);
+        }
+
+        function speakCurrentWord() {
+            if (!currentWord) return;
+            
+            try {
+                if ('speechSynthesis' in window && !/KAKAOTALK/i.test(navigator.userAgent)) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(currentWord.en);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.85; 
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    playBackupAudio(currentWord.en);
+                }
+            } catch(e) {
+                playBackupAudio(currentWord.en);
+            }
+        }
+
+        function playBackupAudio(text) {
+            const audio = document.getElementById('backup-audio');
+            // 사용자님이 검증하신 네이버 정상 작동 주소
+            audio.src = "https://dict.naver.com/api/tts?dict=endic&lang=en&is_Service=true&text=" + encodeURIComponent(text);
+            audio.load();
+            
+            var playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(function(err) {
+                    console.log("카톡 오디오 차단 감지, 재시도 대기: ", err);
+                });
+            }
+        }
+
+        function checkAnswer(selectedKo) {
+            const feedbackText = document.getElementById('feedback-text');
+            const playerChar = document.getElementById('player-char');
+            const enemyChar = document.getElementById('enemy-char');
+
+            if (selectedKo === currentWord.ko) {
+                enemyHp -= 10;
+                if (enemyHp < 0) enemyHp = 0;
+                feedbackText.innerText = `✨ 정답! [${currentWord.en}] 공격 성공! (-10 HP)`;
+                feedbackText.style.color = "#2ecc71";
+                enemyChar.classList.add('hit');
+                setTimeout(() => enemyChar.classList.remove('hit'), 300);
+            } else {
+                playerHp -= 10;
+                if (playerHp < 0) playerHp = 0;
+                feedbackText.innerText = `💥 틀렸습니다! 정답은 '${currentWord.ko}'입니다. (-10 HP)`;
+                feedbackText.style.color = "#e74c3c";
+                playerChar.classList.add('hit');
+                setTimeout(() => playerChar.classList.remove('hit'), 300);
+            }
+
+            updateHpBars();
+
+            if (playerHp <= 0) {
+                setTimeout(() => endGame(false), 800);
+            } else if (enemyHp <= 0) {
+                currentStage++;
+                if (currentStage >= monsterTypes.length) {
+                    setTimeout(() => endGame(true), 800);
+                } else {
+                    feedbackText.innerText = "🎉 스테이지 클리어! 다음 몬스터가 나타납니다.";
+                    setTimeout(() => initStage(), 1200);
+                }
+            } else {
+                setTimeout(() => nextQuestion(), 1400);
+            }
+        }
+
+        function endGame(isVictory) {
+            showScreen('gameover-screen');
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-desc');
+            if (isVictory) {
+                title.innerText = "🏆 VICTORY 🏆";
+                title.style.color = "#ffcc00";
+                desc.innerText = "모든 영어 단어 몬스터를 격파하고 훈련을 끝마쳤습니다!";
+            } else {
+                title.innerText = "💀 GAME OVER 💀";
+                title.style.color = "#e74c3c";
+                desc.innerText = "체력이 소진되었습니다. 다시 한번 도전하여 단어들을 정복해보세요.";
+            }
+        }
+
+        function resetGame() {
+            showScreen('start-screen');
+        }
+    </script>
+</body>
+</html>
