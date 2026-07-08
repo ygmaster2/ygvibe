@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청구기호 책꽂기 게임</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jua','Malgun Gothic',sans-serif;letter-spacing:.02em;background:#f5f4f0;min-height:100vh;display:flex;justify-content:center;padding:2rem 1rem}
+#app{width:100%;max-width:760px}
+.header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap}
+.title{font-size:22px;font-weight:700;color:#1a1a18}
+.score-area{display:flex;gap:8px;margin-left:auto;align-items:center}
+.badge{font-size:13px;padding:5px 12px;border-radius:20px;font-weight:600;border:1px solid #d3d1c7;color:#5f5e5a;background:#fff;letter-spacing:.03em}
+.badge.info{background:#e6f1fb;color:#185fa5;border-color:#b5d4f4}
+.badge.total{background:#eaf3de;color:#27500a;border-color:#c0dd97}
+.stage-bar{display:flex;margin-bottom:1.5rem;border:1px solid #d3d1c7;border-radius:12px;overflow:hidden}
+.stage-tab{flex:1;padding:14px 8px;text-align:center;color:#888780;border-right:1px solid #d3d1c7;cursor:default;transition:all .2s;background:#f1efe8}
+.stage-tab:last-child{border-right:none}
+.stage-tab.active{background:#fff;color:#1a1a18;box-shadow:inset 0 -3px 0 #378add}
+.stage-tab.done{color:#27500a;background:#eaf3de}
+.stage-tab.locked{opacity:.4}
+.stage-icon{font-size:20px;display:block;margin-bottom:4px}
+.stage-name{font-size:16px;font-weight:700;display:block;letter-spacing:.03em}
+.instruction{font-size:14px;color:#444441;margin-bottom:1rem;padding:10px 14px;background:#e6f1fb;border-radius:8px;line-height:1.7;border-left:3px solid #378add;letter-spacing:.03em}
+.shelf{background:#fff;border:1px solid #d3d1c7;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.shelf-label{font-size:13px;color:#5f5e5a;margin-bottom:12px;letter-spacing:.03em}
+.books-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.book{background:#f5f4f0;border:2px solid #d3d1c7;border-radius:10px;padding:16px 8px;cursor:pointer;transition:all .15s;user-select:none;position:relative;text-align:center;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.book:hover{border-color:#378add;background:#e6f1fb;transform:translateY(-2px)}
+.book.correct{border-color:#3b6d11;background:#eaf3de;cursor:default;transform:none}
+.book.correct:hover{transform:none;border-color:#3b6d11;background:#eaf3de}
+.book.wrong{border-color:#a32d2d;background:#fcebeb;animation:shake .3s}
+.book.hint{border-color:#ba7517;background:#faeeda}
+.book-num{font-size:22px;font-weight:700;color:#1a1a18;font-family:'Courier New',monospace;line-height:1.2;word-break:break-all}
+.book-author{font-size:14px;font-weight:600;color:#5f5e5a;font-family:'Courier New',monospace}
+.book-vol{font-size:12px;color:#888780;font-family:'Courier New',monospace}
+.book.correct .book-num{color:#27500a}
+.book.correct .book-author{color:#3b6d11}
+.book.correct .book-vol{color:#639922}
+.book.wrong .book-num{color:#a32d2d}
+.book.hint .book-num,.book.hint .book-author{color:#854f0b}
+.order-badge{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:#639922;color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center}
+.book.correct .order-badge{display:flex}
+.feedback{padding:10px 14px;border-radius:8px;font-size:14px;margin-bottom:1rem;display:none;line-height:1.5;letter-spacing:.03em}
+.feedback.show{display:block}
+.feedback.success{background:#eaf3de;color:#27500a;border:1px solid #c0dd97}
+.feedback.error{background:#fcebeb;color:#791f1f;border:1px solid #f7c1c1}
+.feedback.info{background:#faeeda;color:#633806;border:1px solid #fac775}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{padding:9px 16px;border-radius:8px;border:1px solid #d3d1c7;background:#fff;color:#2c2c2a;font-size:14px;cursor:pointer;font-weight:600;font-family:'Jua',sans-serif;letter-spacing:.03em;transition:all .15s}
+.btn:hover{background:#f1efe8}
+.btn.next{background:#eaf3de;color:#27500a;border-color:#c0dd97}
+.btn.retry{background:#fcebeb;color:#791f1f;border-color:#f7c1c1}
+.btn.hint-btn{background:#faeeda;color:#633806;border-color:#fac775}
+.progress-wrap{flex:1;min-width:80px}
+.progress-label{font-size:12px;color:#5f5e5a;margin-bottom:4px;letter-spacing:.03em}
+.progress{height:6px;background:#f1efe8;border-radius:3px;overflow:hidden;border:1px solid #d3d1c7}
+.progress-fill{height:100%;background:#378add;border-radius:3px;transition:width .4s}
+.result{text-align:center;padding:2rem 1rem;background:#fff;border:1px solid #d3d1c7;border-radius:12px}
+.result-icon{font-size:52px;margin-bottom:.75rem;display:block}
+.result-title{font-size:22px;font-weight:700;color:#1a1a18;margin-bottom:.5rem;letter-spacing:.03em}
+.result-sub{font-size:14px;color:#5f5e5a;margin-bottom:1.5rem;line-height:1.7;letter-spacing:.03em}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:380px;margin:0 auto 1.5rem}
+.stat-card{background:#f1efe8;border-radius:8px;padding:.85rem;text-align:center;border:1px solid #d3d1c7}
+.stat-val{font-size:24px;font-weight:700;color:#1a1a18}
+.stat-lbl{font-size:12px;color:#888780;margin-top:3px;letter-spacing:.03em}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.all-clear{text-align:center;padding:2.5rem 1rem;background:#fff;border:1px solid #d3d1c7;border-radius:12px}
+.all-clear-icon{font-size:64px;margin-bottom:1rem;display:block}
+.all-clear-title{font-size:26px;font-weight:700;color:#1a1a18;margin-bottom:.5rem;letter-spacing:.03em}
+.all-clear-sub{font-size:14px;color:#5f5e5a;margin-bottom:1.5rem;line-height:1.7;letter-spacing:.03em}
+.total-score{font-size:56px;font-weight:700;color:#185fa5}
+.total-max{font-size:18px;color:#888780}
+.stage-scores{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:360px;margin:0 auto 1.5rem}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop .3s ease-out}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <span class="title">📚 청구기호 책꽂기 게임</span>
+    <div class="score-area">
+      <span class="badge total" id="totalDisplay">총점 0</span>
+      <span class="badge info" id="scoreDisplay">0점</span>
+      <span class="badge" id="roundDisplay">1단계 · 1/5</span>
+    </div>
+  </div>
+  <div class="stage-bar">
+    <div class="stage-tab active" id="tab0">
+      <span class="stage-icon" id="icon0">🌱</span>
+      <span class="stage-name">1단계</span>
+    </div>
+    <div class="stage-tab locked" id="tab1">
+      <span class="stage-icon" id="icon1">🔒</span>
+      <span class="stage-name">2단계</span>
+    </div>
+  </div>
+  <div id="mainArea"></div>
+</div>
+<script>
+// ── 데이터 ───────────────────────────────────────────────
+const BOOKS_RAW = [{"call":"609.2 이78ㅅ"},{"call":"610.99 브231ㅋ"},{"call":"610.99 프239ㄱ"},{"call":"617.8 나872ㄷ"},{"call":"617.8 나872ㅈ"},{"call":"540.09111 이52ㅎ"},{"call":"609.906 페298ㅁ"},{"call":"601.04 안667ㅎ"},{"call":"609.11 유955ㅁ"},{"call":"638.3 T661ㄱ"},{"call":"638.3 파156ㅊ"},{"call":"813.7 김78세"},{"call":"327.856 성52ㅈ"},{"call":"327.856 수38ㅁ"},{"call":"809 정34ㅈ"},{"call":"186.5 이57ㅍ"},{"call":"818 박52ㅇ"},{"call":"186.5 르76ㄱ"},{"call":"186.5 엘298ㅇ"},{"call":"609 지52ㅇ"},{"call":"325.211 김74ㄴ"},{"call":"181.7 배294ㄱ"},{"call":"186.3 홍14ㅁ"},{"call":"472 뉴884ㅈ"},{"call":"420 뉴884ㅈ"},{"call":"410 뉴884ㅈ"},{"call":"450 뉴884ㅈ"},{"call":"443.1 뉴884ㅅ"},{"call":"412 뉴884ㅈ"},{"call":"420.1 뉴884차"},{"call":"443.8875 뉴884브"},{"call":"170 뉴884ㄴ"},{"call":"180 뉴884ㅅ"},{"call":"420 뉴884ㅁ"},{"call":"575.81 뉴884ㅅ"},{"call":"558.3 뉴884ㅂ"},{"call":"420.1 뉴884ㅎ"},{"call":"440 뉴884ㅁ"},{"call":"420.13 뉴884ㅇ"},{"call":"517.31 뉴884ㅅ"},{"call":"511.169 뉴884ㅈ"},{"call":"401 뉴884ㄱ"},{"call":"412 뉴884ㅎ"},{"call":"443.1 뉴884ㅇ"},{"call":"413.1 뉴884화"},{"call":"453.9 뉴884ㄴ"},{"call":"818 김64지"},{"call":"737.5 레68ㅋ"},{"call":"188.5 박54ㅇ"},{"call":"004.73 최55ㅊ"},{"call":"373.4 이57ㄷ"},{"call":"540.04 노32ㅎ"},{"call":"540.0911 공76ㅅ"},{"call":"327.04 김75ㅍ"},{"call":"325.23 머898ㄱ"},{"call":"594.5 임67ㅉ"},{"call":"811.7 나883ㅊ"},{"call":"325.1 이73ㅇ"},{"call":"325.571 조56ㅂ"},{"call":"802.56 야32ㅊ"},{"call":"152.222 장54ㄴ"},{"call":"909 김25ㅎ"},{"call":"833.6 스77ㄱ"},{"call":"331.544 박64세ㄱ"},{"call":"517.52 이14ㄸ"},{"call":"325.5 윤57ㅅ"},{"call":"199.1 이54ㅇ"},{"call":"199.1 김75ㅅ"},{"call":"181.53 캐34ㅇ"},{"call":"188.5 이74ㅊ"},{"call":"331.18 김66ㄴ"},{"call":"329.4 조36ㅊ"},{"call":"740.7 김38ㅇ"},{"call":"609 주195ㅁ"},{"call":"711.25 박78ㅇ"},{"call":"370.1 김64ㄷ"},{"call":"403.4 우64ㅂ"},{"call":"834 무292이"},{"call":"220.4 법296ㅌ"},{"call":"828 정85ㅇ"},{"call":"818 문66나"},{"call":"854 헤54ㅈ"},{"call":"833.6 히12고"},{"call":"811.7 김55ㅅ"},{"call":"811.7 송54ㅅ"},{"call":"813.7 박64나"},{"call":"029.1 박16ㅂ"},{"call":"911 이24이"},{"call":"377.37 김56ㅇ"},{"call":"321.55 이45ㅊ"},{"call":"410 류54ㅇ"},{"call":"813.7 박52우"},{"call":"320 서73ㄱ"},{"call":"511.1 야32ㄷ"},{"call":"338 이82ㅂ"},{"call":"853 엔24ㅁ"},{"call":"813.6 황56ㅅ"},{"call":"813.7 정25ㅅ"},{"call":"321.531 하57ㅊ"},{"call":"181.71 프295ㅅ"},{"call":"186.5 슈192ㅂ"},{"call":"844 소295ㅇ"},{"call":"818 광95ㄱ"},{"call":"199.1 고66왜"},{"call":"327.8 박15ㅂ"},{"call":"818 나883ㄴ"},{"call":"510.4 김54ㅇ"},{"call":"182.1 시14ㅎ"},{"call":"199.7 이57ㄴ"},{"call":"181.71 레35ㄱ"},{"call":"811.7 나883ㅍ"},{"call":"342.1 박95ㅇ"},{"call":"151.04 손54ㅎ"},{"call":"598.125 김94ㅅ"},{"call":"540.04 조54ㄱ"},{"call":"104 서74ㅊ"},{"call":"420 중16ㅁ"},{"call":"472 한86ㅈ"},{"call":"410 이68ㅎ"},{"call":"594.504 박877ㅁ"},{"call":"430 장95ㅇ"},{"call":"104 장73ㄷ"},{"call":"555.611 엘44ㄱ"},{"call":"510.4 김14ㄴ"},{"call":"470 김67ㅅ"},{"call":"518 김883ㅇ"},{"call":"511.1 다872ㅇ"},{"call":"410 브296ㅅ"},{"call":"410 폴57ㅅ"},{"call":"472 김67ㅅ"},{"call":"470 신68ㄴ"},{"call":"563.9 위888ㅂ"},{"call":"321.3 후296ㅇ"},{"call":"330.911 김74ㄱ"},{"call":"327 차94ㄱ"},{"call":"321.97 제94ㄷ"},{"call":"331.544 박64세"},{"call":"329.4 킨32ㅅ"},{"call":"331.3 조64ㅇ"},{"call":"004.73 김65ㅇ"},{"call":"180 손12ㅇ"},{"call":"911 최883ㅇ"},{"call":"709 크298ㅈ"},{"call":"170 콰68ㅎ"},{"call":"909 오63ㄴ"},{"call":"420 정82ㅁ"},{"call":"474 이15ㅅ"},{"call":"443.1 윤45ㅇ"},{"call":"029.4 정54ㅊ"},{"call":"410 안192ㅅ"},{"call":"453 박74ㄱ"},{"call":"453.9 안64ㅅ"},{"call":"909 히86ㅅ"},{"call":"909 지36ㅅ"},{"call":"911 함16ㅅ"},{"call":"340.22 레48ㅇ"},{"call":"349.9 김38ㄱ"},{"call":"360 김192ㅂ"},{"call":"360 장94ㅅ"},{"call":"320.99 하68ㅅ"},{"call":"320.189 김44ㄱ"},{"call":"320 곽93ㄱ"},{"call":"373.4 김76ㄱ"},{"call":"374.8 수32ㅇ"},{"call":"372.47 나63ㄴ"},{"call":"376.6 캠894ㄱ"},{"call":"410.7 류57ㅅ"},{"call":"373.4 신64ㅇ"},{"call":"420.13 채67ㅊ"},{"call":"813.7 최94ㅅ"},{"call":"813.7 강67ㄹ"},{"call":"813.7 표34ㄷ"},{"call":"813.7 정92ㄷ"},{"call":"813.7 성93ㅎ"},{"call":"813.7 이73ㅍ"},{"call":"813.7 박78ㅁ"},{"call":"813.7 최78ㅎ"},{"call":"813.7 정92ㅅ"},{"call":"854 헤54ㅎ"},{"call":"834 나57ㄴ"},{"call":"843.5 보66ㄹ"},{"call":"843.5 윌298ㅅ"},{"call":"404 궤25궤"},{"call":"404 궤25과"},{"call":"710.13 정74ㄷ"},{"call":"710.13 백57ㅁ"},{"call":"802.56 김38ㅁ"},{"call":"802 배294ㅆ"},{"call":"802 김75ㅊ"},{"call":"802.3 최65ㄴ"},{"call":"802 정62ㅇ"},{"call":"802 김67ㅅ"}];
+
+const EXPERT_T1 = [
+  ["609.1 김32ㄴ","610 박64ㄱ","610.99 나45ㄷ","611 이77ㅅ","612.8 최23ㅇ"],
+  ["410 김54ㅅ","410.9 나32ㄱ","411.1 박77ㄴ","413 이64ㄷ","413.1 최45ㅎ"],
+  ["808.9 김14ㅂ","809 나67ㅅ","810.9 박34ㄱ","811 이88ㄴ","811.6 최56ㄷ"],
+  ["320 강14ㄱ","321.3 김45ㄴ","321.5 나67ㄷ","321.55 박23ㅅ","321.97 이34ㅇ"],
+  ["510 김23ㄱ","510.4 나45ㄴ","511.1 박67ㄷ","513.8 이89ㅅ","515.1 최12ㅇ"],
+  ["180 강14ㄱ","181.5 김23ㄴ","181.7 나45ㄷ","182.1 박67ㅅ","183.2 이89ㅇ"],
+  ["370 강12ㄱ","370.1 김34ㄴ","371.1 나56ㄷ","372.4 박78ㅅ","373.4 이90ㅇ"],
+  ["900 강14ㄱ","909 김23ㄴ","910.9 나45ㄷ","911 박67ㅅ","911.07 이89ㅇ"],
+  ["800 강12ㄱ","809 김34ㄴ","811.6 나56ㄷ","813.6 박78ㅅ","813.7 이90ㅇ"],
+  ["150 강14ㄱ","151.0 김23ㄴ","151.5 나45ㄷ","152.2 박67ㅅ","160.2 이89ㅇ"],
+  ["325 강12ㄱ","325.1 김34ㄴ","325.2 나56ㄷ","325.5 박78ㅅ","325.57 이90ㅇ"],
+  ["470 강14ㄱ","471.2 김23ㄴ","472 나45ㄷ","474 박67ㅅ","476.1 이89ㅇ"],
+  ["540 강12ㄱ","540.04 김34ㄴ","540.09 나56ㄷ","540.0911 박78ㅅ","541 이90ㅇ"],
+  ["186 강14ㄱ","186.3 김23ㄴ","186.5 나45ㄷ","188.5 박67ㅅ","189.2 이89ㅇ"],
+  ["420 강12ㄱ","420.1 김34ㄴ","420.12 나56ㄷ","420.13 박78ㅅ","421 이90ㅇ"],
+  ["199 강14ㄱ","199.1 김23ㄴ","199.5 나45ㄷ","199.7 박67ㅅ","199.8 이89ㅇ"],
+  ["327 강12ㄱ","327.04 김34ㄴ","327.8 나56ㄷ","327.85 박78ㅅ","327.856 이90ㅇ"],
+  ["511 강14ㄱ","511.1 김23ㄴ","511.16 나45ㄷ","511.169 박67ㅅ","511.17 이89ㅇ"],
+  ["802 강12ㄱ","802.3 김34ㄴ","802.5 나56ㄷ","802.56 박78ㅅ","803 이90ㅇ"],
+  ["330 강14ㄱ","330.9 김23ㄴ","331.1 나45ㄷ","331.18 박67ㅅ","331.3 이89ㅇ"],
+];
+const EXPERT_T2 = [
+  ["813.7 강14ㄱ","813.7 김34ㄴ","813.7 나56ㄷ","813.7 박78ㄹ","813.7 이92ㅁ"],
+  ["411.0 강23ㄴ","411.0 김45ㄴ","411.0 나67ㄴ","411.0 박89ㄴ","411.0 이12ㄴ"],
+  ["372.68 강14ㄴ","372.68 김34ㄴ","372.68 나56ㄴ","372.68 박78ㄴ","372.68 이92ㄴ"],
+  ["186.5 강12ㅂ","186.5 김34ㅂ","186.5 나56ㅂ","186.5 박78ㅂ","186.5 이90ㅂ"],
+  ["540.04 강14ㄱ","540.04 김34ㄱ","540.04 나56ㄱ","540.04 박78ㄱ","540.04 이92ㄱ"],
+  ["813.7 강24ㅅ","813.7 김44ㅅ","813.7 나64ㅅ","813.7 박84ㅅ","813.7 이14ㅅ"],
+  ["909 강15ㅎ","909 김35ㅎ","909 나55ㅎ","909 박75ㅎ","909 이95ㅎ"],
+  ["420 강16ㅁ","420 김36ㅁ","420 나56ㅁ","420 박76ㅁ","420 이96ㅁ"],
+  ["818 강17ㅇ","818 김37ㅇ","818 나57ㅇ","818 박77ㅇ","818 이97ㅇ"],
+  ["181.7 강18ㄱ","181.7 김38ㄱ","181.7 나58ㄱ","181.7 박78ㄱ","181.7 이98ㄱ"],
+  ["410 강19ㅅ","410 김39ㅅ","410 나59ㅅ","410 박79ㅅ","410 이99ㅅ"],
+  ["511.1 강22ㄷ","511.1 김42ㄷ","511.1 나62ㄷ","511.1 박82ㄷ","511.1 이12ㄷ"],
+  ["472 강23ㅈ","472 김43ㅈ","472 나63ㅈ","472 박83ㅈ","472 이13ㅈ"],
+  ["325.211 강24ㄴ","325.211 김44ㄴ","325.211 나64ㄴ","325.211 박84ㄴ","325.211 이14ㄴ"],
+  ["199.1 강25ㅇ","199.1 김45ㅇ","199.1 나65ㅇ","199.1 박85ㅇ","199.1 이15ㅇ"],
+  ["802 강26ㅊ","802 김46ㅊ","802 나66ㅊ","802 박86ㅊ","802 이16ㅊ"],
+  ["370.1 강27ㄷ","370.1 김47ㄷ","370.1 나67ㄷ","370.1 박87ㄷ","370.1 이17ㄷ"],
+  ["843.6 강28ㅂ","843.6 김48ㅂ","843.6 나68ㅂ","843.6 박88ㅂ","843.6 이18ㅂ"],
+  ["104 강29ㅊ","104 김49ㅊ","104 나69ㅊ","104 박89ㅊ","104 이19ㅊ"],
+  ["911 강32ㅇ","911 김52ㅇ","911 나72ㅇ","911 박92ㅇ","911 이22ㅇ"],
+];
+const EXPERT_T3 = [
+  ["813.7 김54ㅅ v.1","813.7 김54ㅅ v.2","813.7 김54ㅅ v.3","813.7 김54ㅅ v.4","813.7 김54ㅅ v.5"],
+  ["657.1 박12ㅎ v.1","657.1 박12ㅎ v.2","657.1 박12ㅎ v.3","657.1 박12ㅎ v.4","657.1 박12ㅎ v.5"],
+  ["843.6 이57ㅇ v.1","843.6 이57ㅇ v.2","843.6 이57ㅇ v.3","843.6 이57ㅇ v.4","843.6 이57ㅇ v.5"],
+  ["813.7 전38ㄹ v.1","813.7 전38ㄹ v.2","813.7 전38ㄹ v.3","813.7 전38ㄹ v.4","813.7 전38ㄹ v.5"],
+  ["911.07 에57ㄲ v.1","911.07 에57ㄲ v.2","911.07 에57ㄲ v.3","911.07 에57ㄲ v.4","911.07 에57ㄲ v.5"],
+  ["850.81 헤54ㅎ v.1","850.81 헤54ㅎ v.2","850.81 헤54ㅎ v.3","850.81 헤54ㅎ v.4","850.81 헤54ㅎ v.5"],
+  ["657.1 심64ㅎ v.1","657.1 심64ㅎ v.2","657.1 심64ㅎ v.3","657.1 심64ㅎ v.4","657.1 심64ㅎ v.5"],
+  ["813.7 이66ㅌ v.1","813.7 이66ㅌ v.2","813.7 이66ㅌ v.3","813.7 이66ㅌ v.4","813.7 이66ㅌ v.5"],
+  ["843.6 셔57ㅇ v.1","843.6 셔57ㅇ v.2","843.6 셔57ㅇ v.3","843.6 셔57ㅇ v.4","843.6 셔57ㅇ v.5"],
+  ["372.68 나32ㅋ v.1","372.68 나32ㅋ v.2","372.68 나32ㅋ v.3","372.68 나32ㅋ v.4","372.68 나32ㅋ v.5"],
+  ["377 교15ㅋ v.1","377 교15ㅋ v.2","377 교15ㅋ v.3","377 교15ㅋ v.4","377 교15ㅋ v.5"],
+  ["657.1 비12ㅎ v.1","657.1 비12ㅎ v.2","657.1 비12ㅎ v.3","657.1 비12ㅎ v.4","657.1 비12ㅎ v.5"],
+  ["813.7 조14ㅅ v.1","813.7 조14ㅅ v.2","813.7 조14ㅅ v.3","813.7 조14ㅅ v.4","813.7 조14ㅅ v.5"],
+  ["833.6 사876ㅁ v.1","833.6 사876ㅁ v.2","833.6 사876ㅁ v.3","833.6 사876ㅁ v.4","833.6 사876ㅁ v.5"],
+  ["808.9 세14 v.1","808.9 세14 v.3","808.9 세14 v.53","808.9 세14 v.99","808.9 세14 v.127"],
+];
+
+// 라운드 타입 순서
+// 1단계: easy(3자리) / normal(소수점) 교차
+const S1_TYPES = ['easy','normal','easy','normal','easy'];
+// 2단계: hard(저자기호) / expert_t1(비슷한분류) / hard / expert_t2(동일분류) / expert_t3(권차)
+const S2_TYPES = ['hard','expert_t1','hard','expert_t2','expert_t3'];
+
+// ── 게임 상태 ────────────────────────────────────────────
+let stageIdx = 0;
+let unlockedUpTo = 0;
+let stageScores = [0, 0];
+let round = 1;
+let score = 0;
+let mistakes = 0;
+// 현재 라운드의 책 목록 (정렬 전 원본)
+let roundBooks = [];
+// 정답 순서 (roundBooks의 인덱스 배열)
+let answerOrder = [];
+// 화면에 표시된 순서 (roundBooks의 인덱스 배열, 셔플된)
+let displayOrder = [];
+// 맞춘 순서 (displayOrder 기준 인덱스)
+let clickedCount = 0;
+// expert 풀 사용 추적
+let usedExpert = {t1:[], t2:[], t3:[]};
+
+// ── 유틸 ─────────────────────────────────────────────────
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function getRoundType(){
+  return stageIdx===0 ? S1_TYPES[round-1] : S2_TYPES[round-1];
+}
+
+function parseNum(call){
+  return parseFloat(call.split(' ')[0]) || 0;
+}
+function parseNumStr(call){
+  return call.split(' ')[0];
+}
+function parseAuthor(call){
+  return call.split(' ')[1] || '';
+}
+function parseVol(call){
+  const m = call.match(/v\.(\d+)/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+function sortBooks(books, rtype){
+  // books는 call 문자열 배열
+  return [...books].sort((a,b)=>{
+    const na=parseNum(a), nb=parseNum(b);
+    if(na!==nb) return na-nb;
+    if(rtype==='easy') return 0;
+    const sa=parseNumStr(a), sb=parseNumStr(b);
+    if(sa!==sb) return sa.localeCompare(sb);
+    if(rtype==='normal') return 0;
+    const aa=parseAuthor(a), ab=parseAuthor(b);
+    if(aa!==ab) return aa.localeCompare(ab);
+    return parseVol(a)-parseVol(b);
+  });
+}
+
+function getDisplayParts(call, rtype){
+  const parts = call.split(' ');
+  const num = parts[0];
+  const author = parts[1]||'';
+  const vol = parts.slice(2).join(' ');
+  if(rtype==='easy'){
+    const d=num.indexOf('.');
+    return {num: d===-1?num:num.substring(0,d), author:'', vol:''};
+  }
+  if(rtype==='normal'){
+    return {num, author:'', vol:''};
+  }
+  return {num, author, vol};
+}
+
+// ── 문제 뽑기 ────────────────────────────────────────────
+function pickFromRaw(rtype){
+  const pool = shuffle(BOOKS_RAW);
+  const picked = [];
+  const used = new Set();
+  for(const b of pool){
+    const p = getDisplayParts(b.call, rtype);
+    const key = p.num + (rtype==='hard' ? p.author : '');
+    if(!used.has(key) && picked.length<5){
+      used.add(key);
+      picked.push(b.call);
+    }
+    if(picked.length>=5) break;
+  }
+  return picked;
+}
+
+function pickFromExpert(poolKey){
+  const poolMap = {t1:EXPERT_T1, t2:EXPERT_T2, t3:EXPERT_T3};
+  const pool = poolMap[poolKey];
+  const usedList = usedExpert[poolKey];
+  let available = pool.map((_,i)=>i).filter(i=>!usedList.includes(i));
+  if(available.length===0){
+    usedExpert[poolKey]=[];
+    available = pool.map((_,i)=>i);
+  }
+  const pick = available[Math.floor(Math.random()*available.length)];
+  usedExpert[poolKey].push(pick);
+  return [...pool[pick]];
+}
+
+function pickBooks(){
+  const rt = getRoundType();
+  if(rt==='easy'||rt==='normal'||rt==='hard') return pickFromRaw(rt);
+  const key = rt.replace('expert_','');
+  return pickFromExpert(key);
+}
+
+// ── 헤더/탭 업데이트 ─────────────────────────────────────
+function updateHeader(){
+  document.getElementById('scoreDisplay').textContent = score+'점';
+  document.getElementById('roundDisplay').textContent = (stageIdx===0?'1단계':'2단계')+' · '+round+'/5';
+  const total = stageScores[0]+stageScores[1]+score;
+  document.getElementById('totalDisplay').textContent = '총점 '+total;
+}
+
+function updateTabs(){
+  for(let i=0;i<2;i++){
+    const tab=document.getElementById('tab'+i);
+    const icon=document.getElementById('icon'+i);
+    tab.className='stage-tab';
+    if(i===stageIdx) tab.classList.add('active');
+    else if(stageScores[i]>0) tab.classList.add('done');
+    else if(i>unlockedUpTo) tab.classList.add('locked');
+    if(stageScores[i]>0&&i!==stageIdx) icon.textContent='✅';
+    else if(i>unlockedUpTo) icon.textContent='🔒';
+    else icon.textContent=(i===0?'🌱':'🏆');
+  }
+}
+
+// ── 라운드 시작 ──────────────────────────────────────────
+function startStage(idx){
+  stageIdx=idx; round=1; score=0; mistakes=0;
+  updateTabs(); startRound();
+}
+
+function startRound(){
+  if(round>5){ showStageClear(); return; }
+  mistakes = 0;
+  const rt = getRoundType();
+  roundBooks = pickBooks();
+  const sorted = sortBooks(roundBooks, rt);
+  // answerOrder: displayOrder 기준이 아닌, roundBooks 내 인덱스 순서
+  answerOrder = sorted.map(call => roundBooks.indexOf(call));
+  displayOrder = shuffle([...Array(roundBooks.length).keys()]);
+  clickedCount = 0;
+  renderRound();
+}
+
+// ── 렌더링 ───────────────────────────────────────────────
+function renderRound(){
+  updateHeader(); updateTabs();
+  const rt = getRoundType();
+  const instrMap = {
+    easy:      '📌 앞 3자리 숫자만 비교 — 작은 수부터 순서대로 클릭하세요',
+    normal:    '📌 소수점 이하까지 비교 — 작은 수부터 순서대로 클릭하세요',
+    hard:      '📌 저자기호까지 비교 — 숫자 → 저자기호 순으로 정렬하세요',
+    expert_t1: '📌 분류번호가 비슷해요! 숫자를 꼼꼼히 비교하세요',
+    expert_t2: '📌 분류번호가 똑같아요! 저자기호로 순서를 구분하세요',
+    expert_t3: '📌 분류번호도 저자기호도 똑같아요! 권차(v.) 번호로 구분하세요'
+  };
+
+  const area = document.getElementById('mainArea');
+  area.innerHTML = '';
+
+  // 안내문
+  const instr = document.createElement('div');
+  instr.className = 'instruction';
+  instr.textContent = instrMap[rt];
+  area.appendChild(instr);
+
+  // 피드백
+  const fb = document.createElement('div');
+  fb.id = 'feedback'; fb.className = 'feedback';
+  area.appendChild(fb);
+
+  // 책장
+  const shelf = document.createElement('div');
+  shelf.className = 'shelf';
+  const label = document.createElement('div');
+  label.className = 'shelf-label';
+  label.textContent = '📖 작은 청구기호부터 차례로 클릭하세요 (5권)';
+  shelf.appendChild(label);
+
+  const grid = document.createElement('div');
+  grid.className = 'books-grid';
+
+  // displayOrder 순서대로 카드 생성
+  displayOrder.forEach(function(bookIdx, cardPos){
+    const call = roundBooks[bookIdx];
+    const p = getDisplayParts(call, rt);
+    const card = document.createElement('div');
+    card.className = 'book';
+    card.id = 'card'+cardPos;
+
+    const badge = document.createElement('div');
+    badge.className = 'order-badge';
+    badge.id = 'badge'+cardPos;
+    card.appendChild(badge);
+
+    const numEl = document.createElement('div');
+    numEl.className = 'book-num';
+    numEl.textContent = p.num;
+    card.appendChild(numEl);
+
+    if(p.author){
+      const authEl = document.createElement('div');
+      authEl.className = 'book-author';
+      authEl.textContent = p.author;
+      card.appendChild(authEl);
+    }
+    if(p.vol){
+      const volEl = document.createElement('div');
+      volEl.className = 'book-vol';
+      volEl.textContent = p.vol;
+      card.appendChild(volEl);
+    }
+
+    // 클릭 이벤트: bookIdx(roundBooks 기준)를 클로저로 캡처
+    card.addEventListener('click', (function(bi, cp){
+      return function(){ onCardClick(bi, cp); };
+    })(bookIdx, cardPos));
+
+    grid.appendChild(card);
+  });
+
+  shelf.appendChild(grid);
+  area.appendChild(shelf);
+
+  // 컨트롤
+  const ctrl = document.createElement('div');
+  ctrl.className = 'controls';
+
+  const pw = document.createElement('div');
+  pw.className = 'progress-wrap';
+  const pl = document.createElement('div');
+  pl.className = 'progress-label';
+  pl.textContent = (round-1)+'/5 라운드 완료';
+  const pg = document.createElement('div');
+  pg.className = 'progress';
+  const pf = document.createElement('div');
+  pf.className = 'progress-fill';
+  pf.style.width = Math.round((round-1)/5*100)+'%';
+  pg.appendChild(pf); pw.appendChild(pl); pw.appendChild(pg);
+  ctrl.appendChild(pw);
+
+  const hintBtn = document.createElement('button');
+  hintBtn.className = 'btn hint-btn';
+  hintBtn.textContent = '💡 힌트';
+  hintBtn.addEventListener('click', onHint);
+  ctrl.appendChild(hintBtn);
+
+  const retryBtn = document.createElement('button');
+  retryBtn.className = 'btn retry';
+  retryBtn.textContent = '🔄 다시';
+  retryBtn.addEventListener('click', function(){ startRound(); });
+  ctrl.appendChild(retryBtn);
+
+  area.appendChild(ctrl);
+}
+
+// ── 클릭 처리 ────────────────────────────────────────────
+function onCardClick(bookIdx, cardPos){
+  const card = document.getElementById('card'+cardPos);
+  if(!card || card.classList.contains('correct')) return;
+
+  // 이 카드가 현재 clickedCount번째 정답인지 확인
+  const expectedBookIdx = answerOrder[clickedCount];
+
+  if(bookIdx === expectedBookIdx){
+    // 정답
+    card.classList.add('correct');
+    const badge = document.getElementById('badge'+cardPos);
+    if(badge){ badge.textContent = clickedCount+1; }
+    clickedCount++;
+    showFeedback('success', '✓ 맞아요! '+clickedCount+'번째');
+
+    if(clickedCount === roundBooks.length){
+      const bonus = Math.max(10 - mistakes*2, 1);
+      score += bonus;
+      stageScores[stageIdx] = score;
+      updateHeader();
+      showFeedback('success', '🎉 라운드 완료! +'+bonus+'점 (오답 '+mistakes+'회)');
+      setTimeout(function(){ round++; startRound(); }, 800);
+    }
+  } else {
+    // 오답
+    mistakes++;
+    card.classList.add('wrong');
+    const rt = getRoundType();
+    const p = getDisplayParts(roundBooks[bookIdx], rt);
+    const label = p.num + (p.author?' '+p.author:'') + (p.vol?' '+p.vol:'');
+    showFeedback('error', '✗ 틀렸어요. "'+label+'"은(는) '+(clickedCount+1)+'번째가 아니에요.');
+    setTimeout(function(){ card.classList.remove('wrong'); }, 500);
+  }
+}
+
+function onHint(){
+  const expectedBookIdx = answerOrder[clickedCount];
+  const rt = getRoundType();
+  const p = getDisplayParts(roundBooks[expectedBookIdx], rt);
+  const label = p.num + (p.author?' '+p.author:'') + (p.vol?' '+p.vol:'');
+  mistakes++;
+  // 해당 카드 찾아서 hint 표시
+  displayOrder.forEach(function(bi, cp){
+    const card = document.getElementById('card'+cp);
+    if(!card || card.classList.contains('correct')) return;
+    card.classList.remove('hint');
+    if(bi===expectedBookIdx) card.classList.add('hint');
+  });
+  showFeedback('info', '💡 다음은 "'+label+'" 입니다. (오답 카운트)');
+}
+
+function showFeedback(type, msg){
+  const fb = document.getElementById('feedback');
+  if(!fb) return;
+  fb.className = 'feedback show '+type;
+  fb.textContent = msg;
+}
+
+// ── 단계 완료 ────────────────────────────────────────────
+function showStageClear(){
+  const passed = score >= 30; // 50점 만점의 60%
+  const isLast = stageIdx===1;
+  if(passed && !isLast) unlockedUpTo = 1;
+  updateTabs();
+  if(passed && isLast){ showAllClear(); return; }
+
+  const area = document.getElementById('mainArea');
+  area.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'result pop';
+  div.innerHTML =
+    '<span class="result-icon">'+(passed?'🎉':'😅')+'</span>'+
+    '<div class="result-title">'+(passed?'단계 통과!':'아쉽지만 재도전!')+'</div>'+
+    '<div class="result-sub">'+(passed?'잘 했어요! 다음 단계가 열렸습니다.':'통과 기준은 18점이에요. 다시 도전해봐요!')+'</div>'+
+    '<div class="stat-grid">'+
+      '<div class="stat-card"><div class="stat-val">'+score+'</div><div class="stat-lbl">획득 점수</div></div>'+
+      '<div class="stat-card"><div class="stat-val">30</div><div class="stat-lbl">단계 만점</div></div>'+
+      '<div class="stat-card"><div class="stat-val">'+(passed?'통과 ✓':'미달 ✗')+'</div><div class="stat-lbl">결과</div></div>'+
+    '</div>'+
+    '<div class="btn-row"></div>';
+  area.appendChild(div);
+
+  const btnRow = div.querySelector('.btn-row');
+  if(passed && !isLast){
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn next';
+    nextBtn.textContent = '➡️ 2단계 도전하기';
+    nextBtn.addEventListener('click', function(){ startStage(1); });
+    btnRow.appendChild(nextBtn);
+  }
+  const retryBtn = document.createElement('button');
+  retryBtn.className = 'btn retry';
+  retryBtn.textContent = '🔄 다시 도전';
+  retryBtn.addEventListener('click', function(){ startStage(stageIdx); });
+  btnRow.appendChild(retryBtn);
+}
+
+function showAllClear(){
+  const total = stageScores[0]+stageScores[1];
+  const area = document.getElementById('mainArea');
+  area.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'all-clear pop';
+  div.innerHTML =
+    '<span class="all-clear-icon">🏆</span>'+
+    '<div class="all-clear-title">모든 단계 클리어!</div>'+
+    '<div class="all-clear-sub">축하해요! 1단계부터 2단계까지 모두 통과했어요.<br>청구기호 책꽂기 마스터가 되었습니다! 📚</div>'+
+    '<div style="margin:1rem 0"><div class="stat-lbl" style="margin-bottom:.25rem">최종 총점</div>'+
+    '<div class="total-score">'+total+'<span class="total-max"> / 100</span></div></div>'+
+    '<div class="stage-scores">'+
+      '<div class="stat-card"><div class="stat-val">'+stageScores[0]+'</div><div class="stat-lbl">1단계 (만점 50점)</div></div>'+
+      '<div class="stat-card"><div class="stat-val">'+stageScores[1]+'</div><div class="stat-lbl">2단계 (만점 50점)</div></div>'+
+    '</div>'+
+    '<div class="btn-row"><button class="btn next" onclick="restartAll()">🔄 처음부터 다시</button></div>';
+  area.appendChild(div);
+}
+
+function restartAll(){
+  stageIdx=0; unlockedUpTo=0; stageScores=[0,0];
+  round=1; score=0; mistakes=0;
+  usedExpert={t1:[],t2:[],t3:[]};
+  updateTabs(); startRound();
+}
+
+// ── 시작 ─────────────────────────────────────────────────
+startRound();
+</script>
+</body>
+</html>
