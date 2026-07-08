@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스마트폰 과의존 자가진단 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>스마트폰 과의존 자가진단</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>청소년 스마트폰 과의존 관찰척도(S-척도) 10문항을 활용해, 학생이 스스로 자신의 스마트폰 사용 습관을 점검해볼 수 있도록 만든 자가진단 웹앱입니다. 답변을 마치면 총점과 위험 등급, 세부 요인별 분석 결과를 확인할 수 있으며, 필요한 경우 전문 상담 기관 정보도 함께 안내합니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>10문항 자가진단</b> : 4단계 척도(전혀 그렇지 않다 ~ 매우 그렇다)로 답변, 진행 상황을 프로그레스 바와 문항 인디케이터로 표시</li>
+      <li><b>답변 수정</b> : "이전 질문으로" 버튼이나 상단 문항 인디케이터를 눌러 이미 답한 문항으로 돌아가 수정 가능</li>
+      <li><b>결과 자동 판정</b> : 총점(40점 만점)에 따라 일반 / 잠재적 위험 / 고위험 사용자군으로 자동 분류</li>
+      <li><b>세부 요인별 분석</b> : 조절력 상실(문항 1 · 2), 금단 증상(문항 3 · 4 · 10), 내성 및 일상생활 장애(문항 5~9) 점수를 그래프로 표시</li>
+      <li><b>맞춤 조언</b> : 위험 등급에 맞는 실천 팁과 설명 제공</li>
+      <li><b>결과 복사</b> : 진단 결과를 텍스트로 복사해 공유 가능</li>
+      <li><b>도움 요청 모달</b> : 스마트쉼센터(1599-0075), 청소년상담복지센터(1388) 연락처 및 바로 전화 걸기 버튼 제공</li>
+      <li>익명으로 진행되며, 별도 로그인이나 서버 저장 없이 브라우저에서만 동작</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>인트로 화면에서 "테스트 시작하기" 버튼을 누릅니다.</li>
+      <li>총 10개의 문항에 순서대로 답합니다. 답을 선택하면 자동으로 다음 문항으로 넘어갑니다.</li>
+      <li>이전 문항을 다시 확인하거나 수정하려면 "이전 질문으로" 버튼이나 상단 문항 인디케이터를 사용합니다.</li>
+      <li>마지막 문항까지 답하면 결과 화면이 나타나며, 총점 · 위험 등급 · 세부 요인별 점수를 확인할 수 있습니다.</li>
+      <li>필요하면 "진단 결과 복사하기"로 결과를 텍스트로 복사하거나, "도움 요청하기"로 상담 기관 연락처를 확인합니다.</li>
+      <li>"다시 진단하기"를 누르면 처음부터 새로 진단할 수 있습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>단일 HTML 파일로 구성되어 있으며, Tailwind CSS(CDN)와 Font Awesome 아이콘을 사용합니다. 문항 텍스트와 요인 분류는 <code>questions</code> 배열에 정의되어 있고, JavaScript로 인트로 → 문항 진행 → 결과의 3개 화면을 전환합니다. 답변은 배열 변수에만 저장되며 서버로 전송되거나 저장되지 않습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>이 진단은 자가 점검용 간이 도구이며, 의학적 진단을 대체하지 않습니다.</li>
+        <li>답변 데이터는 저장되지 않으므로 화면을 새로고침하거나 닫으면 진행 내용이 초기화됩니다.</li>
+        <li>고위험군으로 판정된 학생에게는 스마트쉼센터, 청소년상담복지센터(1388) 등 전문 기관 상담을 권유해 주세요.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공부 인증 앱 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>📚 공부 인증 앱</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>학급 학생들이 각자의 공부 스케줄을 등록하고, 정해진 시간에 공부하는 모습을 사진으로 인증해 학급 전체와 실시간으로 공유하는 모바일 웹앱입니다. 서로의 인증 피드를 확인하고 댓글로 응원하며 꾸준한 학습 습관을 만들 수 있도록 돕습니다. 로그인 절차 없이 이름과 컬러만 정하면 바로 사용할 수 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>간편 시작</b> : 이름과 개인 컬러를 선택하면 로그인 없이 바로 사용 (다음 접속부터는 자동으로 로그인)</li>
+      <li><b>요일별 공부 스케줄 등록</b> : 공부하는 요일을 선택하고, 요일마다 시작~종료 시간을 지정</li>
+      <li><b>공부 인증</b> : 공부하는 모습을 사진으로 찍거나 선택하고 한마디 메모를 남겨 인증 게시 (사진은 자동으로 리사이즈되어 업로드됨)</li>
+      <li><b>실시간 피드</b> : 반 전체의 인증 게시물을 실시간으로 확인 (15초 간격 자동 새로고침 백업 포함)</li>
+      <li><b>댓글</b> : 각 인증 게시물에 댓글을 달아 서로 응원</li>
+      <li><b>학급 스케줄 한눈에 보기</b> : 친구들의 요일별 공부 시간과 "오늘 공부하는 친구" 표시 확인</li>
+      <li><b>계정 삭제</b> : 본인의 스케줄 · 인증샷 · 댓글을 한 번에 삭제</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>처음 접속하면 이름을 입력하고 나만의 컬러를 선택합니다.</li>
+      <li>공부하는 요일을 선택하고 요일별 시작~종료 시간을 설정한 뒤 "시작하기"를 누릅니다. (스케줄은 나중에 설정해도 됨)</li>
+      <li>하단 탭에서 <b>피드</b>를 눌러 반 친구들의 인증 현황을 실시간으로 확인합니다.</li>
+      <li><b>인증하기</b> 탭에서 공부하는 모습을 사진으로 찍거나 선택하고, 한마디를 남긴 뒤 "인증 완료"를 누릅니다.</li>
+      <li><b>스케줄</b> 탭에서 내 스케줄을 언제든 수정하거나 친구들의 스케줄을 확인할 수 있습니다.</li>
+      <li>더 이상 사용하지 않을 경우 <b>스케줄</b> 탭 하단의 "내 계정 삭제"로 내 데이터를 정리할 수 있습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>단일 HTML 파일로 구성되어 있으며, Firebase Realtime Database(<code>gonbuhaja</code> 프로젝트)를 데이터 저장소로 사용합니다. 화면은 <code>이름 입력 → 스케줄 설정 → 메인 화면</code> 순서로 전환되고, 메인 화면은 <b>피드 / 인증하기 / 스케줄</b> 3개의 탭으로 구성됩니다. 모든 로직은 하나의 <code>&lt;script&gt;</code> 블록 안에 JavaScript로 작성되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>별도 로그인이 없어 이름만으로 사용자를 구분하므로, 같은 이름을 여러 명이 사용하면 데이터가 섞일 수 있습니다.</li>
+        <li>인증 피드는 최근 100개까지만 보관되며, 그 이전 게시물은 자동으로 삭제됩니다.</li>
+        <li>사진 데이터가 Firebase Realtime Database에 직접 저장되므로, 이미지가 너무 크면 업로드에 실패할 수 있습니다.</li>
+        <li>계정 삭제 시 스케줄 · 인증샷 · 댓글이 모두 삭제되며 복구할 수 없습니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

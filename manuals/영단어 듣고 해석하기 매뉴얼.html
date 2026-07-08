@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영단어 듣고 해석하기 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>영단어 듣고 해석하기</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>원어민 발음(음성합성)을 듣고 알맞은 한국어 뜻을 골라 몬스터와 대결하는 영어 단어 듣기 RPG 게임입니다. 구글 시트에 등록된 영단어를 실시간으로 불러와 문제로 출제하며, 정답을 맞히면 몬스터에게, 틀리면 플레이어에게 피해를 주는 방식으로 진행됩니다. 슬라임 → 골렘 → 드래곤 순으로 등장하는 3단계 몬스터를 모두 물리치면 승리합니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>구글 시트 연동 : 영단어와 한국어 뜻 데이터를 실시간으로 불러와 문제 출제</li>
+      <li>발음 재생 : 브라우저 음성합성(TTS)으로 영단어 발음을 들려주며, "발음 다시 듣기" 버튼으로 반복 청취 가능</li>
+      <li>4지선다 문제 : 정답 뜻 1개 + 오답 뜻 3개를 무작위로 섞어 제시</li>
+      <li>RPG 배틀 방식 : 정답 시 몬스터 체력 -10, 오답 시 플레이어 체력 -10, 피격 시 흔들림 효과</li>
+      <li>3단계 몬스터 : 초급 리스닝 슬라임(40) → 중급 스피킹 골렘(60) → 보스 리스닝 드래곤(100) 순으로 난이도 상승</li>
+      <li>카카오톡 인앱 브라우저 자동 감지 및 외부 브라우저(크롬 등)로 자동 전환, TTS가 지원되지 않는 환경에서는 네이버 사전 발음 API로 대체 재생</li>
+      <li>승리 · 패배 화면과 "다시 도전하기" 버튼으로 재도전</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>접속하면 구글 시트에서 단어 데이터를 불러온 뒤 "게임 시작하기" 버튼이 표시됩니다.</li>
+      <li>"게임 시작하기"를 누르면 첫 번째 몬스터(슬라임)와의 대결이 시작됩니다.</li>
+      <li>"🔊 발음 다시 듣기" 버튼을 눌러 영단어 발음을 듣습니다. (문제가 나올 때 자동으로 한 번 재생됨)</li>
+      <li>4개의 보기 중 알맞은 한국어 뜻을 선택합니다. 정답이면 몬스터 체력이, 오답이면 내 체력이 10 줄어듭니다.</li>
+      <li>몬스터 체력을 모두 없애면 다음 스테이지(몬스터)로 넘어가고, 3단계 몬스터(드래곤)까지 모두 물리치면 승리합니다.</li>
+      <li>내 체력이 0이 되면 패배 화면이 뜨며, "다시 도전하기" 버튼으로 처음부터 다시 시작할 수 있습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>(서버 로직)와 <code>index.html</code>(게임 화면 전체) 두 파일로 이루어져 있습니다. <code>code.gs</code>의 <code>getVocabData()</code>가 연결된 구글 시트의 활성 시트에서 2행부터 75행까지, B~E열(번호 · 단어 · 발음 · 뜻) 범위를 읽어 영단어와 뜻 목록을 전달합니다. <code>index.html</code>은 문제 출제, 보기 셔플, 체력 계산, TTS 발음 재생, 화면 전환(대기→배틀→결과)을 모두 JavaScript로 처리합니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>문제 데이터는 연결된 구글 시트의 B(번호) · C(영어단어) · D(한글발음) · E(한국어뜻) 열, 2~75행 범위에서 읽어오므로, 단어를 추가 · 수정할 때는 이 범위와 열 위치를 지켜야 합니다.</li>
+        <li>시트에서 단어를 하나도 가져오지 못하면 "시트에서 영단어를 가져오지 못했습니다"라는 안내와 함께 게임이 시작되지 않습니다.</li>
+        <li>카카오톡 인앱 브라우저에서는 음성합성이 제한되어 자동으로 외부 브라우저로 전환을 시도하며, 그래도 TTS가 동작하지 않으면 네이버 사전 발음 API로 대체 재생됩니다.</li>
+        <li>정답과 오답 모두 체력이 10씩 변하는 고정 데미지 방식이므로, 몬스터 체력(40/60/100)에 따라 필요한 정답 수가 달라집니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

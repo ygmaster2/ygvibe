@@ -1,0 +1,728 @@
+<code.gs>
+// Code.gs
+
+// 1. 웹 화면 초기 설정 (명칭 변경 반영)
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('시약 관리 프로그램')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// 2. 관리자 비밀번호 확인
+function verifyAdminPin(pin) {
+  return pin === "17752";
+}
+
+// 3. 사용자용 시약 목록 가져오기
+function getReagentList(category) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(category);
+  if (!sheet) return [];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return [];
+  
+  var data = sheet.getRange(3, 2, lastRow - 2, 7).getValues(); 
+  var list = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] !== "" && data[i][1] !== "") { // 순번과 이름이 있는 경우만
+      list.push({
+        id: data[i][0],      // B열
+        name: data[i][1],    // C열
+        remain: data[i][6],  // H열
+        rowIndex: i + 3
+      });
+    }
+  }
+  return list;
+}
+
+// 4. 사용 기록 제출 및 잔량 차감
+function submitUsage(date, category, reagentId, reagentName, amount, user) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logSheet = ss.getSheetByName('사용기록');
+  var categorySheet = ss.getSheetByName(category);
+  
+  logSheet.appendRow([date, reagentId, reagentName, amount, user]);
+  
+  var data = categorySheet.getRange(3, 2, Math.max(1, categorySheet.getLastRow() - 2), 7).getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] == reagentId) {
+      var currentRow = i + 3;
+      var newRemain = Number(data[i][6]) - Number(amount);
+      categorySheet.getRange(currentRow, 8).setValue(newRemain);
+      break;
+    }
+  }
+  return "기록되었습니다.";
+}
+
+// 5. 관리자 데이터 로드 (문제 1, 2 해결)
+function getSheetDataForAdmin(sheetName) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  var rawData = [];
+  var lastRow = sheet.getLastRow();
+  
+  if (sheetName === '사용기록') {
+    // 문제 1: 3행부터 5열까지 가져오기 (A3:E3가 헤더)
+    rawData = sheet.getRange(3, 1, Math.max(1, lastRow - 2), 5).getDisplayValues();
+  } else {
+    // B2부터 H열까지 (2행이 헤더)
+    rawData = sheet.getRange(2, 2, Math.max(1, lastRow - 1), 7).getDisplayValues();
+  }
+
+  // 문제 2: 내용이 없는 행(공란) 생략 필터링
+  var filteredData = rawData.filter(function(row, index) {
+    if (index === 0) return true; // 헤더는 유지
+    return row.join("").trim() !== ""; // 행 전체가 비어있지 않은 경우만 포함
+  });
+
+  return filteredData;
+}
+
+// 6. 관리자 모드: 시약 추가 기능 (문제 3 해결)
+function addReagentByAdmin(category, reagentData) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(category);
+  if (!sheet) return "시트를 찾을 수 없습니다.";
+
+  // 양식: A(분류), B(순번), C(시약명), D(화합물), E(용량), F(날짜), G(초기량), H(잔량)
+  sheet.appendRow([
+    category,
+    reagentData.id,
+    reagentData.name,
+    reagentData.compound,
+    reagentData.capacity,
+    reagentData.date,
+    reagentData.initial,
+    reagentData.initial // 초기 잔량은 초기량과 동일하게 세팅
+  ]);
+  return category + " 카테고리에 추가되었습니다.";
+}
+
+// 7. 수정 및 삭제
+function updateReagentByAdmin(sheetName, rowIndex, newAmount, isDelete) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (isDelete) {
+    sheet.deleteRow(rowIndex);
+    return "삭제되었습니다.";
+  } else {
+    var col = (sheetName === '사용기록') ? 4 : 8;
+    sheet.getRange(rowIndex, col).setValue(newAmount);
+    return "수정되었습니다.";
+  }
+}
+
+// Code.gs
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('시약 관리 프로그램')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function verifyAdminPin(pin) {
+  return pin === "17752";
+}
+
+// 사용자용 시약 목록
+function getReagentList(category) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(category);
+  if (!sheet) return [];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return [];
+  var data = sheet.getRange(3, 2, lastRow - 2, 7).getValues(); 
+  var list = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] !== "" && data[i][1] !== "") {
+      list.push({ id: data[i][0], name: data[i][1], remain: data[i][6] });
+    }
+  }
+  return list;
+}
+
+// 사용 기록 제출
+function submitUsage(date, category, reagentId, reagentName, amount, user) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logSheet = ss.getSheetByName('사용기록');
+  var catSheet = ss.getSheetByName(category);
+  logSheet.appendRow([date, reagentId, reagentName, amount, user]);
+  
+  var data = catSheet.getRange(3, 2, Math.max(1, catSheet.getLastRow() - 2), 7).getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] == reagentId) {
+      catSheet.getRange(i + 3, 8).setValue(Number(data[i][6]) - Number(amount));
+      break;
+    }
+  }
+  SpreadsheetApp.flush(); // 시트에 즉시 반영
+  return "기록되었습니다.";
+}
+
+// 관리자 데이터 로드 (핵심 수정: 실제 행 번호 포함)
+function getSheetDataForAdmin(sheetName) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  var lastRow = sheet.getLastRow();
+  var startRow = (sheetName === '사용기록') ? 3 : 2;
+  var numCols = (sheetName === '사용기록') ? 5 : 7;
+  var startCol = (sheetName === '사용기록') ? 1 : 2;
+  
+  if (lastRow < startRow) return [];
+  var values = sheet.getRange(startRow, startCol, lastRow - startRow + 1, numCols).getDisplayValues();
+  
+  var filteredData = [];
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
+    var actualRowIndex = startRow + i; // 시트상의 실제 행 번호 계산
+    
+    // 헤더이거나 내용이 있는 행만 포함
+    if (i === 0 || row.join("").trim() !== "") {
+      var rowWithIndex = row.slice(); 
+      rowWithIndex.push(actualRowIndex); // 배열의 마지막에 실제 인덱스 숨겨서 전달
+      filteredData.push(rowWithIndex);
+    }
+  }
+  return filteredData;
+}
+
+// 시약 추가 (연동 강화)
+function addReagentByAdmin(category, reagentData) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(category);
+  if (!sheet) return "시트를 찾을 수 없습니다.";
+
+  sheet.appendRow([
+    category,
+    reagentData.id,
+    reagentData.name,
+    reagentData.compound,
+    reagentData.capacity,
+    reagentData.date,
+    reagentData.initial,
+    reagentData.initial
+  ]);
+  
+  SpreadsheetApp.flush(); // 중요: 이 명령어가 있어야 구글 시트와 즉시 연동됩니다.
+  return category + " 시트에 성공적으로 연동 및 추가되었습니다.";
+}
+
+function updateReagentByAdmin(sheetName, rowIndex, newAmount, isDelete) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (isDelete) {
+    sheet.deleteRow(rowIndex);
+    return "삭제되었습니다.";
+  } else {
+    var col = (sheetName === '사용기록') ? 4 : 8;
+    sheet.getRange(rowIndex, col).setValue(newAmount);
+    SpreadsheetApp.flush();
+    return "수정되었습니다.";
+  }
+}
+// Code.gs
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('시약 관리 프로그램')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function verifyAdminPin(pin) {
+  return pin === "17752";
+}
+
+// 사용자용 시약 목록 가져오기
+function getReagentList(category) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(category);
+  if (!sheet) return [];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return [];
+  var data = sheet.getRange(3, 2, lastRow - 2, 7).getValues(); 
+  var list = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] !== "" && data[i][1] !== "") {
+      list.push({ id: data[i][0], name: data[i][1], remain: data[i][6] });
+    }
+  }
+  return list;
+}
+
+// 사용 기록 제출
+function submitUsage(date, category, reagentId, reagentName, amount, user) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logSheet = ss.getSheetByName('사용기록');
+  var catSheet = ss.getSheetByName(category);
+  logSheet.appendRow([date, reagentId, reagentName, amount, user]);
+  
+  var data = catSheet.getRange(3, 2, Math.max(1, catSheet.getLastRow() - 2), 7).getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] == reagentId) {
+      catSheet.getRange(i + 3, 8).setValue(Number(data[i][6]) - Number(amount));
+      break;
+    }
+  }
+  SpreadsheetApp.flush(); 
+  return "기록되었습니다.";
+}
+
+// 관리자 데이터 로드 (실제 행 번호 포함)
+function getSheetDataForAdmin(sheetName) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  var lastRow = sheet.getLastRow();
+  var startRow = (sheetName === '사용기록') ? 3 : 2;
+  var numCols = (sheetName === '사용기록') ? 5 : 7;
+  var startCol = (sheetName === '사용기록') ? 1 : 2;
+  
+  if (lastRow < startRow) return [];
+  var values = sheet.getRange(startRow, startCol, lastRow - startRow + 1, numCols).getDisplayValues();
+  
+  var filteredData = [];
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
+    var actualRowIndex = startRow + i; 
+    
+    if (i === 0 || row.join("").trim() !== "") {
+      var rowWithIndex = row.slice(); 
+      rowWithIndex.push(actualRowIndex); 
+      filteredData.push(rowWithIndex);
+    }
+  }
+  return filteredData;
+}
+
+// 시약 추가
+function addReagentByAdmin(category, reagentData) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(category);
+  if (!sheet) return "시트를 찾을 수 없습니다.";
+
+  sheet.appendRow([
+    category,
+    reagentData.id,
+    reagentData.name,
+    reagentData.compound,
+    reagentData.capacity,
+    reagentData.date,
+    reagentData.initial,
+    reagentData.initial
+  ]);
+  
+  SpreadsheetApp.flush(); 
+  return category + " 시트에 추가되었습니다.";
+}
+
+// 수정 및 삭제 통합 함수 (연동 강화)
+function updateReagentByAdmin(sheetName, rowIndex, newAmount, isDelete) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (isDelete) {
+    sheet.deleteRow(rowIndex);
+    SpreadsheetApp.flush(); // 삭제 즉시 연동
+    return "시트에서 행이 삭제되었습니다.";
+  } else {
+    var col = (sheetName === '사용기록') ? 4 : 8;
+    sheet.getRange(rowIndex, col).setValue(newAmount);
+    SpreadsheetApp.flush();
+    return "수정되었습니다.";
+  }
+}
+
+// Code.gs
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('시약 관리 프로그램')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1'); // 모바일 최적화 태그 추가
+}
+
+function verifyAdminPin(pin) {
+  return pin === "17752";
+}
+
+function getReagentList(category) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(category);
+  if (!sheet) return [];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return [];
+  var data = sheet.getRange(3, 2, lastRow - 2, 7).getValues(); 
+  var list = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] !== "" && data[i][1] !== "") {
+      list.push({ id: data[i][0], name: data[i][1], remain: data[i][6] });
+    }
+  }
+  return list;
+}
+
+function submitUsage(date, category, reagentId, reagentName, amount, user) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logSheet = ss.getSheetByName('사용기록');
+  var catSheet = ss.getSheetByName(category);
+  logSheet.appendRow([date, reagentId, reagentName, amount, user]);
+  
+  var data = catSheet.getRange(3, 2, Math.max(1, catSheet.getLastRow() - 2), 7).getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] == reagentId) {
+      catSheet.getRange(i + 3, 8).setValue(Number(data[i][6]) - Number(amount));
+      break;
+    }
+  }
+  SpreadsheetApp.flush(); 
+  return "기록되었습니다.";
+}
+
+function getSheetDataForAdmin(sheetName) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  var lastRow = sheet.getLastRow();
+  var startRow = (sheetName === '사용기록') ? 3 : 2;
+  var numCols = (sheetName === '사용기록') ? 5 : 7;
+  var startCol = (sheetName === '사용기록') ? 1 : 2;
+  
+  if (lastRow < startRow) return [];
+  var values = sheet.getRange(startRow, startCol, lastRow - startRow + 1, numCols).getDisplayValues();
+  
+  var filteredData = [];
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
+    var actualRowIndex = startRow + i; 
+    if (i === 0 || row.join("").trim() !== "") {
+      var rowWithIndex = row.slice(); 
+      rowWithIndex.push(actualRowIndex); 
+      filteredData.push(rowWithIndex);
+    }
+  }
+  return filteredData;
+}
+
+function addReagentByAdmin(category, reagentData) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(category);
+  if (!sheet) return "시트를 찾을 수 없습니다.";
+  sheet.appendRow([category, reagentData.id, reagentData.name, reagentData.compound, reagentData.capacity, reagentData.date, reagentData.initial, reagentData.initial]);
+  SpreadsheetApp.flush(); 
+  return category + " 시트에 추가되었습니다.";
+}
+
+function updateReagentByAdmin(sheetName, rowIndex, newAmount, isDelete) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (isDelete) {
+    sheet.deleteRow(rowIndex);
+    SpreadsheetApp.flush();
+    return "삭제되었습니다.";
+  } else {
+    var col = (sheetName === '사용기록') ? 4 : 8;
+    sheet.getRange(rowIndex, col).setValue(newAmount);
+    SpreadsheetApp.flush();
+    return "수정되었습니다.";
+  }
+}
+
+// Code.gs
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('시약 관리 프로그램')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// 스프레드시트 URL 가져오기 함수 추가
+function getSpreadsheetUrl() {
+  return SpreadsheetApp.getActiveSpreadsheet().getUrl();
+}
+
+function verifyAdminPin(pin) {
+  return pin === "17752";
+}
+
+function getReagentList(category) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(category);
+  if (!sheet) return [];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return [];
+  var data = sheet.getRange(3, 2, lastRow - 2, 7).getValues(); 
+  var list = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] !== "" && data[i][1] !== "") {
+      list.push({ id: data[i][0], name: data[i][1], remain: data[i][6] });
+    }
+  }
+  return list;
+}
+
+function submitUsage(date, category, reagentId, reagentName, amount, user) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logSheet = ss.getSheetByName('사용기록');
+  var catSheet = ss.getSheetByName(category);
+  logSheet.appendRow([date, reagentId, reagentName, amount, user]);
+  
+  var data = catSheet.getRange(3, 2, Math.max(1, catSheet.getLastRow() - 2), 7).getValues();
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] == reagentId) {
+      catSheet.getRange(i + 3, 8).setValue(Number(data[i][6]) - Number(amount));
+      break;
+    }
+  }
+  SpreadsheetApp.flush(); 
+  return "기록되었습니다.";
+}
+
+function getSheetDataForAdmin(sheetName) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  var lastRow = sheet.getLastRow();
+  var startRow = (sheetName === '사용기록') ? 3 : 2;
+  var numCols = (sheetName === '사용기록') ? 5 : 7;
+  var startCol = (sheetName === '사용기록') ? 1 : 2;
+  
+  if (lastRow < startRow) return [];
+  var values = sheet.getRange(startRow, startCol, lastRow - startRow + 1, numCols).getDisplayValues();
+  
+  var filteredData = [];
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
+    var actualRowIndex = startRow + i; 
+    if (i === 0 || row.join("").trim() !== "") {
+      var rowWithIndex = row.slice(); 
+      rowWithIndex.push(actualRowIndex); 
+      filteredData.push(rowWithIndex);
+    }
+  }
+  return filteredData;
+}
+
+function addReagentByAdmin(category, reagentData) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(category);
+  if (!sheet) return "시트를 찾을 수 없습니다.";
+  sheet.appendRow([category, reagentData.id, reagentData.name, reagentData.compound, reagentData.capacity, reagentData.date, reagentData.initial, reagentData.initial]);
+  SpreadsheetApp.flush(); 
+  return category + " 시트에 추가되었습니다.";
+}
+
+function updateReagentByAdmin(sheetName, rowIndex, newAmount, isDelete) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (isDelete) {
+    sheet.deleteRow(rowIndex);
+    SpreadsheetApp.flush();
+    return "삭제되었습니다.";
+  } else {
+    var col = (sheetName === '사용기록') ? 4 : 8;
+    sheet.getRange(rowIndex, col).setValue(newAmount);
+    SpreadsheetApp.flush();
+    return "수정되었습니다.";
+  }
+}
+
+
+<index.html>
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
+    .container { max-width: 600px; margin: 10px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); box-sizing: border-box; }
+    .admin-container { max-width: 1000px; display: none; }
+    h2 { color: #2c3e50; text-align: center; font-size: 1.4rem; margin-top: 0; }
+    label { font-weight: bold; margin-top: 12px; display: block; color: #34495e; }
+    input, select { width: 100%; padding: 12px; margin-top: 6px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+    button { background-color: #3498db; color: white; border: none; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 5px; transition: background 0.3s; }
+    button:active { background-color: #2980b9; }
+
+    /* [새로운 스타일] PIN 입력 모달 창 */
+    #pin-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+    .modal-content { background-color: white; margin: 30% auto; padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; }
+    .modal-content h3 { margin-top: 0; color: #2c3e50; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-cancel { background-color: #95a5a6; }
+
+    /* 관리자 탭 및 테이블 */
+    .add-box { background: #ebf5fb; padding: 15px; border-radius: 8px; border: 1px solid #3498db; margin-bottom: 20px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .row div { flex: 1; min-width: 120px; }
+    .tab { display: flex; overflow-x: auto; background-color: #f1f1f1; border-radius: 8px 8px 0 0; }
+    .tab button { flex: 1; min-width: 80px; background-color: inherit; border: none; padding: 12px 5px; font-size: 14px; color: #7f8c8d; border-bottom: 3px solid transparent; }
+    .tab button.active { background-color: white; color: #3498db; border-bottom: 3px solid #3498db; border-radius: 0; }
+    .tabcontent { display: none; padding: 15px; border: 1px solid #ccc; border-top: none; background: white; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background-color: #f8f9fa; }
+    .action-btn { width: auto; padding: 6px 10px; font-size: 12px; margin: 2px; display: inline-block; }
+    .btn-edit { background-color: #f1c40f; color: black; }
+    .btn-delete { background-color: #e74c3c; color: white; }
+
+    @media (max-width: 480px) { .container { padding: 15px; } }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="user-view">
+    <h2>🧪 시약 관리 프로그램</h2>
+    <label>사용 날짜</label><input type="date" id="use-date">
+    <label>시약 분류</label>
+    <select id="category" onchange="loadReagents()">
+      <option value="">분류 선택</option>
+      <option value="산">산</option><option value="염기">염기</option><option value="유기">유기</option><option value="무기">무기</option>
+    </select>
+    <label>사용 시약 (순번, 이름)</label>
+    <select id="reagent-select"></select>
+    <label>사용량 (g/mL)</label><input type="number" id="amount" placeholder="숫자만 입력">
+    <label>사용자</label><input type="text" id="user-info" placeholder="예시 3700 이주현">
+    <button onclick="submitData()">기록 제출하기</button>
+    <button style="background-color: #7f8c8d; margin-top: 15px;" onclick="showPinModal()">⚙️ 관리자 모드 접속</button>
+  </div>
+
+  <div id="pin-modal">
+    <div class="modal-content">
+      <h3>🔐 PIN번호 입력</h3>
+      <input type="password" id="pin-input" placeholder="숫자 5자리" inputmode="numeric">
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closePinModal()">취소</button>
+        <button onclick="checkAdminPin()">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container admin-container" id="admin-view">
+    <h2>👑 관리자 대시보드</h2>
+    <button id="go-to-sheet-btn" style="background-color: #27ae60; margin-bottom: 15px; font-size: 14px;" onclick="openSpreadsheet()">📊 구글 스프레드시트 바로가기</button>
+
+    <div class="add-box">
+      <h3>➕ 새 시약 추가</h3>
+      <div class="row">
+        <div><label>분류</label><select id="add-cat"><option value="산">산</option><option value="염기">염기</option><option value="유기">유기</option><option value="무기">무기</option></select></div>
+        <div><label>순번</label><input type="text" id="add-id" placeholder="예: 2026-산-1"></div>
+        <div><label>시약명</label><input type="text" id="add-name"></div>
+      </div>
+      <div class="row">
+        <div><label>화합물</label><input type="text" id="add-comp"></div>
+        <div><label>용량</label><input type="text" id="add-cap"></div>
+        <div><label>초기량</label><input type="number" id="add-init"></div>
+      </div>
+      <button style="background-color: #3498db;" onclick="addNewReagent()">구글 시트에 즉시 추가</button>
+    </div>
+
+    <div class="tab">
+      <button class="tablinks active" onclick="openTab(event, '사용기록')">사용기록</button>
+      <button class="tablinks" onclick="openTab(event, '산')">산</button>
+      <button class="tablinks" onclick="openTab(event, '염기')">염기</button>
+      <button class="tablinks" onclick="openTab(event, '유기')">유기</button>
+      <button class="tablinks" onclick="openTab(event, '무기')">무기</button>
+    </div>
+
+    <div id="사용기록" class="tabcontent" style="display:block;"></div>
+    <div id="산" class="tabcontent"></div>
+    <div id="염기" class="tabcontent"></div>
+    <div id="유기" class="tabcontent"></div>
+    <div id="무기" class="tabcontent"></div>
+
+    <button style="background-color:#e74c3c; margin-top:20px;" onclick="location.reload()">🚪 로그아웃</button>
+  </div>
+
+  <script>
+    document.getElementById('use-date').valueAsDate = new Date();
+    var currentReagentList = [];
+    var spreadsheetUrl = "";
+
+    // PIN 모달 제어 함수
+    function showPinModal() {
+      document.getElementById('pin-modal').style.display = 'block';
+      document.getElementById('pin-input').focus();
+    }
+    function closePinModal() {
+      document.getElementById('pin-modal').style.display = 'none';
+      document.getElementById('pin-input').value = '';
+    }
+
+    function checkAdminPin() {
+      var pin = document.getElementById('pin-input').value;
+      google.script.run.withSuccessHandler(function(ok){
+        if(ok){ 
+          closePinModal();
+          document.getElementById('user-view').style.display='none'; 
+          document.getElementById('admin-view').style.display='block'; 
+          loadAdminData('사용기록');
+          // 관리자 진입 시 시트 URL 미리 가져오기
+          google.script.run.withSuccessHandler(function(url){ spreadsheetUrl = url; }).getSpreadsheetUrl();
+        } else {
+          alert("PIN 번호가 일치하지 않습니다.");
+          document.getElementById('pin-input').value = '';
+        }
+      }).verifyAdminPin(pin);
+    }
+
+    function openSpreadsheet() {
+      if(spreadsheetUrl) window.open(spreadsheetUrl, '_blank');
+      else alert("주소를 불러오는 중입니다. 잠시 후 다시 클릭해주세요.");
+    }
+
+    // 기존 함수들 (변경 없음)
+    function loadReagents() {
+      var cat = document.getElementById('category').value;
+      var sel = document.getElementById('reagent-select');
+      sel.innerHTML = '<option value="">데이터 불러오는 중...</option>';
+      google.script.run.withSuccessHandler(function(list) {
+        currentReagentList = list;
+        sel.innerHTML = '<option value="">시약 선택 (순번, 이름)</option>';
+        list.forEach(function(item) {
+          sel.innerHTML += `<option value="${item.id}">${item.id}, ${item.name} (잔량: ${item.remain})</option>`;
+        });
+      }).getReagentList(cat);
+    }
+
+    function submitData() {
+      var date = document.getElementById('use-date').value, cat = document.getElementById('category').value, id = document.getElementById('reagent-select').value, amt = document.getElementById('amount').value, user = document.getElementById('user-info').value;
+      if(!id || !amt || !user) return alert("모든 항목을 입력해주세요.");
+      var name = currentReagentList.find(i => i.id === id).name;
+      google.script.run.withSuccessHandler(function(m){ alert(m); loadReagents(); }).submitUsage(date, cat, id, name, amt, user);
+    }
+
+    function addNewReagent() {
+      var cat = document.getElementById('add-cat').value;
+      var data = { id: document.getElementById('add-id').value, name: document.getElementById('add-name').value, compound: document.getElementById('add-comp').value, capacity: document.getElementById('add-cap').value, initial: document.getElementById('add-init').value, date: new Date().toLocaleDateString() };
+      if(!data.id || !data.name) return alert("순번과 시약명은 필수입니다.");
+      google.script.run.withSuccessHandler(function(m){ alert(m); loadAdminData(cat); }).addReagentByAdmin(cat, data);
+    }
+
+    function openTab(evt, name) {
+      var links = document.getElementsByClassName("tablinks");
+      for (var i=0; i<links.length; i++) links[i].className = links[i].className.replace(" active", "");
+      var contents = document.getElementsByClassName("tabcontent");
+      for (var i=0; i<contents.length; i++) contents[i].style.display = "none";
+      document.getElementById(name).style.display = "block";
+      evt.currentTarget.className += " active";
+      loadAdminData(name);
+    }
+
+    function loadAdminData(name) {
+      var div = document.getElementById(name);
+      div.innerHTML = "<p style='text-align:center;'>연동 중...</p>";
+      google.script.run.withSuccessHandler(function(data){
+        var html = "<table>";
+        data.forEach(function(row, i){
+          var actualRow = row.pop();
+          html += "<tr>";
+          row.forEach(function(cell){ html += (i===0) ? `<th>${cell}</th>` : `<td>${cell}</td>`; });
+          if(i===0) html += "<th>관리</th>";
+          else {
+            html += `<td>
+              <button class='action-btn btn-edit' onclick='editRow("${name}",${actualRow})'>수정</button>
+              <button class='action-btn btn-delete' onclick='deleteRow("${name}",${actualRow})'>삭제</button>
+            </td>`;
+          }
+          html += "</tr>";
+        });
+        div.innerHTML = html + "</table>";
+      }).getSheetDataForAdmin(name);
+    }
+
+    function editRow(name, row) {
+      var val = prompt("수정할 수치를 입력하세요:");
+      if(val) google.script.run.withSuccessHandler(function(m){ alert(m); loadAdminData(name); }).updateReagentByAdmin(name, row, val, false);
+    }
+
+    function deleteRow(name, row) {
+      if(confirm("이 행을 삭제하시겠습니까? 시트에서도 삭제됩니다.")) {
+        google.script.run.withSuccessHandler(function(m){ alert(m); loadAdminData(name); }).updateReagentByAdmin(name, row, 0, true);
+      }
+    }
+  </script>
+</body>
+</html>

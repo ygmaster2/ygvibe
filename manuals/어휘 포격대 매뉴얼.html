@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>어휘 포격대 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>어휘 포격대</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>지문 속 문맥상 알맞은 어휘를 골라 성벽을 포격해 무너뜨리는 게임형 어휘 학습 프로그램입니다. 구글 시트에 등록된 여러 문제 중 매번 무작위로 10문항을 뽑아 진행하며, 제한 시간 안에 정답을 맞히면 포격에 성공해 성벽이 조금씩 무너지고 점수를 얻습니다. 게임이 끝나면 최종 점수를 명예의 전당(Top 100 랭킹)에 등록할 수 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>무작위 출제</b> : 구글 시트 첫 번째 탭에 등록된 문제 중 매 게임마다 10문항을 무작위로 선정 (문항 순서, 보기 순서도 매번 셔플)</li>
+      <li><b>포격 시스템</b> : 정답을 고르면 대포가 발사되어 성벽에 명중, 폭발 이펙트와 함께 성벽이 파손됨 (문항 수만큼 균등하게 파손율이 누적되며 10단계 그래픽으로 성벽 상태가 변화)</li>
+      <li><b>제한 시간</b> : 문항마다 시간 게이지가 줄어들며, 시간이 다 되면 오답(방어 성공, 포격 실패)으로 처리됨</li>
+      <li><b>오답 페널티</b> : 오답을 고르면 해당 보기가 "파손"되어 다시 선택할 수 없고, 남은 시간이 절반으로 줄어들며 잠시 조작이 잠김</li>
+      <li><b>점수 시스템</b> : 정답 시 남은 시간에 비례한 기본 점수 + 누적 성벽 파손율이 60/70/80/90/100%를 처음 넘을 때마다 1,000~5,000점의 구간 보너스 획득</li>
+      <li>배경음악, 포격 · 오발 · 승리 효과음과 음소거 · 음량 조절 기능</li>
+      <li>게임 종료 후 최종 파손율과 점수를 확인하고, 이니셜(최대 10자)로 명예의 전당(Top 100 랭킹)에 점수 등록 가능</li>
+      <li>"재작전 개시" 버튼으로 처음부터 다시 도전</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>게임이 로딩되면(구글 연동 대기) 화면을 한 번 클릭해 배경음악을 재생합니다.</li>
+      <li>화면에 표시된 문장의 빈칸 <code>[ ? ]</code>에 들어갈 알맞은 어휘를 하단 4개의 "포탄" 버튼 중에서 고릅니다.</li>
+      <li>정답을 고르면 대포가 발사되어 성벽에 명중하고, 남은 시간에 따라 점수를 얻습니다.</li>
+      <li>오답을 고르면 해당 포탄이 불발되고 남은 시간이 절반으로 줄어들며, 잠시 후 남은 보기로 다시 시도할 수 있습니다.</li>
+      <li>제한 시간이 다 되거나 정답을 맞히면 해설 팝업이 뜨고, "NEXT ATTACK" 버튼으로 다음 문제로 넘어갑니다.</li>
+      <li>10문항을 모두 마치면 최종 파손율과 점수가 표시되며, 이니셜을 입력하고 "기록 등재"를 눌러 명예의 전당에 점수를 올릴 수 있습니다.</li>
+      <li>다시 도전하려면 "재작전 개시" 버튼을 누릅니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>(서버 로직)와 <code>index.html</code>(게임 화면 전체) 두 파일로 이루어져 있습니다. <code>code.gs</code>의 <code>getQuizData()</code>가 연결된 구글 시트 첫 번째 탭에서 문제(문장 · 보기 4개 · 정답 번호 · 해설 등)를 읽어 무작위로 섞은 뒤 10문항을 뽑아 전달하고, <code>getRankingSheet()</code>/<code>submitScore()</code>/<code>getTopRankings()</code>가 <code>Ranking</code> 시트를 자동으로 만들고 점수를 기록 · 조회합니다. <code>index.html</code>은 포격 애니메이션, 성벽 상태(10단계 SVG), 타이머, 점수 · 보너스 계산, 사운드 재생 등을 모두 JavaScript로 처리합니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>문제 데이터는 연결된 구글 시트 첫 번째 탭에서 관리하며, A(번호) · B(출처) · C(문장, "[ ? ]" 표시 포함) · D~G(보기 1~4) · H(정답 번호) · I(해설) 형식이어야 합니다. 데이터가 없으면 안내용 샘플 문제 1개로 대체됩니다.</li>
+        <li>반드시 Google Apps Script 배포 설정에서 "액세스 권한: 모든 사용자"로 배포된 웹앱 링크로 접속해야 정상 작동하며, 그렇지 않으면 데이터 로딩 오류가 발생할 수 있습니다.</li>
+        <li>명예의 전당 랭킹은 <code>Ranking</code> 시트에 저장되며, 시트가 없으면 최초 실행 시 자동으로 생성됩니다.</li>
+        <li>오답 시 남은 시간이 절반으로 줄어드는 페널티가 있으므로, 신중하게 답을 선택하는 것이 유리합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

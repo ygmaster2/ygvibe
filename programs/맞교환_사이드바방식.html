@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>선택과목 맞교환 신청 관리부 (사이드바)</title>
+<style>
+
+:root{
+  --ink:#1c2a3a; --paper:#fbfaf7; --line:#d8d4ca;
+  --navy:#274472; --seal:#c0392b; --approve:#1e7d51; --wait:#b07d12; --soft:#eef0ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  background:var(--paper);color:var(--ink);padding:20px 14px 60px;line-height:1.55}
+.wrap{max-width:1100px;margin:0 auto}
+
+header{border-bottom:3px double var(--navy);padding-bottom:12px;margin-bottom:16px;
+  display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px}
+header h1{font-size:1.4rem;letter-spacing:.04em;color:var(--navy)}
+header .sub{font-size:.83rem;color:#6b7280}
+
+.notice{font-size:.8rem;background:#eef3fb;border:1px solid #b8cce8;border-radius:7px;
+  padding:8px 13px;margin-bottom:14px;color:#274472}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.stat .lbl{font-size:.76rem;color:#6b7280}
+.stat .num{font-size:1.55rem;font-weight:700}
+.st-wait .num{color:var(--wait)} .st-ok .num{color:var(--approve)} .st-no .num{color:var(--seal)}
+
+fieldset{border:1px solid var(--line);border-radius:8px;background:#fff;padding:15px;margin-bottom:18px}
+legend{padding:0 8px;font-weight:700;color:var(--navy);font-size:.93rem}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sbox{border:1px dashed var(--line);border-radius:7px;padding:11px}
+.sbox h3{font-size:.82rem;color:var(--navy);margin-bottom:7px}
+.sbox h3 .tag{font-size:.68rem;font-weight:700;color:#fff;background:var(--navy);border-radius:4px;padding:1px 6px;margin-right:4px}
+.sbox.b h3 .tag{background:#7a8aa6}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 2fr;gap:7px}
+.grid1{display:grid;grid-template-columns:1fr;gap:7px;margin-top:7px}
+.flabel{font-size:.74rem;color:#4b5563;display:block;margin-bottom:2px}
+input,select,button{font:inherit}
+input,select{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:5px;background:#fff}
+input:focus,select:focus{outline:2px solid var(--navy);outline-offset:1px}
+.hint{margin-top:9px;text-align:center;font-size:.81rem;color:#6b7280;
+  background:var(--soft);border-radius:6px;padding:6px;min-height:28px}
+.hint strong{color:var(--navy)}
+.common{display:grid;grid-template-columns:180px 1fr;gap:9px;margin-top:11px}
+.actions{margin-top:11px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.btn{padding:8px 16px;border:1px solid var(--navy);border-radius:5px;background:var(--navy);
+  color:#fff;cursor:pointer;font-weight:600;font-size:.9rem}
+.btn:hover{filter:brightness(1.13)}
+.btn.ghost{background:#fff;color:var(--navy)}
+.btn.sm{padding:4px 10px;font-size:.79rem;font-weight:500}
+.btn.danger{border-color:var(--seal);color:var(--seal);background:#fff}
+.btn.warn{border-color:var(--wait);color:var(--wait);background:#fff}
+
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
+  border:1px solid var(--line);border-radius:999px;background:var(--soft);font-size:.81rem}
+.chip button{border:none;background:none;color:var(--seal);cursor:pointer;font-weight:700;font-size:.83rem;line-height:1;padding:0 1px}
+
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:9px}
+.toolbar input[type=search]{flex:1;min-width:160px}
+.toolbar select{width:auto}
+
+.tbl-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:7px;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+table.main{min-width:800px}
+table.combo{min-width:440px}
+table.stu{min-width:480px}
+th{background:var(--soft);color:#374151;font-size:.77rem;letter-spacing:.04em;
+  padding:8px 9px;border-bottom:2px solid var(--navy);text-align:left;white-space:nowrap}
+table.main td, table.combo td{padding:8px 9px;border-bottom:1px solid #eee;
+  vertical-align:middle;white-space:nowrap}
+table.stu td{padding:8px 9px;border-bottom:1px solid #eee;vertical-align:top;white-space:normal}
+table.stu td:first-child, table.stu td:nth-child(2){white-space:nowrap}
+tr:hover td{background:#fafbf7}
+
+.sid{font-variant-numeric:tabular-nums;color:#6b7280;font-size:.79rem}
+.sline{display:flex;align-items:center;gap:7px;padding:2px 0}
+.sline .who{font-size:.67rem;font-weight:700;color:#fff;background:var(--navy);
+  border-radius:4px;padding:1px 5px;flex:none}
+.sline.b .who{background:#7a8aa6}
+.flow{display:inline-flex;align-items:center;gap:5px}
+.flow .from{color:#6b7280;text-decoration:line-through;text-decoration-color:#c9c4b8}
+.flow .arrow{color:var(--navy);font-weight:700}
+.flow .to{font-weight:700;color:var(--navy)}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.74rem;font-weight:700;border:1px solid}
+.bw{color:var(--wait);border-color:var(--wait);background:#fdf6e3}
+.bo{color:var(--approve);border-color:var(--approve);background:#eaf6ef}
+.bn{color:var(--seal);border-color:var(--seal);background:#fdeeec}
+select.st{width:auto;padding:3px 5px;font-size:.79rem;border-radius:5px}
+.memo-cell{max-width:130px;overflow:hidden;text-overflow:ellipsis;color:#6b7280;font-size:.8rem}
+.empty{padding:32px;text-align:center;color:#9ca3af;font-size:.88rem}
+
+h2.sec{margin:24px 0 8px;font-size:1.02rem;color:var(--navy);
+  border-left:4px solid var(--navy);padding-left:9px}
+.note{font-size:.77rem;color:#6b7280;margin-bottom:7px}
+.nc{font-variant-numeric:tabular-nums;text-align:right}
+th.nc{text-align:right}
+.pname{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--navy)}
+.pname .x{color:#9ca3af;font-weight:400}
+.multi{color:var(--seal);font-weight:700}
+
+/* 학생 명단 */
+.roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px;max-height:220px;overflow-y:auto;
+  border:1px solid var(--line);border-radius:6px;padding:8px;background:#fafafa;margin-top:8px}
+.roster-card{display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border:1px solid var(--line);border-radius:5px;padding:5px 9px;font-size:.82rem}
+.roster-card .rc-info{display:flex;align-items:center;gap:7px}
+.roster-card .rc-sid{color:#6b7280;font-size:.76rem;font-variant-numeric:tabular-nums}
+.roster-card button{border:none;background:none;color:var(--seal);cursor:pointer;font-weight:700;font-size:.85rem}
+.autofilled{background:#eaf6ef!important;border-color:var(--approve)!important;transition:background .4s}
+.csv-hint{font-size:.74rem;color:#9ca3af;margin-top:6px}
+
+@media(max-width:680px){
+  .pair{grid-template-columns:1fr}
+  .common{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+
+
+/* ── 사이드바 레이아웃 ── */
+body{padding:0}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:200px;min-width:200px;background:var(--navy);display:flex;flex-direction:column;
+  padding:0;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sidebar-title{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.15)}
+.sidebar-title h1{font-size:1rem;color:#fff;line-height:1.4;letter-spacing:.02em}
+.sidebar-title .sub{font-size:.72rem;color:rgba(255,255,255,.6);margin-top:3px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;
+  color:rgba(255,255,255,.75);cursor:pointer;font-size:.88rem;font-weight:600;
+  border-left:3px solid transparent;transition:all .15s;border:none;background:none;
+  width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid #fff}
+.nav-item .icon{font-size:1rem;width:20px;text-align:center}
+.nav-divider{height:1px;background:rgba(255,255,255,.12);margin:6px 14px}
+.main-content{margin-left:200px;flex:1;padding:22px 24px 60px;max-width:calc(100vw - 200px)}
+.page{display:none}
+.page.active{display:block}
+.stats{grid-template-columns:repeat(2,1fr)}
+@media(max-width:700px){
+  .sidebar{width:56px;min-width:56px}
+  .nav-item span{display:none}
+  .sidebar-title h1,.sidebar-title .sub{display:none}
+  .main-content{margin-left:56px;max-width:calc(100vw - 56px)}
+}
+
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- 사이드바 -->
+<aside class="sidebar">
+  <div class="sidebar-title">
+    <h1>선택과목<br>맞교환 관리</h1>
+    <div class="sub" id="todayLabel"></div>
+  </div>
+  <nav style="flex:1;padding:8px 0">
+    <button class="nav-item active" data-page="page-reg"><span class="icon">📝</span><span>신청 등록</span></button>
+    <button class="nav-item" data-page="page-list"><span class="icon">📋</span><span>신청 현황</span></button>
+    <button class="nav-item" data-page="page-stat"><span class="icon">📊</span><span>통계</span></button>
+    <div class="nav-divider"></div>
+    <button class="nav-item" data-page="page-setting"><span class="icon">⚙️</span><span>설정</span></button>
+  </nav>
+</aside>
+
+<!-- 메인 컨텐츠 -->
+<main class="main-content">
+
+  <div class="notice">
+  💾 <strong>데이터 보관 안내</strong><br>
+  <span style="line-height:2">
+  ✅ 이 <strong>HTML 파일을 컴퓨터에 저장</strong>한 뒤 <strong>크롬(Chrome)으로 열면</strong> 입력한 데이터가 자동으로 저장됩니다. 창을 닫았다 다시 열어도 데이터가 그대로 유지됩니다.<br>
+  ⚠️ <strong>같은 컴퓨터·같은 브라우저</strong>에서만 유지됩니다. 다른 컴퓨터나 다른 브라우저로 열면 데이터가 보이지 않습니다.<br>
+  ⚠️ 크롬에서 <strong>"인터넷 사용 기록 삭제 → 쿠키 및 사이트 데이터"</strong>를 삭제하면 데이터가 사라집니다.<br>
+  📤 다른 컴퓨터로 옮기거나 백업할 때는 <strong>CSV 내보내기</strong> 버튼을 눌러 파일로 저장해 두세요.
+  </span>
+</div>
+  <div class="stats">
+  <div class="stat"><div class="lbl">전체 교환 신청</div><div class="num" id="stTotal">0</div></div>
+  <div class="stat st-wait"><div class="lbl">대기</div><div class="num" id="stWait">0</div></div>
+  <div class="stat st-ok"><div class="lbl">승인</div><div class="num" id="stOk">0</div></div>
+  <div class="stat st-no"><div class="lbl">반려</div><div class="num" id="stNo">0</div></div>
+</div>
+
+  <!-- 페이지: 신청 등록 -->
+  <div class="page active" id="page-reg">
+    <h2 class="sec" style="margin-top:0">신청 등록</h2>
+    <!-- 신청 등록 -->
+<fieldset>
+  <legend>맞교환 신청 등록</legend>
+  <div class="pair">
+    <div class="sbox">
+      <h3><span class="tag">신청 학생</span></h3>
+      <div class="grid4">
+        <div><label class="flabel">학년</label>
+          <select id="aGrade"><option>1</option><option selected>2</option><option>3</option></select></div>
+        <div><label class="flabel">반</label><input id="aKlass" type="number" min="1" max="20" placeholder="3" data-ac="a"></div>
+        <div><label class="flabel">번호</label><input id="aNum" type="number" min="1" max="40" placeholder="12" data-ac="a"></div>
+        <div><label class="flabel">이름</label><input id="aName" placeholder="홍길동"></div>
+      </div>
+      <div class="grid1">
+        <div><label class="flabel">현재 수강 과목</label><input id="aSubj" list="subjects" placeholder="예: 사회·문화" lang="ko" autocomplete="off" inputmode="text"></div>
+      </div>
+    </div>
+    <div class="sbox b">
+      <h3><span class="tag">상대 학생</span></h3>
+      <div class="grid4">
+        <div><label class="flabel">학년</label>
+          <select id="bGrade"><option>1</option><option selected>2</option><option>3</option></select></div>
+        <div><label class="flabel">반</label><input id="bKlass" type="number" min="1" max="20" placeholder="5" data-ac="b"></div>
+        <div><label class="flabel">번호</label><input id="bNum" type="number" min="1" max="40" placeholder="7" data-ac="b"></div>
+        <div><label class="flabel">이름</label><input id="bName" placeholder="김철수"></div>
+      </div>
+      <div class="grid1">
+        <div><label class="flabel">현재 수강 과목</label><input id="bSubj" list="subjects" placeholder="예: 정치와 법" lang="ko" autocomplete="off" inputmode="text"></div>
+      </div>
+    </div>
+  </div>
+  <div class="hint" id="swapHint">두 학생의 현재 과목을 입력하면 서로 맞바꾸는 형태로 등록됩니다.</div>
+  <div class="common">
+    <div><label class="flabel">신청일</label><input id="regDate" type="date"></div>
+    <div><label class="flabel">비고</label><input id="memo" placeholder="사유 등 (선택)"></div>
+  </div>
+  <datalist id="subjects"></datalist>
+  <div class="actions">
+    <button class="btn" id="addBtn">교환 신청 등록</button>
+    <button class="btn ghost" id="csvBtn">CSV 내보내기</button>
+    <label style="padding:8px 16px;border:1px solid var(--navy);border-radius:5px;
+      background:#fff;color:var(--navy);cursor:pointer;font-weight:600;font-size:.9rem;
+      display:inline-flex;align-items:center;gap:4px">
+      CSV 가져오기
+      <input type="file" id="importFile" accept=".csv" style="display:none">
+    </label>
+
+    <button class="btn warn sm" id="fixBtn">저장 데이터 정비</button>
+    <button class="btn danger sm" id="clearBtn" style="margin-left:auto">전체 삭제</button>
+  </div>
+</fieldset>
+
+<!-- 학생 명단 관리 -->
+<fieldset>
+  <legend>학생 명단 관리 <span style="font-weight:400;font-size:.8rem;color:#6b7280">(학번 입력 시 이름 자동완성)</span></legend>
+
+  <!-- 한 명씩 직접 입력 -->
+  <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+    <div><label class="flabel">학년</label>
+      <select id="rGrade" style="width:70px"><option>1</option><option selected>2</option><option>3</option></select></div>
+    <div><label class="flabel">반</label><input id="rKlass" type="number" min="1" max="20" placeholder="3" style="width:68px"></div>
+    <div><label class="flabel">번호</label><input id="rNum" type="number" min="1" max="40" placeholder="12" style="width:68px"></div>
+    <div style="flex:1;min-width:110px"><label class="flabel">이름</label><input id="rName" placeholder="홍길동"></div>
+    <button class="btn sm" id="addRosterBtn" style="align-self:flex-end">추가</button>
+    <button class="btn danger sm" id="clearRosterBtn" style="align-self:flex-end">명단 전체 삭제</button>
+  </div>
+
+  <!-- 드래그앤드롭 + 파일선택 일괄 등록 -->
+  <div style="border:1px solid var(--line);border-radius:7px;padding:11px;background:#fafafa;margin-bottom:10px">
+    <details>
+      <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:var(--navy);
+        padding:7px 10px;background:#f0f4fb;border:1px solid #b8cce8;border-radius:6px;
+        list-style:none;display:flex;align-items:center;gap:6px;margin-bottom:0">
+        ▶ 📂 CSV 파일로 일괄 등록
+      </summary>
+      <div style="margin-top:8px">
+    <!-- 드롭존 + 파일선택 -->
+    <div style="font-size:.8rem;font-weight:700;color:#4b5563;margin-bottom:5px">파일 끌어다 놓기 (Chrome 권장)</div>
+    <div id="dropZone" style="border:2px dashed var(--navy);border-radius:8px;padding:18px;text-align:center;
+      cursor:pointer;transition:background .2s;margin-bottom:6px;position:relative">
+      <div style="font-size:.88rem;color:var(--navy);font-weight:700;margin-bottom:3px">📄 CSV 파일을 여기에 끌어다 놓으세요</div>
+      <div style="font-size:.76rem;color:#6b7280">또는 클릭하여 파일 선택 (Chrome에서만 작동)</div>
+      <input type="file" id="rosterFile" accept=".csv,.txt"
+        style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+    </div>
+    <div id="pasteResult" style="font-size:.82rem;margin-top:6px;min-height:20px;font-weight:600"></div>
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:var(--navy);
+        padding:7px 10px;background:#f0f4fb;border:1px solid #b8cce8;border-radius:6px;list-style:none;
+        display:flex;align-items:center;gap:6px">
+        ▶ 엑셀에서 CSV 만드는 방법 보기
+      </summary>
+      <div style="margin-top:8px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:11px;font-size:.8rem">
+        <div style="margin-bottom:8px;color:#4b5563;line-height:1.9">
+          ① 엑셀을 열고 아래처럼 입력합니다.<br>
+          ② <strong>파일 → 다른 이름으로 저장</strong> 클릭<br>
+          ③ 파일 형식에서 <strong>CSV UTF-8(쉼표로 분리)(*.csv)</strong> 선택 후 저장<br>
+          ④ 저장된 .csv 파일을 위 박스에 끌어다 놓으세요.
+        </div>
+        <table style="border-collapse:collapse;font-size:.82rem;margin-bottom:8px">
+          <tr style="background:var(--soft)">
+            <th style="border:1px solid var(--line);padding:5px 16px">A열 (학년)</th>
+            <th style="border:1px solid var(--line);padding:5px 16px">B열 (반)</th>
+            <th style="border:1px solid var(--line);padding:5px 16px">C열 (번호)</th>
+            <th style="border:1px solid var(--line);padding:5px 16px">D열 (이름)</th>
+          </tr>
+          <tr style="background:#fffbe6">
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center;color:#9ca3af">학년</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center;color:#9ca3af">반</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center;color:#9ca3af">번호</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;color:#9ca3af">이름</td>
+          </tr>
+          <tr>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">2</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">3</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">12</td>
+            <td style="border:1px solid var(--line);padding:5px 16px">홍길동</td>
+          </tr>
+          <tr>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">2</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">5</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">7</td>
+            <td style="border:1px solid var(--line);padding:5px 16px">김철수</td>
+          </tr>
+          <tr>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">2</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">2</td>
+            <td style="border:1px solid var(--line);padding:5px 16px;text-align:center">19</td>
+            <td style="border:1px solid var(--line);padding:5px 16px">박주영</td>
+          </tr>
+        </table>
+        <div style="font-size:.76rem;color:#9ca3af">※ 첫 줄 헤더(학년,반,번호,이름)는 자동으로 건너뜁니다.</div>
+      </div>
+    </details>
+      </div><!-- /CSV 내용 -->
+    </details>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;margin-bottom:6px">
+    <span style="font-size:.8rem;color:#6b7280" id="rosterCountLabel">등록된 학생: 0명</span>
+    <button class="btn ghost sm" id="toggleRosterBtn">명단 보기 ▼</button>
+  </div>
+  <div id="rosterList" class="roster-grid" style="display:none"></div>
+  <div class="empty" id="rosterEmpty" style="padding:16px;display:none">등록된 학생이 없습니다. 위에서 직접 입력하거나 파일로 일괄 등록하세요.</div>
+</fieldset>
+
+
+  </div>
+
+  <!-- 페이지: 신청 현황 -->
+  <div class="page" id="page-list">
+    <h2 class="sec" style="margin-top:0">신청 현황</h2>
+    <!-- 검색·필터 -->
+<div class="toolbar">
+  <input type="search" id="q" placeholder="이름·과목·학번 검색 (두 학생 모두 검색)">
+  <select id="fStatus"><option value="">상태 전체</option><option>대기</option><option>승인</option><option>반려</option></select>
+  <select id="fGrade"><option value="">학년 전체</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+  <button class="btn sm" id="bulkApproveBtn" style="background:var(--approve);border-color:var(--approve);white-space:nowrap">✔ 일괄 승인</button>
+  <button class="btn danger sm" id="bulkRejectBtn" style="white-space:nowrap">✖ 일괄 반려</button>
+</div>
+<div id="bulkResult" style="font-size:.8rem;margin-bottom:6px;min-height:18px;color:var(--approve);font-weight:600"></div>
+
+<!-- 신청 목록 -->
+<div class="tbl-wrap">
+  <table class="main">
+    <thead><tr>
+      <th>학생</th><th>변경 내용 (맞교환)</th><th>신청일</th><th>상태</th><th>비고</th><th></th>
+    </tr></thead>
+    <tbody id="tbRows"></tbody>
+  </table>
+  <div class="empty" id="emptyMsg">등록된 교환 신청이 없습니다.</div>
+</div>
+
+
+  </div>
+
+  <!-- 페이지: 통계 -->
+  <div class="page" id="page-stat">
+    <!-- 과목 조합별 현황 -->
+<h2 class="sec">과목 조합별 교환 현황</h2>
+<div class="note">반려 건은 제외합니다. 맞교환이므로 과목별 수강 인원 총합은 변하지 않습니다.</div>
+<div class="tbl-wrap">
+  <table class="combo">
+    <thead><tr>
+      <th>과목 조합</th><th class="nc">교환 건수</th><th class="nc">이동 학생 수</th>
+    </tr></thead>
+    <tbody id="tbCombo"></tbody>
+    <tfoot id="tfCombo" style="display:none">
+      <tr style="background:var(--soft);font-weight:700;border-top:2px solid var(--navy)">
+        <td>합 계</td>
+        <td class="nc" id="sumComboCount">0</td>
+        <td class="nc" id="sumComboStu">0</td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="empty" id="emptyCombo">데이터가 없습니다.</div>
+</div>
+
+<!-- 학년반별 교환 현황 -->
+<h2 class="sec">학년·반별 교환 현황</h2>
+<div class="note">해당 반 학생이 신청 학생 또는 상대 학생으로 포함된 건수를 집계합니다. 반려 건은 제외합니다.</div>
+<div class="tbl-wrap">
+  <table class="combo">
+    <thead><tr>
+      <th>학년·반</th><th class="nc">교환 건수</th><th class="nc">이동 학생 수</th>
+    </tr></thead>
+    <tbody id="tbClass"></tbody>
+    <tfoot id="tfClass" style="display:none">
+      <tr style="background:var(--soft);font-weight:700;border-top:2px solid var(--navy)">
+        <td>합 계</td>
+        <td class="nc" id="sumClassCount">0</td>
+        <td class="nc" id="sumClassStu">0</td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="empty" id="emptyClass">데이터가 없습니다.</div>
+</div>
+
+<!-- 학생별 현황 -->
+<h2 class="sec">학생별 교환 현황</h2>
+<div class="note">한 학생이 여러 명과 교환한 경우 모든 내역이 묶여서 표시됩니다. 반려 건은 제외합니다.</div>
+<div style="margin-bottom:8px">
+  <input type="search" id="stuQ" placeholder="🔍 학번(예: 2-5-18) 또는 이름으로 검색"
+    style="width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:6px;font-size:.9rem">
+</div>
+<div class="tbl-wrap">
+  <table class="stu">
+    <thead><tr>
+      <th>학생</th><th class="nc">교환 건수</th><th>변경 내역</th>
+    </tr></thead>
+    <tbody id="tbStu"></tbody>
+    <tfoot id="tfStu" style="display:none">
+      <tr style="background:var(--soft);font-weight:700;border-top:2px solid var(--navy)">
+        <td>총 교환 참여 학생</td>
+        <td class="nc" id="sumStuCount">0</td>
+        <td style="font-size:.8rem;color:#6b7280" id="sumStuNote"></td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="empty" id="emptyStu">데이터가 없습니다.</div>
+</div>
+
+
+  </div>
+
+  <!-- 페이지: 설정 -->
+  <div class="page" id="page-setting">
+    <h2 class="sec" style="margin-top:0">설정</h2>
+    <!-- 과목 목록 관리 -->
+<fieldset>
+  <legend>과목 목록 관리</legend>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:9px">
+    <input id="newSubj" placeholder="추가할 과목명 입력 후 Enter" style="flex:1;min-width:180px">
+    <button class="btn sm" id="addSubjBtn">과목 추가</button>
+    <button class="btn ghost sm" id="saveDefaultBtn" style="border-color:var(--approve);color:var(--approve)">현재 목록을 기본으로 저장</button>
+    <button class="btn ghost sm" id="resetSubjBtn">기본 목록으로 초기화</button>
+  </div>
+  <div id="subjChips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <div style="font-size:.74rem;color:#9ca3af;margin-top:7px">
+    ※ 삭제해도 이미 등록된 신청 내역은 바뀌지 않습니다. 목록에 없는 과목도 직접 입력 가능합니다.
+  </div>
+</fieldset>
+
+
+  </div>
+
+</main>
+</div><!-- /.layout -->
+
+<script>
+// ── 페이지 전환 ──
+document.querySelectorAll('.nav-item').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active');});
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.page).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+
+(function(){
+  /* ── 저장소 ── */
+  var store=(function(){
+    var mem={};
+    try{localStorage.setItem('__t','1');localStorage.removeItem('__t');}
+    catch(e){return{get:function(k){return mem[k]||null;},set:function(k,v){mem[k]=v;}};}
+    return{
+      get:function(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}},
+      set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+    };
+  })();
+
+  var KEY='scm-items', SKEY='scm-subjects', RKEY='scm-roster', DKEY='scm-default-subjects';
+  var DEFAULT=['정치와 법','경제','사회·문화','생활과 윤리','윤리와 사상',
+    '한국지리','세계지리','동아시아사','세계사','물리학Ⅰ','화학Ⅰ','생명과학Ⅰ','지구과학Ⅰ'];
+  var items=[], subjects=DEFAULT.slice(), roster=[];
+
+  /* ── 유틸 ── */
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function today(){return new Date().toISOString().slice(0,10);}
+  function sid(st){return st.grade+'-'+st.klass+'-'+(String(st.num).length<2?'0':'')+st.num;}
+  function badge(s){var c=s==='승인'?'bo':s==='반려'?'bn':'bw';return '<span class="badge '+c+'">'+esc(s)+'</span>';}
+  function show(id,v){var el=$(id);if(el)el.style.display=v;}
+  function html(id,v){var el=$(id);if(el)el.innerHTML=v;}
+
+  /* ── 저장/불러오기 ── */
+  function save(){store.set(KEY,items);}
+  function saveSubj(){store.set(SKEY,subjects);}
+  function saveRoster(){store.set(RKEY,roster);}
+  function load(){
+    var r=store.get(KEY);if(r&&Array.isArray(r))items=r;
+    var s=store.get(SKEY);if(s&&Array.isArray(s))subjects=s;
+    var ro=store.get(RKEY);if(ro&&Array.isArray(ro))roster=ro;
+    // 저장된 기본 목록이 있으면 DEFAULT 덮어쓰기
+    var d=store.get(DKEY);if(d&&Array.isArray(d))DEFAULT=d;
+    renderSubj();renderRoster();render();
+  }
+
+  /* ── 과목 칩 ── */
+  function renderSubj(){
+    $('subjects').innerHTML=subjects.map(function(s){return'<option>'+esc(s)+'</option>';}).join('');
+    $('subjChips').innerHTML=subjects.map(function(s,i){
+      return'<span class="chip">'+esc(s)+'<button data-si="'+i+'">×</button></span>';
+    }).join('');
+  }
+
+  /* ── 학생 명단 ── */
+  function findStudent(grade,klass,num){
+    var g=String(grade),k=String(klass),n=String(num);
+    for(var i=0;i<roster.length;i++){
+      if(String(roster[i].grade)===g&&String(roster[i].klass)===k&&String(roster[i].num)===n)return roster[i];
+    }
+    return null;
+  }
+  var rosterVisible=false;
+  function renderRoster(){
+    var list=roster.slice().sort(function(a,b){return(a.grade-b.grade)||(a.klass-b.klass)||(a.num-b.num);});
+    html('rosterList',list.map(function(s,i){
+      return'<div class="roster-card">'+
+        '<span class="rc-info"><span class="rc-sid">'+s.grade+'-'+s.klass+'-'+(s.num<10?'0':'')+s.num+'</span>'+
+        '<strong>'+esc(s.name)+'</strong></span>'+
+        '<button data-ri="'+i+'" title="삭제">×</button></div>';
+    }).join(''));
+    // 인원수 표시
+    var lbl=$('rosterCountLabel');
+    if(lbl) lbl.textContent='등록된 학생: '+list.length+'명';
+    // 토글 상태에 따라 표시
+    var rl=$('rosterList'), re=$('rosterEmpty');
+    if(rosterVisible){
+      if(rl) rl.style.display=list.length?'':'none';
+      if(re) re.style.display=list.length?'none':'block';
+    } else {
+      if(rl) rl.style.display='none';
+      if(re) re.style.display='none';
+    }
+    var btn=$('toggleRosterBtn');
+    if(btn) btn.textContent=rosterVisible?'명단 숨기기 ▲':'명단 보기 ▼';
+  }
+
+  /* ── 자동완성 ── */
+  function tryAutofill(side){
+    var grade=+($(side+'Grade').value||0);
+    var klass=+($(side+'Klass').value||0);
+    var num=+($(side+'Num').value||0);
+    if(!grade||!klass||!num)return;
+    var found=findStudent(grade,klass,num);
+    if(found){
+      var nameEl=$(side+'Name');
+      nameEl.value=found.name;
+      nameEl.classList.add('autofilled');
+      setTimeout(function(){nameEl.classList.remove('autofilled');},1200);
+      updateHint();
+    }
+  }
+  ['aGrade','aKlass','aNum','bGrade','bKlass','bNum'].forEach(function(id){
+    $(id).addEventListener('change',function(){tryAutofill(id.startsWith('a')?'a':'b');});
+    $(id).addEventListener('input',function(){tryAutofill(id.startsWith('a')?'a':'b');});
+  });
+
+  /* ── 명단 추가 ── */
+  function addRosterOne(g,k,n,name){
+    g=+g;k=+k;n=+n;name=String(name).trim();
+    if(!g||!k||!n||!name)return false;
+    var dup=findStudent(g,k,n);
+    if(dup){dup.name=name;return true;}
+    roster.push({grade:g,klass:k,num:n,name:name});
+    return true;
+  }
+  $('toggleRosterBtn').addEventListener('click',function(){
+    rosterVisible=!rosterVisible;
+    renderRoster();
+  });
+
+  function doAddRoster(){
+    var g=$('rGrade').value,k=$('rKlass').value,n=$('rNum').value,name=$('rName').value;
+    if(addRosterOne(g,k,n,name)){
+      saveRoster();renderRoster();
+      $('rKlass').value='';$('rNum').value='';$('rName').value='';$('rKlass').focus();
+    } else {alert('반·번호·이름을 모두 입력해 주세요.');}
+  }
+  $('addRosterBtn').addEventListener('click',doAddRoster);
+  $('rName').addEventListener('keydown',function(e){if(e.key==='Enter')doAddRoster();});
+
+  /* ── CSV 파싱 ── */
+  function parseCSVText(text){
+    if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+    var lines=text.split(/\r?\n/);
+    var added=0,skipped=0;
+    lines.forEach(function(line,idx){
+      line=line.trim();if(!line)return;
+      var cols=line.indexOf('\t')>=0?line.split('\t'):line.split(',');
+      if(cols.length<4){skipped++;return;}
+      var g=cols[0].trim().replace(/^"+|"+$/g,'');
+      var k=cols[1].trim().replace(/^"+|"+$/g,'');
+      var n=cols[2].trim().replace(/^"+|"+$/g,'');
+      var name=cols[3].trim().replace(/^"+|"+$/g,'');
+      if(idx===0&&isNaN(+g))return;
+      if(!+g||!+k||!+n||!name){skipped++;return;}
+      addRosterOne(g,k,n,name);added++;
+    });
+    return{added:added,skipped:skipped};
+  }
+
+  /* ── 파일 처리 ── */
+  function processFile(file){
+    if(!file)return;
+    var pr=$('pasteResult');
+    pr.style.color='var(--wait)';pr.textContent='읽는 중...';
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var r=parseCSVText(ev.target.result);
+      saveRoster();renderRoster();
+      pr.style.color='var(--approve)';
+      pr.textContent='✓ '+r.added+'명 등록 완료'+(r.skipped?' ('+r.skipped+'줄 건너뜀)':'');
+    };
+    reader.onerror=function(){
+      pr.style.color='var(--seal)';
+      pr.textContent='❌ 파일을 읽지 못했습니다.';
+    };
+    reader.readAsText(file,'UTF-8');
+  }
+
+  /* ── 드래그앤드롭 ── */
+  var dz=$('dropZone');
+  dz.addEventListener('dragover',function(e){e.preventDefault();dz.style.background='#e8f0fb';});
+  dz.addEventListener('dragleave',function(){dz.style.background='';});
+  dz.addEventListener('drop',function(e){
+    e.preventDefault();dz.style.background='';
+    processFile(e.dataTransfer.files[0]);
+  });
+
+  /* ── 클릭 파일 선택 ── */
+  $('rosterFile').addEventListener('change',function(e){
+    processFile(e.target.files[0]);
+    e.target.value='';
+  });
+
+  /* ── 명단 삭제 ── */
+  $('clearRosterBtn').addEventListener('click',function(){
+    if(roster.length&&confirm('학생 명단 전체('+roster.length+'명)를 삭제할까요?')){
+      roster=[];saveRoster();renderRoster();
+    }
+  });
+  var rosterListEl=$('rosterList');
+  if(rosterListEl)rosterListEl.addEventListener('click',function(e){
+    var ri=e.target.dataset&&e.target.dataset.ri;
+    if(ri!==undefined&&ri!==''){
+      var sorted=roster.slice().sort(function(a,b){return(a.grade-b.grade)||(a.klass-b.klass)||(a.num-b.num);});
+      var target=sorted[+ri];
+      if(target){
+        roster=roster.filter(function(s){return!(s.grade===target.grade&&s.klass===target.klass&&s.num===target.num);});
+        saveRoster();renderRoster();
+      }
+    }
+  });
+
+  /* ── 과목 추가/삭제/초기화 ── */
+  function addSubj(){
+    var v=($('newSubj').value||'').trim();
+    if(!v)return;
+    if(subjects.indexOf(v)>=0){alert('이미 목록에 있는 과목입니다.');return;}
+    subjects.push(v);saveSubj();renderSubj();
+    $('newSubj').value='';$('newSubj').focus();
+  }
+  $('addSubjBtn').addEventListener('click',addSubj);
+  $('newSubj').addEventListener('keydown',function(e){if(e.key==='Enter')addSubj();});
+  $('saveDefaultBtn').addEventListener('click',function(){
+    if(confirm('현재 과목 목록('+subjects.length+'개)을 기본 목록으로 저장할까요?\n이후 "기본 목록으로 초기화"를 눌러도 이 목록으로 돌아옵니다.')){
+      DEFAULT=subjects.slice();
+      store.set(DKEY,DEFAULT);
+      alert('✓ 현재 목록을 기본 목록으로 저장했습니다.');
+    }
+  });
+  $('resetSubjBtn').addEventListener('click',function(){
+    if(confirm('과목 목록을 기본 목록으로 되돌릴까요?')){subjects=DEFAULT.slice();saveSubj();renderSubj();}
+  });
+  $('subjChips').addEventListener('click',function(e){
+    var si=e.target.dataset&&e.target.dataset.si;
+    if(si!==undefined&&si!==''){subjects.splice(+si,1);saveSubj();renderSubj();}
+  });
+
+  /* ── 힌트 ── */
+  function updateHint(){
+    var a=($('aSubj').value||'').trim(),b=($('bSubj').value||'').trim();
+    var an=($('aName').value||'').trim()||'신청 학생',bn=($('bName').value||'').trim()||'상대 학생';
+    $('swapHint').innerHTML=a&&b
+      ?'<strong>'+esc(an)+'</strong>: '+esc(a)+' → '+esc(b)+'&nbsp;&nbsp;|&nbsp;&nbsp;<strong>'+esc(bn)+'</strong>: '+esc(b)+' → '+esc(a)
+      :'두 학생의 현재 과목을 입력하면 서로 맞바꾸는 형태로 등록됩니다.';
+  }
+  ['aSubj','bSubj','aName','bName'].forEach(function(id){$(id).addEventListener('input',updateHint);});
+
+  /* ── 신청 등록 ── */
+  $('addBtn').addEventListener('click',function(){
+    var a={grade:+$('aGrade').value,klass:+$('aKlass').value,num:+$('aNum').value,
+           name:($('aName').value||'').trim(),subj:($('aSubj').value||'').trim()};
+    var b={grade:+$('bGrade').value,klass:+$('bKlass').value,num:+$('bNum').value,
+           name:($('bName').value||'').trim(),subj:($('bSubj').value||'').trim()};
+    if(!a.name||!a.klass||!a.num||!a.subj||!b.name||!b.klass||!b.num||!b.subj){
+      alert('두 학생의 반·번호·이름·현재 과목을 모두 입력해 주세요.');return;
+    }
+    if(a.subj===b.subj){alert('두 학생의 과목이 같아 맞교환할 수 없습니다.');return;}
+    [a.subj,b.subj].forEach(function(s){
+      if(s&&subjects.indexOf(s)<0){subjects.push(s);saveSubj();renderSubj();}
+    });
+    items.push({id:Date.now()+''+Math.floor(Math.random()*1000),
+      a:a,b:b,date:$('regDate').value||today(),memo:($('memo').value||'').trim(),status:'대기'});
+    save();render();
+    ['aSubj','bKlass','bNum','bName','bSubj','memo'].forEach(function(id){$(id).value='';})
+    updateHint();$('aName').focus();
+  });
+
+  /* ── 상태 변경 ── */
+  document.body.addEventListener('change',function(e){
+    if(e.target.matches('select.st')){
+      var it=items.filter(function(i){return i.id===e.target.dataset.id;})[0];
+      if(it){it.status=e.target.value;save();render();}
+    }
+  });
+
+  /* ── 삭제 ── */
+  document.body.addEventListener('click',function(e){
+    var del=e.target.dataset&&e.target.dataset.del;
+    if(del){
+      var it=items.filter(function(i){return i.id===del;})[0];
+      if(it&&confirm(it.a.name+' ⇄ '+it.b.name+' 교환 신청을 삭제할까요?')){
+        items=items.filter(function(i){return i.id!==del;});save();render();
+      }
+    }
+  });
+
+  /* ── 검색·필터 ── */
+  ['q','fStatus','fGrade','stuQ'].forEach(function(id){$(id).addEventListener('input',render);});
+
+  /* ── 일괄 승인/반려 ── */
+  function bulkUpdate(newStatus){
+    /* 현재 검색·필터 조건에 해당하는 항목만 변경 */
+    var q=($('q').value||'').trim().toLowerCase();
+    var fs=$('fStatus').value, fg=$('fGrade').value;
+    var targets=items.filter(function(it){
+      if(fs&&String(it.status||'')!==fs)return false;
+      if(fg&&String(it.a.grade)!==fg&&String(it.b.grade)!==fg)return false;
+      if(q){
+        var hay=[it.a.name,it.b.name,it.a.subj,it.b.subj,sid(it.a),sid(it.b)].join(' ').toLowerCase();
+        if(hay.indexOf(q)<0)return false;
+      }
+      return true;
+    });
+    if(!targets.length){
+      var br=$('bulkResult');
+      br.style.color='var(--seal)'; br.textContent='조건에 해당하는 신청이 없습니다.'; return;
+    }
+    var label=newStatus==='승인'?'승인':'반려';
+    if(!confirm('현재 목록의 '+targets.length+'건을 모두 '+label+'처리할까요?'))return;
+    targets.forEach(function(it){ it.status=newStatus; });
+    save(); render();
+    var br=$('bulkResult');
+    br.style.color=newStatus==='승인'?'var(--approve)':'var(--seal)';
+    br.textContent='✓ '+targets.length+'건 '+label+' 처리 완료';
+    setTimeout(function(){ br.textContent=''; }, 3000);
+  }
+  $('bulkApproveBtn').addEventListener('click',function(){ bulkUpdate('승인'); });
+  $('bulkRejectBtn').addEventListener('click',function(){ bulkUpdate('반려'); });
+
+  /* ── 데이터 정비 ── */
+  $('fixBtn').addEventListener('click',function(){
+    items=items.map(function(it){return Object.assign({},it,{status:String(it.status||'대기').trim()});});
+    save();render();
+    alert('정비 완료 ('+items.length+'건).');
+  });
+
+  /* ── 전체 삭제 ── */
+  $('clearBtn').addEventListener('click',function(){
+    if(items.length&&confirm('모든 교환 신청('+items.length+'건)을 삭제할까요?')){
+      items=[];save();render();
+    }
+  });
+
+  /* ── CSV 내보내기 ── */
+  $('csvBtn').addEventListener('click',function(){
+    var head=['신청학년','반','번호','이름','현재과목','상대학년','반','번호','이름','현재과목','신청일','상태','비고'];
+    var rows=items.map(function(i){
+      return[i.a.grade,i.a.klass,i.a.num,i.a.name,i.a.subj,
+             i.b.grade,i.b.klass,i.b.num,i.b.name,i.b.subj,
+             i.date,i.status,(i.memo||'').replace(/,/g,' ')].join(',');
+    });
+    var blob=new Blob(['\uFEFF'+[head.join(',')].concat(rows).join('\r\n')],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='선택과목_맞교환신청_'+today()+'.csv';
+    a.click();URL.revokeObjectURL(a.href);
+  });
+
+  /* ── CSV 가져오기 ── */
+  function processImportFile(file){
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var text=ev.target.result;
+      // BOM 제거
+      if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+      // 줄 분리 (\r\n, \r, \n 모두 처리)
+      var lines=text.split(/\r\n|\r|\n/).filter(function(l){return l.trim();});
+      if(lines.length<2){alert('데이터가 없거나 헤더만 있습니다.');return;}
+      var imported=[],skipped=0;
+      lines.forEach(function(line,idx){
+        if(idx===0)return; // 헤더 스킵
+        // 쉼표 분리 (최대 13개 컬럼, 비고에 쉼표 있을 경우 대비)
+        var cols=line.split(',');
+        if(cols.length<12){skipped++;return;}
+        var ag=cols[0].trim(), ak=cols[1].trim(), an=cols[2].trim();
+        var aname=cols[3].trim(), asubj=cols[4].trim();
+        var bg=cols[5].trim(), bk=cols[6].trim(), bn=cols[7].trim();
+        var bname=cols[8].trim(), bsubj=cols[9].trim();
+        var date=cols[10].trim(), status=cols[11].trim();
+        var memo=cols.slice(12).join(',').trim();
+        // 숫자 유효성
+        if(!+ag||!+ak||!+an||!aname||!asubj||!+bg||!+bk||!+bn||!bname||!bsubj){
+          skipped++;return;
+        }
+        imported.push({
+          id:Date.now()+''+Math.floor(Math.random()*9999)+''+idx,
+          a:{grade:+ag,klass:+ak,num:+an,name:aname,subj:asubj},
+          b:{grade:+bg,klass:+bk,num:+bn,name:bname,subj:bsubj},
+          date:date||new Date().toISOString().slice(0,10),
+          status:status||'대기',
+          memo:memo
+        });
+      });
+      if(!imported.length){
+        alert('가져올 수 있는 데이터가 없습니다.\n('+skipped+'줄 건너뜀)\n\nCSV 내보내기로 저장한 파일인지 확인해 주세요.');
+        return;
+      }
+      var msg='기존 데이터('+items.length+'건)에 '+imported.length+'건을 추가할까요?'
+        +'\n\n확인 → 추가\n취소 → 기존 삭제 후 교체';
+      if(items.length&&confirm(msg)){
+        items=items.concat(imported);
+      } else {
+        if(items.length&&!confirm('기존 데이터('+items.length+'건)를 모두 지우고\n가져온 데이터('+imported.length+'건)로 교체할까요?'))return;
+        items=imported;
+      }
+      save();render();
+      alert('✓ '+imported.length+'건 가져오기 완료'+(skipped?' ('+skipped+'줄 건너뜀)':''));
+    };
+    reader.onerror=function(){alert('파일을 읽지 못했습니다. CSV 파일인지 확인해 주세요.');};
+    reader.readAsText(file,'UTF-8');
+  }
+
+  $('importFile').addEventListener('change',function(e){processImportFile(e.target.files[0]);e.target.value='';});
+
+
+  /* ── 메인 렌더 ── */
+  function render(){
+    var q=($('q').value||'').trim().toLowerCase();
+    var fs=$('fStatus').value,fg=$('fGrade').value;
+    var list=items.filter(function(it){
+      if(fs&&String(it.status||'')!==fs)return false;
+      if(fg&&String(it.a.grade)!==fg&&String(it.b.grade)!==fg)return false;
+      if(q){
+        var hay=[it.a.name,it.b.name,it.a.subj,it.b.subj,sid(it.a),sid(it.b)].join(' ').toLowerCase();
+        if(hay.indexOf(q)<0)return false;
+      }
+      return true;
+    }).sort(function(a,b){return(a.a.grade-b.a.grade)||(a.a.klass-b.a.klass)||(a.a.num-b.a.num);});
+
+    html('tbRows',list.map(function(it){
+      var sel=['대기','승인','반려'].map(function(s){return'<option'+(s===it.status?' selected':'')+'>'+s+'</option>';}).join('');
+      return'<tr>'+
+        '<td><div class="sline"><span class="who">신청</span><strong>'+esc(it.a.name)+'</strong><span class="sid">'+sid(it.a)+'</span></div>'+
+            '<div class="sline b"><span class="who">상대</span><strong>'+esc(it.b.name)+'</strong><span class="sid">'+sid(it.b)+'</span></div></td>'+
+        '<td><div class="flow"><span class="from">'+esc(it.a.subj)+'</span><span class="arrow">→</span><span class="to">'+esc(it.b.subj)+'</span></div>'+
+            '<div class="flow"><span class="from">'+esc(it.b.subj)+'</span><span class="arrow">→</span><span class="to">'+esc(it.a.subj)+'</span></div></td>'+
+        '<td class="sid">'+esc(it.date)+'</td>'+
+        '<td>'+badge(it.status)+' <select class="st" data-id="'+it.id+'">'+sel+'</select></td>'+
+        '<td class="memo-cell" title="'+esc(it.memo)+'">'+esc(it.memo)+'</td>'+
+        '<td><button class="btn danger sm" data-del="'+it.id+'">삭제</button></td>'+
+        '</tr>';
+    }).join(''));
+    show('emptyMsg',list.length?'none':'block');
+
+    $('stTotal').textContent=items.length;
+    $('stWait').textContent=items.filter(function(i){return i.status==='대기';}).length;
+    $('stOk').textContent=items.filter(function(i){return i.status==='승인';}).length;
+    $('stNo').textContent=items.filter(function(i){return i.status==='반려';}).length;
+
+    /* 과목 조합별 */
+    var combos={};
+    var validItems=items.filter(function(i){return i.status!=='반려';});
+    validItems.forEach(function(i){
+      var pair=[i.a.subj,i.b.subj].sort(function(x,y){return x.localeCompare(y,'ko');});
+      var k=pair.join('|||');combos[k]=(combos[k]||0)+1;
+    });
+    var ckeys=Object.keys(combos).sort(function(a,b){return combos[b]-combos[a];});
+    var totalComboCount=ckeys.reduce(function(s,k){return s+combos[k];},0);
+    html('tbCombo',ckeys.map(function(k){
+      var parts=k.split('|||');
+      return'<tr><td><span class="pname">'+esc(parts[0])+'<span class="x">⇄</span>'+esc(parts[1])+'</span></td>'+
+        '<td class="nc">'+combos[k]+'</td><td class="nc">'+combos[k]*2+'</td></tr>';
+    }).join(''));
+    show('emptyCombo',ckeys.length?'none':'block');
+    // 합계
+    var tfCombo=$('tfCombo');
+    if(tfCombo) tfCombo.style.display=ckeys.length?'':'none';
+    if($('sumComboCount')) $('sumComboCount').textContent=totalComboCount+'건';
+    if($('sumComboStu')) $('sumComboStu').textContent=(totalComboCount*2)+'명';
+
+    /* 학년반별 집계 */
+    var classMap={};
+    validItems.forEach(function(i){
+      [i.a, i.b].forEach(function(s){
+        var k=s.grade+'학년 '+s.klass+'반';
+        if(!classMap[k]) classMap[k]={grade:s.grade,klass:s.klass,count:0,stus:new Set()};
+        classMap[k].count++;
+        classMap[k].stus.add(String(s.grade)+'-'+String(s.klass)+'-'+String(s.num));
+      });
+    });
+    var clkeys=Object.keys(classMap).sort(function(a,b){
+      return(classMap[a].grade-classMap[b].grade)||(classMap[a].klass-classMap[b].klass);
+    });
+    var totalClassStu=0;
+    html('tbClass',clkeys.map(function(k){
+      var c=classMap[k];
+      var stuCount=c.stus.size;
+      totalClassStu+=stuCount;
+      return'<tr><td><strong>'+esc(k)+'</strong></td>'+
+        '<td class="nc">'+c.count+'건</td>'+
+        '<td class="nc">'+stuCount+'명</td></tr>';
+    }).join(''));
+    show('emptyClass',clkeys.length?'none':'block');
+    var tfClass=$('tfClass');
+    if(tfClass) tfClass.style.display=clkeys.length?'':'none';
+    if($('sumClassCount')) $('sumClassCount').textContent=validItems.length+'건';
+    if($('sumClassStu')) $('sumClassStu').textContent=totalClassStu+'명';
+
+    /* 학생별 — 신청/상대 구분 없이 모든 학생 독립 행, 학번순 정렬 */
+    var stu={};
+    items.filter(function(i){return i.status!=='반려';}).forEach(function(i){
+      [[i.a,i.b],[i.b,i.a]].forEach(function(pair){
+        var me=pair[0],other=pair[1];
+        if(!me||!me.name||me.name==='(미입력)')return;
+        /* 키: 학년-반-번호 (동명이인 구분, 학번순 정렬 기준) */
+        var k=String(me.grade)+'-'+String(me.klass)+'-'+String(me.num).padStart(3,'0');
+        if(!stu[k])stu[k]={info:me,list:[]};
+        stu[k].list.push({from:me.subj,to:other.subj,partner:other.name,psid:sid(other),status:i.status});
+      });
+    });
+    var skeys=Object.keys(stu).sort(function(a,b){
+      /* 학년→반→번호 순 정렬 */
+      var pa=a.split('-'), pb=b.split('-');
+      return(+pa[0]-+pb[0])||(+pa[1]-+pb[1])||(+pa[2]-+pb[2]);
+    });
+    /* 학생별 검색 필터 */
+    var stuQ=($('stuQ').value||'').trim().toLowerCase();
+    if(stuQ){
+      skeys=skeys.filter(function(k){
+        var s=stu[k];
+        var sidFull=sid(s.info); // 예: 2-5-18
+        var sidCompact=sidFull.replace(/-/g,''); // 예: 2518
+        var hay=(String(s.info.name)+' '+sidFull+' '+sidCompact).toLowerCase();
+        return hay.indexOf(stuQ)>=0;
+      });
+    }
+    html('tbStu',skeys.map(function(k){
+      var s=stu[k],multi=s.list.length>1;
+      var detail=s.list.map(function(c){
+        var bc=c.status==='승인'?'bo':c.status==='반려'?'bn':'bw';
+        return'<div style="margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">'+
+          '<span class="flow">'+
+            '<span class="from">'+esc(c.from)+'</span>'+
+            '<span class="arrow">→</span>'+
+            '<span class="to">'+esc(c.to)+'</span>'+
+          '</span>'+
+          '<span style="color:#9ca3af;font-size:.78rem">⇄ 상대</span>'+
+          '<span style="display:inline-flex;align-items:center;gap:5px;'+
+            'background:#f0f4fb;border:1px solid #b8cce8;border-radius:5px;padding:2px 9px;font-size:.84rem">'+
+            '<span class="sid">'+esc(c.psid)+'</span>'+
+            '<strong>'+esc(c.partner)+'</strong>'+
+          '</span>'+
+          '<span class="badge '+bc+'">'+esc(c.status)+'</span>'+
+        '</div>';
+      }).join('');
+      return'<tr>'+
+        '<td><strong>'+esc(s.info.name)+'</strong><br><span class="sid">'+esc(sid(s.info))+'</span></td>'+
+        '<td class="nc'+(multi?' multi':'')+'">'+s.list.length+'</td>'+
+        '<td>'+detail+'</td></tr>';
+    }).join(''));
+    show('emptyStu',skeys.length?'none':'block');
+    // 학생별 합계
+    var totalStuExchanges=skeys.reduce(function(s,k){return s+stu[k].list.length;},0);
+    var tfStu=$('tfStu');
+    if(tfStu) tfStu.style.display=skeys.length?'':'none';
+    if($('sumStuCount')) $('sumStuCount').textContent=skeys.length+'명';
+    if($('sumStuNote')) $('sumStuNote').textContent='총 교환 건수: '+validItems.length+'건 (이동 학생 '+(validItems.length*2)+'명)';
+  }
+
+  /* ── 초기화 ── */
+  $('todayLabel').textContent='오늘: '+today();
+  $('regDate').value=today();
+  load();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수학용사 모험성공기 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>수학용사 모험성공기</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>판타지 액션 플랫포머와 수학 문제 풀이가 결합된 학습 게임입니다. 학년과 단원을 선택하면 문제가 출제되며, 용사를 조작해 몬스터를 물리치고 문제방과 보스전을 거쳐 총 5개 층을 모험합니다. 문제는 구글 시트에 연동된 문제은행에서 실시간으로 불러오며, 연결이 안 되면 학년별로 내장된 문제가 자동으로 출제됩니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>학년(초5~중3)과 단원(최대 3개) 선택 후 게임 시작, 이름 입력(최대 12자)</li>
+      <li>5개 층 모험 : 1층 루미나 숲(버섯) → 2층 아르카 정원 유적(버섯 · 슬라임) → 3층 황혼 수정 협곡(멧돼지) → 4층 사막 유적 공중회랑(가고일) → 5층 천공 신전 구름길(검치호랑이), 각 층마다 12개의 문제방과 보스전으로 구성</li>
+      <li>액션 전투 : 방향키로 이동 · 점프, 검 공격으로 몬스터 처치, 문제방에서는 문제를 맞히면 코인 · 점수 획득(2회 시도 제한, 오답 시 해당 방 종료)</li>
+      <li>보스전 : 검으로 보스를 맞히면 문제가 출제되며, 정답이면 보스에게 피해, 오답이면 오히려 반격당해 플레이어가 피해를 입음</li>
+      <li>기어(장비) 세트 6종을 코인으로 구매해 피해 감소 · 이동 속도 · 점프력 · 검 사거리 강화</li>
+      <li>회복 물약 등 아이템 사용, 퀵 아이템 슬롯(숫자 1~8)</li>
+      <li>진행 상황 자동 저장(이어하기)과 누적 순위 게시판(수학용사 순위) 제공</li>
+      <li>모바일 터치 조작(방향패드 · 점프/공격 버튼) 및 키보드 조작 모두 지원, 가로 모드 권장</li>
+      <li>진동 피드백, 화면 흔들림 등 다양한 타격 이펙트와 실시간 생성 효과음</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>타이틀 화면에서 학년을 선택하고, 필요하면 "단원 선택"에서 원하는 단원(최대 3개)을 고릅니다.</li>
+      <li>이름을 입력하고 게임을 시작합니다. (구글 문제은행 연결 상태가 화면에 표시되며, 연결 실패 시 내장 문제로 자동 전환됨)</li>
+      <li>방향키(모바일은 방향패드)로 이동하고 점프하며 맵을 탐험합니다.</li>
+      <li>몬스터는 검으로 공격해 처치하고, 문제방에 들어가면 출제되는 문제를 풀어 코인과 점수를 획득합니다. (문제방은 2회까지 시도 가능, 틀리면 해당 방은 종료)</li>
+      <li>보스방에서는 검으로 보스를 맞혀 문제를 출제시키고, 정답을 맞혀 보스 체력을 깎습니다. 오답이면 반격당해 피해를 입으니 주의합니다.</li>
+      <li>코인이 모이면 상점에서 기어(장비) 세트를 구매해 능력치를 강화할 수 있습니다.</li>
+      <li>보스를 처치하면 체력이 회복되고 다음 층으로 이동합니다. 5층 보스까지 처치하면 모험이 완료됩니다.</li>
+      <li>체력이 0이 되면 실패 화면이 뜨며, 해당 층 처음부터 다시하기를 선택할 수 있고, 두 경우 모두 순위 게시판에서 기록을 확인할 수 있습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>이미지 · 아이콘 등 그래픽 리소스를 모두 내부에 포함한 단일 HTML 파일로, 별도 서버 설치 없이 브라우저만으로 실행됩니다. 문제 데이터는 연결된 구글 시트("문제은행", "단원목록" 탭)를 Google Visualization API로 불러오며, 연결에 실패하면 코드에 내장된 학년별 문제 생성기가 절차적으로(난수 기반) 문제를 만들어 대신 출제합니다. 진행 상황과 순위 게시판은 모두 브라우저의 localStorage에 저장되며 별도의 서버 · 데이터베이스는 사용하지 않습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>진행 상황(이어하기)과 순위 게시판은 브라우저(기기)별로 localStorage에 저장되므로, 다른 컴퓨터나 브라우저에서는 이어서 진행하거나 기록을 확인할 수 없습니다.</li>
+        <li>문제은행이 연동된 구글 시트에 접근할 수 없는 환경(오프라인 등)에서는 자동으로 내장 문제로 전환되어 실제 시트 문제와 다를 수 있습니다.</li>
+        <li>화면이 가로 모드에 최적화되어 있어, 세로로 접속하면 "가로로 돌려주세요" 안내가 표시됩니다.</li>
+        <li>파일 용량이 매우 크므로(이미지가 모두 내장되어 있음) 최초 로딩에 시간이 걸릴 수 있습니다.</li>
+        <li>코드에 관리자(테스트) 모드가 포함되어 있어 특정 암호를 입력하면 무제한 아이템 등 디버깅 기능이 활성화됩니다. 일반 사용자에게 노출되지 않도록 유의하세요.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

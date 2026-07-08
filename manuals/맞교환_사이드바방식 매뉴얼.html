@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>선택과목 맞교환 신청 관리 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>선택과목 맞교환 신청 관리</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>학생들이 선택과목을 서로 맞바꾸고 싶을 때, 신청부터 승인까지의 과정을 디지털화한 프로그램입니다. 신청 학생과 상대 학생의 정보 및 현재 수강 과목을 입력해 맞교환 신청을 등록하고, 신청 현황을 확인하며 승인·반려 처리를 할 수 있습니다. 과목 조합별·학년반별·학생별 통계를 통해 전체 교환 현황을 한눈에 파악할 수 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>사이드바 메뉴로 <b>신청 등록 / 신청 현황 / 통계 / 설정</b> 화면 전환</li>
+      <li><b>신청 등록</b> : 신청 학생 · 상대 학생의 학년/반/번호/이름/현재 과목을 입력하면 맞교환 형태로 자동 등록</li>
+      <li><b>학생 명단 관리</b> : 학번(학년-반-번호) 입력 시 이름 자동완성, CSV 파일로 학생 명단 일괄 등록(드래그 앤 드롭 지원)</li>
+      <li><b>신청 현황</b> : 이름 · 과목 · 학번으로 검색, 상태(대기/승인/반려)와 학년으로 필터링, 조건에 맞는 항목 일괄 승인 · 반려</li>
+      <li><b>통계</b> : 과목 조합별, 학년 · 반별, 학생별 교환 현황을 표로 집계 (학생 검색 가능)</li>
+      <li><b>설정</b> : 과목 목록 추가/삭제, 기본 목록으로 초기화 또는 현재 목록을 기본값으로 저장</li>
+      <li><b>CSV 내보내기 / 가져오기</b>로 신청 데이터 백업 및 복원</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>"신청 등록" 화면에서 신청 학생과 상대 학생의 학년/반/번호/이름/현재 과목을 입력합니다. (학생 명단에 등록되어 있으면 반 · 번호만 입력해도 이름이 자동으로 채워짐)</li>
+      <li>신청일과 비고(선택)를 입력한 뒤 "교환 신청 등록" 버튼을 누릅니다.</li>
+      <li>"신청 현황" 화면에서 등록된 신청 목록을 확인하고, 각 건의 상태를 대기/승인/반려로 변경합니다. 여러 건을 한 번에 처리하려면 검색 · 필터로 대상을 좁힌 뒤 "일괄 승인" 또는 "일괄 반려" 버튼을 누릅니다.</li>
+      <li>"통계" 화면에서 과목 조합별, 학년 · 반별, 학생별 교환 현황을 확인합니다.</li>
+      <li>"설정" 화면에서 자주 사용하는 과목 목록을 관리합니다.</li>
+      <li>데이터를 다른 컴퓨터로 옮기거나 백업하려면 "CSV 내보내기" 버튼으로 파일을 저장하고, 필요할 때 "CSV 가져오기"로 불러옵니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>단일 HTML 파일로 구성되어 있으며, 별도 서버 없이 브라우저의 localStorage에 데이터(신청 내역 · 과목 목록 · 학생 명단)를 저장합니다. 사이드바 메뉴 클릭 시 JavaScript로 화면(<code>.page</code>)이 전환되며, 모든 로직은 하나의 <code>&lt;script&gt;</code> 블록 안에 작성되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>이 HTML 파일을 컴퓨터에 저장한 뒤 <b>Chrome으로 열어야</b> 입력한 데이터가 유지됩니다. 다른 컴퓨터나 다른 브라우저로 열면 데이터가 보이지 않습니다.</li>
+        <li>크롬에서 "인터넷 사용 기록 삭제 → 쿠키 및 사이트 데이터"를 삭제하면 저장된 데이터가 함께 사라집니다.</li>
+        <li>데이터를 다른 컴퓨터로 옮기거나 백업할 때는 반드시 "CSV 내보내기" 기능을 사용해야 합니다.</li>
+        <li>CSV 가져오기는 이 프로그램에서 내보낸 형식(헤더 포함, 13개 컬럼)과 일치해야 정상적으로 인식됩니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

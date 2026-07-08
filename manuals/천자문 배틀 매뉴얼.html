@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>천자문 배틀 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>천자문 배틀</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>마법천자문 콘셉트의 포켓몬 스타일 배틀 게임으로, 학생이 한자의 음과 뜻을 입력하며 자연스럽게 천자문을 익힐 수 있도록 만든 웹 프로그램입니다. 화면에 나타난 한자의 음을 맞히면 방어에 성공하고, 이어서 뜻을 골라 반격하면 적에게 피해를 줍니다. 문제(한자 · 음 · 뜻 · 위력 · 급수)는 구글 시트에서 불러오며, 배틀을 시작할 때마다 적의 최대 체력이 시트에 등록된 값 중 하나로 무작위로 정해집니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>방어 단계</b> : 화면에 뜬 한자의 음을 입력해서 맞히면 방어 성공, 틀리면 플레이어가 피해를 입고 정답이 표시됨</li>
+      <li><b>반격 단계</b> : 방어에 성공하면 방금 입력한 음과 같은 한자들의 "뜻" 버튼이 나타나고, 그중 화면의 한자와 일치하는 뜻을 골라야 반격 성공</li>
+      <li><b>크리티컬 공격</b> : 같은 음을 가진 한자(동음이의 한자)가 2개 이상이면 반격 시 2배 피해가 적용됨</li>
+      <li>한자별 위력(power)과 급수(level) 데이터를 시트에서 불러와 데미지와 표시에 반영</li>
+      <li><b>적 체력 무작위 배정</b> : 배틀을 시작하거나 다시 도전할 때마다 시트에 등록된 여러 체력 값 중 하나가 무작위로 선택되어 난이도가 매번 달라짐</li>
+      <li>포켓몬 스타일 전투 화면(체력바, 스프라이트, 흔들림 · 붉은 화면 효과)과 배경음악(BGM) 재생</li>
+      <li>승리 · 패배 화면과 "다시 도전" 버튼으로 재도전 가능</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>화면이 로딩되면 "배틀 시작 (BGM ON)" 버튼을 누릅니다.</li>
+      <li>화면 중앙에 나타난 한자를 보고, 입력창에 그 한자의 음(소리)을 입력한 뒤 Enter를 누릅니다.</li>
+      <li>음을 맞히면 방어에 성공하고, 이어서 같은 음을 입력창에 입력해 뜻 후보 버튼들을 확인합니다.</li>
+      <li>후보 버튼 중 현재 한자와 일치하는 뜻을 클릭하면 반격에 성공해 적의 체력이 줄어듭니다. (동음 한자가 여러 개면 2배 피해)</li>
+      <li>틀리게 답하면 내 체력이 15씩 줄어들고 정답이 화면에 표시된 뒤 다음 라운드로 넘어갑니다.</li>
+      <li>적의 체력을 모두 없애면 승리, 내 체력이 0이 되면 패배 화면이 뜨며, "다시 도전" 버튼을 누르면 새로운 무작위 체력으로 다시 시작할 수 있습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>(서버 로직)와 <code>index.html</code>(게임 화면 전체) 두 파일로 이루어져 있습니다. <code>code.gs</code>의 <code>getHanjaList()</code> 함수가 구글 시트의 <code>HanjaData</code> 시트(또는 첫 번째 시트)에서 한자 · 음 · 뜻 · 위력 · 급수 데이터를 읽고, A열에 등록된 체력 값 중 하나를 무작위로 골라 적의 최대 체력으로 함께 전달합니다. <code>index.html</code>은 이 데이터를 받아 방어→반격 라운드 진행, 체력 계산, 효과음 · 애니메이션 등을 JavaScript로 처리합니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>문제 데이터(한자/음/뜻/위력/급수)와 적 체력 후보 값은 모두 연결된 구글 시트에서 관리하므로, 시트 내용을 수정하면 게임 데이터가 그대로 바뀝니다.</li>
+        <li>시트에 체력 값이 없으면 적 체력이 기본값 200으로 설정되고, 한자 데이터가 아예 없으면 오류 메시지가 표시됩니다.</li>
+        <li>배경음악은 외부 GitHub 저장소에 연결된 파일을 재생하므로, 해당 파일이 삭제되거나 접근이 제한되면 음악이 재생되지 않을 수 있습니다.</li>
+        <li>브라우저의 오디오 자동재생 정책 때문에 "배틀 시작" 버튼을 눌러야 BGM이 재생됩니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

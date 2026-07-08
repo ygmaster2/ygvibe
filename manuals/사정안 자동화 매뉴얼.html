@@ -5,839 +5,138 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>사정안 자동화 시스템 매뉴얼</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
   body {
-    font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
-    background: #f5f7fa;
-    color: #1f2937;
-    display: flex;
-    min-height: 100vh;
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
   }
-
-  /* ===== 사이드바 ===== */
-  #sidebar {
-    width: 260px;
-    min-width: 260px;
-    background: #1e293b;
-    color: #e2e8f0;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    overflow-y: auto;
-    z-index: 100;
-    padding-bottom: 40px;
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+  .role-tag {
+    display: inline-block; font-size: 11px; font-weight: 700; color: #fff;
+    border-radius: 4px; padding: 1px 7px; margin-right: 6px; vertical-align: middle;
   }
-
-  #sidebar .logo {
-    padding: 24px 20px 20px;
-    border-bottom: 1px solid #334155;
-  }
-
-  #sidebar .logo h1 {
-    font-size: 15px;
-    font-weight: 700;
-    color: #f1f5f9;
-    line-height: 1.5;
-  }
-
-  #sidebar .logo p {
-    font-size: 11px;
-    color: #94a3b8;
-    margin-top: 4px;
-  }
-
-  .nav-group {
-    margin-top: 8px;
-  }
-
-  .nav-group-title {
-    font-size: 10px;
-    font-weight: 700;
-    color: #64748b;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    padding: 14px 20px 6px;
-  }
-
-  .nav-group a {
-    display: block;
-    padding: 9px 20px 9px 28px;
-    font-size: 13px;
-    color: #cbd5e1;
-    text-decoration: none;
-    transition: all 0.15s;
-    border-left: 3px solid transparent;
-  }
-
-  .nav-group a:hover {
-    background: #334155;
-    color: #f1f5f9;
-    border-left-color: #60a5fa;
-  }
-
-  .nav-group a.active {
-    background: #1d4ed8;
-    color: #fff;
-    border-left-color: #93c5fd;
-  }
-
-  .nav-role-badge {
-    display: inline-block;
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 9999px;
-    margin-right: 4px;
-    font-weight: 700;
-  }
-  .badge-admin { background: #4f46e5; color: #e0e7ff; }
-  .badge-teacher { background: #0369a1; color: #e0f2fe; }
-  .badge-subject { background: #065f46; color: #d1fae5; }
-
-  /* ===== 메인 콘텐츠 ===== */
-  #main {
-    margin-left: 260px;
-    flex: 1;
-    padding: 40px 48px;
-    max-width: 960px;
-  }
-
-  /* ===== 섹션 공통 ===== */
-  .section {
-    margin-bottom: 60px;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 20px 24px;
-    border-radius: 12px;
-    margin-bottom: 28px;
-  }
-
-  .section-header.admin { background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; }
-  .section-header.teacher { background: linear-gradient(135deg, #0369a1, #0284c7); color: white; }
-  .section-header.subject { background: linear-gradient(135deg, #065f46, #059669); color: white; }
-  .section-header.overview { background: linear-gradient(135deg, #1e293b, #334155); color: white; }
-
-  .section-header .icon { font-size: 32px; }
-
-  .section-header h2 {
-    font-size: 22px;
-    font-weight: 700;
-  }
-
-  .section-header p {
-    font-size: 13px;
-    opacity: 0.85;
-    margin-top: 2px;
-  }
-
-  /* ===== 카드 ===== */
-  .card {
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-
-  .card h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #f1f5f9;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  /* ===== 단계 목록 ===== */
-  .steps {
-    counter-reset: step-counter;
-    list-style: none;
-  }
-
-  .steps li {
-    counter-increment: step-counter;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    margin-bottom: 14px;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  .steps li::before {
-    content: counter(step-counter);
-    min-width: 26px;
-    height: 26px;
-    background: #4f46e5;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .steps.blue li::before { background: #0369a1; }
-  .steps.green li::before { background: #065f46; }
-
-  /* ===== 노트/경고 박스 ===== */
-  .note {
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 13px;
-    line-height: 1.6;
-    margin-top: 14px;
-    display: flex;
-    gap: 10px;
-  }
-
-  .note.info { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
-  .note.warn { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; }
-  .note.success { background: #f0fdf4; border-left: 4px solid #22c55e; color: #14532d; }
-  .note.tip { background: #faf5ff; border-left: 4px solid #a855f7; color: #581c87; }
-
-  .note .note-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-
-  /* ===== 태그/뱃지 ===== */
-  .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .tag.green { background: #dcfce7; color: #166534; }
-  .tag.yellow { background: #fef3c7; color: #92400e; }
-  .tag.red { background: #fee2e2; color: #991b1b; }
-  .tag.blue { background: #dbeafe; color: #1e40af; }
-  .tag.purple { background: #ede9fe; color: #5b21b6; }
-
-  /* ===== 그리드 ===== */
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-
-  /* ===== 개요 역할 카드 ===== */
-  .role-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-top: 4px;
-  }
-
-  .role-card {
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-  }
-
-  .role-card.admin-c { background: #eef2ff; border: 2px solid #c7d2fe; }
-  .role-card.teacher-c { background: #e0f2fe; border: 2px solid #bae6fd; }
-  .role-card.subject-c { background: #d1fae5; border: 2px solid #a7f3d0; }
-
-  .role-card .role-icon { font-size: 36px; margin-bottom: 8px; }
-  .role-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-  .role-card p { font-size: 12px; line-height: 1.5; color: #475569; }
-
-  /* ===== 흐름도 ===== */
-  .flow {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    flex-wrap: wrap;
-    margin: 12px 0;
-  }
-
-  .flow-item {
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #334155;
-    white-space: nowrap;
-  }
-
-  .flow-arrow {
-    color: #94a3b8;
-    font-size: 18px;
-    padding: 0 6px;
-  }
-
-  /* ===== 테이블 ===== */
-  .info-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    margin-top: 8px;
-  }
-
-  .info-table th {
-    background: #f8fafc;
-    padding: 10px 14px;
-    text-align: left;
-    border: 1px solid #e2e8f0;
-    font-weight: 700;
-    color: #475569;
-    width: 160px;
-  }
-
-  .info-table td {
-    padding: 10px 14px;
-    border: 1px solid #e2e8f0;
-    line-height: 1.5;
-    color: #1f2937;
-  }
-
-  /* ===== 스크롤 타겟 오프셋 ===== */
-  [id] { scroll-margin-top: 24px; }
-
-  /* ===== 반응형 ===== */
-  @media (max-width: 900px) {
-    #sidebar { width: 220px; min-width: 220px; }
-    #main { margin-left: 220px; padding: 24px; }
-    .role-cards { grid-template-columns: 1fr; }
-    .grid-2 { grid-template-columns: 1fr; }
-  }
+  .role-tag.admin { background: #4f46e5; }
+  .role-tag.teacher { background: #0369a1; }
+  .role-tag.subject { background: #065f46; }
 </style>
 </head>
 <body>
 
-<!-- ===== 사이드바 ===== -->
-<nav id="sidebar">
-  <div class="logo">
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
     <h1>사정안 자동화 시스템</h1>
-    <p>베타 버전 사용자 매뉴얼</p>
+    <p>사용 매뉴얼</p>
   </div>
 
-  <div class="nav-group">
-    <div class="nav-group-title">시작하기</div>
-    <a href="#overview">📋 시스템 개요</a>
-    <a href="#roles">👥 역할 안내</a>
-    <a href="#flow">🔄 전체 업무 흐름</a>
-  </div>
-
-  <div class="nav-group">
-    <div class="nav-group-title">관리자</div>
-    <a href="#admin-login"><span class="nav-role-badge badge-admin">관</span>로그인</a>
-    <a href="#admin-settings"><span class="nav-role-badge badge-admin">관</span>시스템 설정</a>
-    <a href="#admin-dashboard"><span class="nav-role-badge badge-admin">관</span>대시보드</a>
-    <a href="#admin-export"><span class="nav-role-badge badge-admin">관</span>데이터 내보내기</a>
-  </div>
-
-  <div class="nav-group">
-    <div class="nav-group-title">담임 교사</div>
-    <a href="#teacher-login"><span class="nav-role-badge badge-teacher">담</span>로그인</a>
-    <a href="#teacher-form1"><span class="nav-role-badge badge-teacher">담</span>1학기 사정안</a>
-    <a href="#teacher-form2"><span class="nav-role-badge badge-teacher">담</span>2학기 사정안</a>
-    <a href="#teacher-submit"><span class="nav-role-badge badge-teacher">담</span>저장 · 제출 · 인쇄</a>
-  </div>
-
-  <div class="nav-group">
-    <div class="nav-group-title">교과 교사</div>
-    <a href="#subject-login"><span class="nav-role-badge badge-subject">교</span>로그인</a>
-    <a href="#subject-upload"><span class="nav-role-badge badge-subject">교</span>파일 업로드</a>
-    <a href="#subject-status"><span class="nav-role-badge badge-subject">교</span>업로드 현황</a>
-  </div>
-
-  <div class="nav-group">
-    <div class="nav-group-title">기타</div>
-    <a href="#faq">❓ 자주 묻는 질문</a>
-  </div>
-</nav>
-
-<!-- ===== 메인 콘텐츠 ===== -->
-<main id="main">
-
-  <!-- ========== 개요 ========== -->
-  <section class="section" id="overview">
-    <div class="section-header overview">
-      <div class="icon">📌</div>
-      <div>
-        <h2>시스템 개요</h2>
-        <p>사정안 자동화 시스템 베타 버전 사용자 안내서</p>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🎯 이 시스템은 무엇인가요?</h3>
-      <p style="font-size:14px; line-height:1.8; color:#374151;">
-        사정안 자동화 시스템은 학기말 사정안 작성 및 교과우수상 자료 수집 업무를 디지털화하여
-        담임교사·교과교사의 입력 작업과 관리자의 취합·출력 업무를 효율화하는 웹 기반 시스템입니다.
-        Google Apps Script(GAS) 환경에서 구동되며, 인터넷 브라우저만 있으면 별도 설치 없이 사용 가능합니다.
-      </p>
-      <div class="note info" style="margin-top:16px;">
-        <span class="note-icon">ℹ️</span>
-        <span>Chrome 브라우저 사용을 권장합니다. 모바일 환경에서는 일부 기능이 제한될 수 있습니다.</span>
-      </div>
-    </div>
-
-    <div class="card" id="roles">
-      <h3>👥 사용자 역할</h3>
-      <div class="role-cards">
-        <div class="role-card admin-c">
-          <div class="role-icon">🔐</div>
-          <h4>관리자</h4>
-          <p>시스템 설정, 제출 현황 모니터링, 데이터 내보내기 등 전체 업무를 총괄합니다.</p>
-        </div>
-        <div class="role-card teacher-c">
-          <div class="role-icon">👨‍🏫</div>
-          <h4>담임 교사</h4>
-          <p>담당 학급의 재적 현황, 표창 대상자 등 사정안 양식을 작성하고 제출합니다.</p>
-        </div>
-        <div class="role-card subject-c">
-          <div class="role-icon">📖</div>
-          <h4>교과 교사</h4>
-          <p>나이스에서 받은 교과우수상 대상자 xlsx 파일을 업로드합니다.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="flow">
-      <h3>🔄 전체 업무 흐름</h3>
-      <p style="font-size:13px; color:#64748b; margin-bottom:14px;">아래 순서로 진행하면 됩니다.</p>
-
-      <p style="font-size:13px; font-weight:700; color:#4f46e5; margin-bottom:8px;">① 1학기 사정안 (담임)</p>
-      <div class="flow">
-        <div class="flow-item">관리자 시스템 설정<br><small style="font-weight:400;">(학년도·학기·로그인 활성화)</small></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">담임교사 로그인</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">1학기 양식 작성</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">저장 &amp; 제출</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">관리자 확인 &amp; 출력</div>
-      </div>
-
-      <p style="font-size:13px; font-weight:700; color:#065f46; margin-bottom:8px; margin-top:18px;">② 교과우수상 (교과교사)</p>
-      <div class="flow">
-        <div class="flow-item">성적 산출 완료 후<br><small style="font-weight:400;">관리자가 교과교사 로그인 활성화</small></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">교과교사 로그인<br><small style="font-weight:400;">(학년·과목 선택)</small></div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">나이스 xlsx 업로드</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">관리자 현황 확인</div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-item">CSV 내보내기</div>
-      </div>
-    </div>
+  <section>
+    <h2>1. 개요</h2>
+    <p>사정안 자동화 시스템은 학기말 사정안 작성 및 교과우수상 자료 수집 업무를 디지털화하여 담임교사·교과교사의 입력 작업과 관리자의 취합·출력 업무를 효율화하는 웹 기반 시스템입니다. 관리자·담임교사·교과교사 3개 역할로 나뉘어 있으며, Google Apps Script(GAS) 환경에서 구동되어 별도 설치 없이 브라우저로 바로 사용할 수 있습니다. 로그인 화면에서 "매뉴얼 새창으로 열기" 버튼을 누르면 언제든 이 매뉴얼을 확인할 수 있습니다.</p>
   </section>
 
-  <!-- ========== 관리자 ========== -->
-  <section class="section">
-    <div class="section-header admin">
-      <div class="icon">🔐</div>
-      <div>
-        <h2>관리자 매뉴얼</h2>
-        <p>시스템 전반을 설정하고 제출 현황을 관리합니다</p>
-      </div>
-    </div>
+  <section>
+    <h2>2. 주요 기능</h2>
 
-    <!-- 관리자 로그인 -->
-    <div class="card" id="admin-login">
-      <h3>🔑 관리자 로그인</h3>
-      <ol class="steps">
-        <li>메인 화면에서 <strong>🔐 관리자 로그인</strong> 버튼을 클릭합니다.</li>
-        <li>비밀번호를 입력하고 <strong>로그인</strong> 버튼을 클릭합니다.</li>
-        <li>로그인 성공 시 관리자 대시보드 화면으로 이동합니다.</li>
-      </ol>
-      <div class="note warn">
-        <span class="note-icon">⚠️</span>
-        <span>비밀번호는 Google Sheets의 <strong>master</strong> 시트 A2 셀에 저장되어 있습니다. 분실 시 스프레드시트에서 직접 확인하세요.</span>
-      </div>
-    </div>
+    <h3><span class="role-tag admin">관리자</span>전체 관리</h3>
+    <ul>
+      <li>비밀번호 로그인(Google Sheets <code>master</code> 시트로 확인)</li>
+      <li>시스템 설정 : 학년도, 현재 학기(1/2학기), 담임교사·과목교사 로그인 허용 여부를 설정하면 저장 즉시 전체 사용자에게 반영</li>
+      <li>대시보드 : 학기별 담임 제출 현황(제출/임시저장/미제출)과 교과 업로드 현황을 반 · 과목 카드로 확인</li>
+      <li>담임 화면 조회 및 인쇄, 학년별 전체 반 사정안 연속 출력</li>
+      <li>데이터 전송 : 담임 자료를 <code>양식_1학기</code>/<code>양식_2학기</code> 시트로 정리</li>
+      <li>CSV 내보내기 : 학기별 교과우수상·표창 데이터를 CSV로 다운로드해 로컬 <code>converter.exe</code>로 한글(HWP) 문서 메일머지 생성 (CSV의 교과우수상 명단은 <code>과목편제</code> 시트에 등록된 순서를 따름)</li>
+    </ul>
 
-    <!-- 시스템 설정 -->
-    <div class="card" id="admin-settings">
-      <h3>⚙️ 시스템 설정</h3>
-      <p style="font-size:13px; color:#64748b; margin-bottom:14px;">관리자 대시보드 우상단 <strong>⚙️ 시스템 설정</strong> 버튼을 클릭하면 설정 창이 열립니다.</p>
+    <h3><span class="role-tag teacher">담임교사</span>학급 사정안 작성</h3>
+    <ul>
+      <li>학년 · 반 · 이름 로그인(<code>class_master</code> 시트와 대조)</li>
+      <li>1학기 : 재적 · 사정인원 · 출석일수 미달자 · 비고, 표창 대상자 5개 부문(모범 · 노력 · 선행 · 봉사 · 리더십) 입력</li>
+      <li>2학기(학년말) : 1학기 항목 전체 + 개근자 명단(입력 시 인원수 자동 계산, 3학년은 "3년 개근자"로 자동 표시)</li>
+      <li>임시 저장 · 최종 제출 · A4 가로 인쇄</li>
+    </ul>
 
-      <table class="info-table">
-        <tr>
-          <th>학년도</th>
-          <td>현재 학년도를 입력합니다. (예: 2026)<br>담임교사 양식 상단에 표시됩니다.</td>
-        </tr>
-        <tr>
-          <th>현재 학기</th>
-          <td>
-            <span class="tag blue">1학기</span> 선택 시 — 담임교사의 2학기 탭이 잠깁니다.<br>
-            <span class="tag purple">2학기</span> 선택 시 — 담임교사의 2학기 탭이 활성화됩니다.
-          </td>
-        </tr>
-        <tr>
-          <th>담임교사 로그인</th>
-          <td>토글 <span class="tag green">ON</span>: 담임교사 로그인 허용 &nbsp;|&nbsp; <span class="tag red">OFF</span>: 로그인 잠금</td>
-        </tr>
-        <tr>
-          <th>과목교사 로그인</th>
-          <td>성적 산출 완료 후 <span class="tag green">ON</span>으로 변경합니다.<br><span class="tag red">OFF</span> 상태에서는 교과교사 로그인 버튼이 비활성화됩니다.</td>
-        </tr>
-      </table>
-
-      <div class="note success" style="margin-top:14px;">
-        <span class="note-icon">✅</span>
-        <span><strong>저장</strong> 버튼을 누르면 즉시 모든 사용자에게 반영됩니다. 재배포 없이 바로 적용됩니다.</span>
-      </div>
-
-      <div class="note tip" style="margin-top:10px;">
-        <span class="note-icon">💡</span>
-        <span>배포 전에 학년도·학기를 먼저 설정해두세요. 담임교사와 교과교사가 접속하면 설정값이 자동 적용됩니다.</span>
-      </div>
-    </div>
-
-    <!-- 관리자 대시보드 -->
-    <div class="card" id="admin-dashboard">
-      <h3>📊 대시보드 활용</h3>
-
-      <p style="font-size:13px; font-weight:700; margin-bottom:10px; color:#374151;">① 학기 탭 전환</p>
-      <p style="font-size:13px; line-height:1.7; margin-bottom:16px;">상단 탭에서 <strong>📚 1학기 사정안</strong> / <strong>📚 2학기(학년말) 사정안</strong>을 선택하여 학기별 현황을 확인합니다.</p>
-
-      <p style="font-size:13px; font-weight:700; margin-bottom:10px; color:#374151;">② 통계 영역</p>
-      <div class="grid-2" style="margin-bottom:16px;">
-        <div style="background:#f8fafc; border-radius:8px; padding:14px; font-size:13px;">
-          <p style="font-weight:700; margin-bottom:6px;">📋 담임자료 통계</p>
-          <p>전체 반 수 · 제출 완료 · 미제출 반 수를 한눈에 확인</p>
-        </div>
-        <div style="background:#f8fafc; border-radius:8px; padding:14px; font-size:13px;">
-          <p style="font-weight:700; margin-bottom:6px;">📚 교과자료 통계</p>
-          <p>전체 과목 수 · 업로드 완료 과목 수 표시</p>
-        </div>
-      </div>
-
-      <p style="font-size:13px; font-weight:700; margin-bottom:10px; color:#374151;">③ 담임 카드</p>
-      <p style="font-size:13px; line-height:1.7; margin-bottom:10px;">학년별로 1~8반 카드가 나열됩니다. 카드 색상으로 상태를 확인할 수 있습니다.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-        <span><span class="tag green">✓ 제출됨</span> &nbsp;제출 완료</span>
-        <span><span class="tag yellow">※ 임시저장</span> &nbsp;작성 중</span>
-        <span><span class="tag red">✗ 미제출</span> &nbsp;미작성</span>
-      </div>
-      <div class="note info">
-        <span class="note-icon">ℹ️</span>
-        <span>카드를 클릭하면 해당 반의 사정안 내용을 전체 화면으로 조회할 수 있습니다.</span>
-      </div>
-
-      <p style="font-size:13px; font-weight:700; margin-top:18px; margin-bottom:10px; color:#374151;">④ 교과 카드</p>
-      <p style="font-size:13px; line-height:1.7; margin-bottom:10px;">학년별로 과목편제에 등록된 과목들이 카드로 표시됩니다. 카드를 클릭하면 업로드된 학생 명단을 확인할 수 있습니다.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
-        <span><span class="tag green">✅ 과목명</span> &nbsp;업로드 완료 + 인원수 표시</span>
-        <span><span class="tag red">❌ 과목명</span> &nbsp;미업로드</span>
-      </div>
-
-      <p style="font-size:13px; font-weight:700; margin-top:18px; margin-bottom:10px; color:#374151;">⑤ 담임 화면 조회</p>
-      <ol class="steps">
-        <li>상단 <strong>🔍 담임 데이터 조회</strong> 영역에서 학년·반을 선택합니다.</li>
-        <li><strong>📋 조회</strong> 버튼을 클릭하면 해당 반의 사정안을 전체 화면으로 볼 수 있습니다.</li>
-        <li>모달 상단 <strong>🖨️ 인쇄</strong> 버튼으로 출력 가능합니다.</li>
-      </ol>
-
-      <p style="font-size:13px; font-weight:700; margin-top:18px; margin-bottom:10px; color:#374151;">⑥ 학년별 전체 출력</p>
-      <ol class="steps">
-        <li><strong>🖨️ 학년별 전체 출력</strong> 영역에서 원하는 학년 버튼을 클릭합니다.</li>
-        <li>해당 학년 전체 반의 사정안이 A4 가로 형식으로 연속 표시됩니다.</li>
-        <li><strong>🖨️ 인쇄</strong> 버튼으로 한 번에 출력합니다.</li>
-      </ol>
-    </div>
-
-    <!-- 데이터 내보내기 -->
-    <div class="card" id="admin-export">
-      <h3>📤 데이터 내보내기 및 한글 문서 생성</h3>
-      <p style="font-size:13px; color:#64748b; margin-bottom:14px;">한글(HWP) 문서 생성은 로컬 PC의 <strong>converter.exe</strong>를 통해 이루어집니다. 아래 순서대로 진행하세요.</p>
-
-      <p style="font-size:13px; font-weight:700; color:#4f46e5; margin-bottom:10px;">① 데이터 전송 (양식 시트 준비)</p>
-      <ol class="steps" style="margin-bottom:18px;">
-        <li>대시보드 하단 <strong>📤 데이터 전송</strong> 버튼을 클릭합니다.</li>
-        <li>현재 활성 탭(1학기 또는 2학기) 기준으로 담임 자료가 <strong>양식_1학기</strong> 또는 <strong>양식_2학기</strong> 시트에 자동으로 채워집니다.</li>
-        <li>전송 완료 메시지가 뜨면 구글 시트에서 내용을 확인할 수 있습니다.</li>
-      </ol>
-      <div class="note tip" style="margin-bottom:18px;">
-        <span class="note-icon">💡</span>
-        <span>양식 시트는 추후 엑셀 출력 등 다양한 용도로 활용될 수 있습니다. 현재는 데이터를 정해진 양식 형태로 정리하는 기능을 합니다.</span>
-      </div>
-
-      <p style="font-size:13px; font-weight:700; color:#065f46; margin-bottom:10px;">② 사정안 한글문서 생성 (메일머지)</p>
-      <ol class="steps green" style="margin-bottom:18px;">
-        <li>담임 교사와 교과 교사의 자료 업로드가 완료된 것을 확인합니다.</li>
-        <li>대시보드 하단 <strong>📋 1학기 CSV 내보내기</strong> 또는 <strong>📋 2학기 CSV 내보내기</strong> 버튼을 클릭하여 CSV 파일을 다운로드합니다.</li>
-        <li>관리자 PC에서 <strong>converter.exe</strong>를 실행합니다.</li>
-        <li>converter.exe에서 다운로드된 CSV 파일을 불러와 <strong>메일머지 실행</strong> 버튼을 클릭합니다.</li>
-        <li>교과우수상 HWP 문서가 생성됩니다.</li>
-      </ol>
-
-      <div class="note tip">
-        <span class="note-icon">💡</span>
-        <span>converter.exe는 관리자 PC에서만 실행하면 됩니다. 교사들은 웹 브라우저만으로 데이터를 입력·제출할 수 있습니다.</span>
-      </div>
-    </div>
+    <h3><span class="role-tag subject">교과교사</span>교과우수상 파일 업로드</h3>
+    <ul>
+      <li>학년 · 담당 과목(<code>과목편제</code> 시트 기준 자동 목록) · 이름 로그인</li>
+      <li>나이스(NEIS) xlsx 파일 업로드 → 파일 내용(학년 · 과목명 · 학생 수) 확인 화면에서 검토 후 확정</li>
+      <li>기존 업로드 데이터가 있으면 덮어쓰기 확인 후 재업로드</li>
+      <li>학년 · 과목별 업로드 현황 확인</li>
+    </ul>
   </section>
 
-  <!-- ========== 담임 교사 ========== -->
-  <section class="section">
-    <div class="section-header teacher">
-      <div class="icon">👨‍🏫</div>
-      <div>
-        <h2>담임 교사 매뉴얼</h2>
-        <p>학급 사정안을 작성하고 제출합니다</p>
-      </div>
-    </div>
+  <section>
+    <h2>3. 사용 방법</h2>
 
-    <!-- 담임 로그인 -->
-    <div class="card" id="teacher-login">
-      <h3>🔑 로그인</h3>
-      <ol class="steps blue">
-        <li>메인 화면에서 <strong>👨‍🏫 담임 교사 로그인</strong> 버튼을 클릭합니다.
-          <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠️</span><span>버튼이 회색(비활성화)으로 표시되면 관리자가 아직 로그인을 열지 않은 상태입니다. 관리자에게 문의하세요.</span></div>
-        </li>
-        <li><strong>학년</strong>을 선택합니다. (1학년 / 2학년 / 3학년)</li>
-        <li><strong>반</strong>을 선택합니다. (1반 ~ 8반)</li>
-        <li><strong>교사명</strong>을 입력합니다. (class_master 시트에 등록된 이름과 정확히 일치해야 합니다)</li>
-        <li><strong>로그인</strong> 버튼을 클릭합니다.</li>
-      </ol>
+    <h3><span class="role-tag admin">관리자</span></h3>
+    <ol>
+      <li>관리자 로그인 후 <b>시스템 설정</b>에서 학년도 · 현재 학기 · 담임교사/과목교사 로그인 여부를 설정합니다.</li>
+      <li>대시보드에서 담임 제출 현황과 교과 업로드 현황을 확인합니다.</li>
+      <li>필요하면 반 카드 또는 "담임 데이터 조회"로 특정 반 사정안을 조회 · 인쇄하고, "학년별 전체 출력"으로 학년 전체를 한 번에 인쇄합니다.</li>
+      <li>담임 · 교과 자료가 모두 준비되면 "데이터 전송"으로 양식 시트를 채운 뒤, "CSV 내보내기"로 파일을 내려받습니다.</li>
+      <li>관리자 PC에서 <code>converter.exe</code>를 실행해 CSV를 불러오고 메일머지를 실행하면 한글(HWP) 문서가 생성됩니다.</li>
+    </ol>
 
-      <div class="note info" style="margin-top:14px;">
-        <span class="note-icon">ℹ️</span>
-        <span>로그인 후 새로고침해도 세션이 유지됩니다. 직접 <strong>로그아웃</strong> 버튼을 누르기 전까지는 재로그인이 필요 없습니다.</span>
-      </div>
-    </div>
+    <h3><span class="role-tag teacher">담임교사</span></h3>
+    <ol>
+      <li>메인 화면에서 "담임 교사 로그인"을 누르고 학년 · 반 · 이름을 입력합니다.</li>
+      <li>1학기 탭에서 재적 현황과 표창 대상자 5개 부문을 입력합니다.</li>
+      <li>2학기로 전환된 경우 개근자 명단도 함께 입력합니다.</li>
+      <li>내용을 <b>저장</b>한 뒤 <b>제출</b>합니다. 제출 후에도 언제든 다시 수정 · 재제출할 수 있습니다.</li>
+      <li>필요하면 <b>인쇄</b> 버튼으로 A4 가로 형식으로 출력합니다.</li>
+    </ol>
 
-    <!-- 1학기 사정안 -->
-    <div class="card" id="teacher-form1">
-      <h3>📄 1학기 사정안 작성</h3>
-      <p style="font-size:13px; color:#64748b; margin-bottom:14px;">로그인 후 <strong>1학기 사정안</strong> 탭이 기본으로 열립니다.</p>
-
-      <table class="info-table">
-        <tr>
-          <th>1. 재적 현황</th>
-          <td>
-            <strong>재적</strong>: 학급 전체 학생 수<br>
-            <strong>사정인원</strong>: 실제 성적 산출 대상 학생 수<br>
-            <strong>출석일수 미달자</strong>: 해당자가 없으면 "해당없음" 입력<br>
-            <strong>비고</strong>: 특이사항 입력 (없으면 공란)
-          </td>
-        </tr>
-        <tr>
-          <th>2. 표창 대상자</th>
-          <td>
-            모범 / 노력 / 선행 / 봉사 / 리더십 5개 부문<br>
-            드롭다운에서 <strong>학생 이름 선택</strong> → 추천 사유 입력 → 추천교사 이름 입력<br>
-            <span style="color:#64748b; font-size:12px;">※ 학생 목록은 student_list 시트에서 자동으로 불러옵니다</span>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <!-- 2학기 사정안 -->
-    <div class="card" id="teacher-form2">
-      <h3>📄 2학기(학년말) 사정안 작성</h3>
-      <p style="font-size:13px; color:#64748b; margin-bottom:14px;">관리자가 <strong>2학기</strong>로 설정한 경우 상단 탭에서 <strong>2학기(학년말) 사정안</strong> 탭이 활성화됩니다.</p>
-
-      <table class="info-table">
-        <tr>
-          <th>1. 재적 현황</th>
-          <td>1학기와 동일하게 재적·사정인원·미달자·비고를 입력합니다.</td>
-        </tr>
-        <tr>
-          <th>2. 표창 대상자</th>
-          <td>1학기와 동일하게 5개 부문 표창 대상자를 입력합니다.</td>
-        </tr>
-        <tr>
-          <th>3. 개근자</th>
-          <td>
-            <strong>명단</strong>: 쉼표로 구분하여 입력 (예: 김철수,이영희,박민준)<br>
-            <strong>개근자 수</strong>: 명단 입력 후 자동 계산됩니다<br>
-            <span style="color:#64748b; font-size:12px;">※ 3학년은 "3년 개근자", 1·2학년은 "1년 개근자"로 자동 표시됩니다</span>
-          </td>
-        </tr>
-      </table>
-
-      <div class="note warn" style="margin-top:14px;">
-        <span class="note-icon">⚠️</span>
-        <span>관리자가 학기를 <strong>1학기</strong>로 설정해 두면 2학기 탭이 잠겨 접근할 수 없습니다.</span>
-      </div>
-    </div>
-
-    <!-- 저장·제출·인쇄 -->
-    <div class="card" id="teacher-submit">
-      <h3>💾 저장 · 제출 · 인쇄</h3>
-
-      <table class="info-table">
-        <tr>
-          <th>💾 저장</th>
-          <td>작성 중인 내용을 임시 저장합니다. 언제든 다시 수정할 수 있습니다. 저장 후에도 제출/인쇄 버튼이 활성화됩니다.</td>
-        </tr>
-        <tr>
-          <th>📤 제출</th>
-          <td>최종 완성된 내용을 제출합니다. 저장을 먼저 해야 제출 버튼이 활성화됩니다. 제출 후에도 수정·재제출이 가능합니다.</td>
-        </tr>
-        <tr>
-          <th>🖨️ 인쇄</th>
-          <td>현재 학기 사정안을 A4 가로 형식으로 인쇄합니다. 저장 후 인쇄 버튼이 활성화됩니다.</td>
-        </tr>
-      </table>
-
-      <div class="note tip" style="margin-top:14px;">
-        <span class="note-icon">💡</span>
-        <span>작성 도중 자리를 비워야 할 경우 <strong>저장</strong>을 눌러두면 새로고침 후에도 내용이 그대로 복원됩니다.</span>
-      </div>
-    </div>
+    <h3><span class="role-tag subject">교과교사</span></h3>
+    <ol>
+      <li>메인 화면에서 "과목교사 로그인"을 누르고 학년 · 담당 과목 · 이름을 입력합니다.</li>
+      <li>나이스에서 받은 xlsx 파일을 업로드 영역에 선택합니다.</li>
+      <li>파일 내용 확인 화면에서 학년 · 과목명 · 학생 수가 맞는지 직접 확인한 뒤 "업로드 확인"을 누릅니다.</li>
+      <li>기존 데이터가 있으면 덮어쓰기 여부를 확인하고 진행합니다.</li>
+      <li>업로드 현황에서 담당 과목이 정상 반영되었는지 확인합니다.</li>
+    </ol>
   </section>
 
-  <!-- ========== 교과 교사 ========== -->
-  <section class="section">
-    <div class="section-header subject">
-      <div class="icon">📖</div>
-      <div>
-        <h2>교과 교사 매뉴얼</h2>
-        <p>나이스 성적 우수자 파일을 업로드합니다</p>
-      </div>
-    </div>
-
-    <!-- 교과 로그인 -->
-    <div class="card" id="subject-login">
-      <h3>🔑 로그인</h3>
-      <ol class="steps green">
-        <li>메인 화면에서 <strong>📖 과목교사 로그인</strong> 버튼을 클릭합니다.
-          <div class="note warn" style="margin-top:8px;"><span class="note-icon">⚠️</span><span>버튼이 회색이면 관리자가 과목교사 로그인을 아직 열지 않은 상태입니다. 성적 산출 완료 후 관리자가 활성화합니다.</span></div>
-        </li>
-        <li><strong>현재 학기</strong>가 표시됩니다. (관리자 설정값으로 자동 적용되며 변경 불가)</li>
-        <li><strong>학년</strong>을 선택합니다. 선택 즉시 담당 과목 목록이 드롭다운에 채워집니다.</li>
-        <li><strong>담당 과목</strong>을 드롭다운에서 선택합니다.</li>
-        <li><strong>교사명</strong>을 입력합니다.</li>
-        <li><strong>로그인</strong> 버튼을 클릭합니다.</li>
-      </ol>
-
-      <div class="note info" style="margin-top:14px;">
-        <span class="note-icon">ℹ️</span>
-        <span>과목 목록은 <strong>과목편제</strong> 시트에 등록된 순서대로 표시됩니다. 담당 과목이 없으면 관리자에게 과목편제 등록을 요청하세요.</span>
-      </div>
-    </div>
-
-    <!-- 파일 업로드 -->
-    <div class="card" id="subject-upload">
-      <h3>📁 나이스 파일 업로드</h3>
-      <p style="font-size:13px; color:#64748b; margin-bottom:14px;">나이스(NEIS)에서 내려받은 교과 성적 우수자 xlsx 파일을 업로드합니다.</p>
-
-      <ol class="steps green">
-        <li>업로드 영역을 클릭하거나 <strong>파일 선택</strong> 버튼을 클릭합니다.</li>
-        <li>나이스에서 받은 <strong>.xlsx</strong> 파일을 선택합니다.</li>
-        <li>파일 내용 확인 창이 열립니다. 학년·과목명·학생 수를 검토합니다.</li>
-        <li>학생 목록이 정확하면 <strong>업로드 확인</strong> 버튼을 클릭합니다.</li>
-        <li>기존 데이터가 있는 경우 <strong>덮어쓰기 확인</strong> 창이 추가로 표시됩니다.</li>
-      </ol>
-
-      <div class="note warn" style="margin-top:14px;">
-        <span class="note-icon">⚠️</span>
-        <span>파일에서 추출된 <strong>학년</strong>과 <strong>과목명</strong>이 로그인 시 선택한 정보와 일치하지 않으면 업로드가 거부됩니다. 파일을 다시 확인하세요.</span>
-      </div>
-
-      <div class="note tip" style="margin-top:10px;">
-        <span class="note-icon">💡</span>
-        <span>같은 학년·과목 파일을 다시 올리면 기존 데이터를 덮어씁니다. 덮어쓰기 전에 기존 업로더와 시간이 표시되니 확인 후 진행하세요.</span>
-      </div>
-    </div>
-
-    <!-- 업로드 현황 -->
-    <div class="card" id="subject-status">
-      <h3>📊 업로드 현황 확인</h3>
-      <p style="font-size:13px; line-height:1.7; color:#374151;">
-        로그인 후 화면 하단 <strong>업로드 현황</strong> 섹션에서 1·2·3학년 전체 과목의 업로드 상태를 확인할 수 있습니다.
-      </p>
-      <div style="margin-top:12px; display:flex; gap:12px; flex-wrap:wrap; font-size:13px;">
-        <span><span class="tag green">✅ 과목명</span> &nbsp;업로드 완료</span>
-        <span><span class="tag" style="background:#f1f5f9; color:#94a3b8;">○ 과목명</span> &nbsp;미업로드</span>
-      </div>
-      <div class="note info" style="margin-top:14px;">
-        <span class="note-icon">ℹ️</span>
-        <span>다른 교과교사가 업로드한 과목도 현황에 표시됩니다. 자신의 담당 과목만 업로드하면 됩니다.</span>
-      </div>
-    </div>
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>(서버 로직)와 <code>index.html</code>(로그인 · 관리자 · 담임 · 교과교사 화면을 모두 담은 단일 페이지) 두 파일이 실제로 사용됩니다. <code>code.gs</code>가 <code>class_master</code>(담임 대조), <code>student_list</code>(반별 학생 명단), <code>master</code>(비밀번호 · 학기 · 학년도), <code>과목편제</code>(과목 순서), <code>양식_1학기</code>/<code>양식_2학기</code>(전송 결과) 등 여러 시트를 읽고 쓰며, <code>index.html</code>은 화면 전환(hidden 클래스 토글)과 검증 로직을 JavaScript로 처리합니다.</p>
   </section>
 
-  <!-- ========== FAQ ========== -->
-  <section class="section" id="faq">
-    <div class="section-header overview">
-      <div class="icon">❓</div>
-      <div>
-        <h2>자주 묻는 질문</h2>
-        <p>사용 중 자주 발생하는 문제와 해결 방법</p>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Q. 로그인 버튼이 회색으로 표시됩니다.</h3>
-      <p style="font-size:14px; line-height:1.7;">관리자가 해당 역할의 로그인을 비활성화한 상태입니다. 관리자에게 활성화를 요청하세요.</p>
-    </div>
-
-    <div class="card">
-      <h3>Q. 이름을 입력했는데 로그인이 안 됩니다. (담임교사)</h3>
-      <p style="font-size:14px; line-height:1.7;">Google Sheets <strong>class_master</strong> 시트에 등록된 이름과 정확히 일치해야 합니다. 띄어쓰기, 성과 이름 순서까지 동일하게 입력하세요. 관리자에게 시트 확인을 요청할 수 있습니다.</p>
-    </div>
-
-    <div class="card">
-      <h3>Q. 담당 과목 드롭다운에 과목이 없습니다. (교과교사)</h3>
-      <p style="font-size:14px; line-height:1.7;">관리자가 Google Sheets <strong>과목편제</strong> 시트에 해당 학년·학기 과목을 등록하지 않은 상태입니다. 관리자에게 과목 등록을 요청하세요.</p>
-    </div>
-
-    <div class="card">
-      <h3>Q. 2학기 탭이 잠겨있습니다. (담임교사)</h3>
-      <p style="font-size:14px; line-height:1.7;">관리자 시스템 설정에서 현재 학기가 <strong>1학기</strong>로 설정되어 있습니다. 2학기 사정안 작성 기간이 되면 관리자가 2학기로 변경합니다.</p>
-    </div>
-
-    <div class="card">
-      <h3>Q. 데이터 전송 후 양식 시트 내용이 비어 있습니다.</h3>
-      <p style="font-size:14px; line-height:1.7;">담임교사들이 자료를 아직 제출하지 않았거나, 현재 탭(1학기/2학기)이 올바른지 확인하세요. 1학기 탭이 활성화된 상태에서 전송하면 <strong>양식_1학기</strong> 시트에, 2학기 탭에서 전송하면 <strong>양식_2학기</strong> 시트에 데이터가 채워집니다.</p>
-    </div>
-
-    <div class="card">
-      <h3>Q. 파일 업로드 후 학생 수가 0명으로 표시됩니다. (교과교사)</h3>
-      <p style="font-size:14px; line-height:1.7;">나이스에서 받은 파일 형식이 맞지 않을 수 있습니다. 파일의 열 구조(반·번호·이름)가 올바른지 확인하고, 문제가 지속되면 관리자에게 문의하세요.</p>
-    </div>
-
-    <div class="card">
-      <h3>Q. 제출한 내용을 수정할 수 있나요?</h3>
-      <p style="font-size:14px; line-height:1.7;">가능합니다. 로그인 후 내용을 수정하고 <strong>저장 → 제출</strong>을 다시 누르면 기존 제출 내용이 덮어씌워집니다. 관리자가 최종 데이터를 내보내기 전에는 언제든지 수정할 수 있습니다.</p>
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>담임교사 저장 · 제출 시 재적 · 사정인원 · 미달자, 표창 5개 부문(학생 · 사유 · 추천교사), (2학기는) 개근자 명단 중 하나라도 비어 있으면 오류가 발생합니다. 같은 학생을 두 개 이상의 표창 부문에 중복 선택해도 저장할 수 없습니다.</li>
+        <li>표창 대상자 드롭다운은 <code>student_list</code> 시트 기준 반별 최대 35명까지만 인식됩니다.</li>
+        <li>교과교사 업로드 시 과목명이 로그인 정보와 다르면 경고창이 뜨지만, 확인을 누르면 그대로 업로드가 진행됩니다. 학년은 자동으로 대조하지 않으므로 파일 내용 확인 화면에서 직접 확인해야 합니다.</li>
+        <li>관리자 비밀번호는 <code>master</code> 시트 A2 셀에 저장되어 있으며, 분실 시 스프레드시트에서 직접 확인해야 합니다.</li>
+      </ul>
     </div>
   </section>
-
-  <footer style="margin-top:20px; padding:24px 0; border-top:1px solid #e2e8f0; text-align:center; font-size:12px; color:#94a3b8;">
-    사정안 자동화 시스템 베타 버전 매뉴얼 &nbsp;|&nbsp; 문의: 관리자에게 연락하세요
-  </footer>
 </main>
-
-<script>
-  // 스크롤 시 사이드바 활성 항목 강조
-  const links = document.querySelectorAll('#sidebar a');
-  const sections = [];
-  links.forEach(link => {
-    const id = link.getAttribute('href').replace('#', '');
-    const el = document.getElementById(id);
-    if (el) sections.push({ id, el, link });
-  });
-
-  window.addEventListener('scroll', () => {
-    const scrollY = window.scrollY + 80;
-    let current = sections[0];
-    sections.forEach(s => {
-      if (s.el.offsetTop <= scrollY) current = s;
-    });
-    links.forEach(l => l.classList.remove('active'));
-    if (current) current.link.classList.add('active');
-  }, { passive: true });
-</script>
 
 </body>
 </html>

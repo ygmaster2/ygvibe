@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정기시험 감독표 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>정기시험 감독표</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>정기시험 감독 시간표를 구글 시트에 입력해두면, 교사들이 별도 설치 없이 웹 브라우저로 접속해 바로 확인할 수 있게 해주는 프로그램입니다. 지정한 공개 시각 이전에는 카운트다운 타이머만 표시되어 시험 정보가 미리 노출되지 않으며, 공개 시각이 되면 교시별 감독 배정표가 자동으로 나타납니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>공개 시간 제어</b> : 구글 시트 F1 셀에 지정한 시각 이전에는 감독표를 숨기고 카운트다운 타이머만 표시, 시각이 되면 자동으로 감독표 공개</li>
+      <li><b>3교시/4교시 자동 대응</b> : 구글 시트 E1 셀 값에 따라 3교시용 또는 4교시용 표 형식으로 자동 전환</li>
+      <li><b>감독표 조회</b> : 순번 · 시험실 · 교시별 감독 교사를 표 형태로 표시, 복도 감독은 노란색으로 구분 표시</li>
+      <li><b>이름 검색</b> : 선생님 이름을 입력하면 해당 셀이 빨간색으로 강조 표시되어 본인 감독 시간을 빠르게 확인 가능</li>
+      <li><b>실시간 변경 감지</b> : 30초 간격으로 시트 수정 여부를 확인해, 감독표가 변경되면 "시간표가 변경되었습니다" 알림 버튼 표시 (자동 새로고침은 하지 않아 검색 중인 화면이 끊기지 않음)</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>담당 교사가 구글 시트에 순번/시험실/교시별 감독 배정 내용을 입력하고, A1에 제목, E1에 교시 구분(3교시/4교시), F1에 공개 시각을 입력합니다.</li>
+      <li>이 시트를 기반으로 배포된 웹앱 주소(URL)에 접속합니다.</li>
+      <li>지정한 공개 시각 전이면 카운트다운 타이머 화면이 나타나고, 시각이 되면 자동으로 감독표 화면으로 전환됩니다.</li>
+      <li>검색창에 본인 이름을 입력하면 감독 배정 칸이 강조되어 표시됩니다.</li>
+      <li>감독표가 열린 뒤 시트가 수정되면 "시간표가 변경되었습니다" 버튼이 나타나며, 버튼을 눌러 최신 내용으로 새로고침합니다.</li>
+      <li>감독 시간에 이상이 있으면 즉시 수업계 교사에게 알리고, 변경 시에도 수업계 교사에게 사유와 함께 알립니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>와 <code>index.html</code> 두 파일로 이뤄져 있습니다. <code>code.gs</code>의 <code>doGet()</code> 함수가 웹앱 진입점이며, <code>getSheetData()</code>가 활성 시트의 제목 · 공개 시각 · 교시 구분 · 감독 데이터를 읽어 <code>index.html</code>로 전달합니다. <code>index.html</code>은 이 데이터를 받아 표를 그리고, 검색 · 카운트다운 · 변경 감지(30초 폴링) 로직을 JavaScript로 처리합니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>이 프로그램은 특정 구글 시트와 연결된 Google Apps Script 웹앱으로 배포해야 동작합니다. (연결된 시트의 활성 시트 데이터를 기준으로 표시)</li>
+        <li>A1(제목), E1(교시 구분), F1(공개 시각) 셀 값의 형식이 올바르지 않으면 정상적으로 표시되지 않을 수 있습니다.</li>
+        <li>시트가 수정되어도 자동으로 새로고침되지 않으며, 알림 버튼을 눌러야 최신 내용이 반영됩니다.</li>
+        <li>데이터가 없거나 서버 연결에 문제가 있으면 오류 메시지가 표시됩니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>
