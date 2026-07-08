@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청구기호 책꽂기 게임 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>청구기호 책꽂기 게임</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>도서관 책의 청구기호(분류기호 · 저자기호 · 권차)를 순서대로 배열하며 익히는 학습 게임입니다. 화면에 무작위로 섞여 나온 5권의 책을 청구기호가 작은 순서대로 차례로 클릭해 책장에 정리하며, 1단계(기초)와 2단계(심화) 총 10라운드를 거쳐 도서 분류 순서 감각을 기를 수 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>1단계(기초, 5라운드)</b> : "앞 3자리 숫자만 비교"와 "소수점 이하까지 비교" 유형이 번갈아 출제됨</li>
+      <li><b>2단계(심화, 5라운드)</b> : "저자기호까지 비교", "분류번호가 비슷한 책 비교", "분류번호가 같은 책 비교", "권차(v.)까지 비교" 유형으로 난이도가 높아짐</li>
+      <li>라운드마다 5권의 책이 무작위 순서로 카드에 표시되며, 정답 순서대로 클릭하면 초록색으로 표시되고 순번 뱃지가 붙음</li>
+      <li>오답을 클릭하면 카드가 붉게 흔들리고 오답 횟수가 올라감 (오답 횟수만큼 라운드 점수가 깎임)</li>
+      <li><b>힌트 버튼</b> : 다음 정답 카드를 노란색으로 알려주되 오답 1회로 처리됨</li>
+      <li><b>다시 버튼</b> : 현재 라운드를 새로 시작</li>
+      <li>라운드 완료 시 점수 = 최대 10점 - (오답 횟수 × 2), 최소 1점까지 지급</li>
+      <li><b>단계 완료 조건</b> : 5라운드 총점 30점 이상(50점 만점)이면 통과, 통과하면 다음 단계가 열림</li>
+      <li>2단계까지 모두 통과하면 최종 총점(100점 만점)과 단계별 점수를 보여주는 "모든 단계 클리어" 화면 표시</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>화면에 나온 5권의 책 카드를 확인하고, 안내 문구(비교 기준)를 읽습니다.</li>
+      <li>청구기호가 가장 작은 책부터 순서대로 카드를 클릭합니다.</li>
+      <li>정답이면 카드가 초록색으로 바뀌고 순번이 표시되며, 5권을 모두 맞히면 자동으로 다음 라운드로 넘어갑니다.</li>
+      <li>오답을 클릭하면 잠시 카드가 붉게 표시되고, 같은 라운드에서 다시 시도할 수 있습니다.</li>
+      <li>순서를 모르겠으면 "💡 힌트" 버튼으로 다음 정답을 확인할 수 있지만 오답 1회로 처리되어 점수가 깎입니다.</li>
+      <li>5라운드를 마치면 결과 화면이 뜨며, 30점 이상이면 다음 단계로, 미달이면 재도전 화면이 표시됩니다.</li>
+      <li>2단계까지 모두 통과하면 최종 점수와 함께 "모든 단계 클리어" 화면이 나타나며, "처음부터 다시" 버튼으로 재도전할 수 있습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>별도 서버나 데이터베이스 없이 브라우저에서 바로 실행되는 단일 HTML 파일입니다. 실제 도서관 청구기호 약 200여 건과, 유사 · 동일 분류번호 비교 및 권차 비교를 위한 별도 문제 세트(<code>EXPERT_T1</code>/<code>T2</code>/<code>T3</code>)가 코드에 내장되어 있으며, 라운드마다 무작위로 5권을 뽑아 정답 순서를 계산합니다. 진행 상태(점수 · 단계 · 라운드)는 모두 자바스크립트 변수로만 관리되며 새로고침하면 초기화됩니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>진행 상황과 점수는 저장되지 않으므로, 페이지를 새로고침하거나 닫으면 처음부터 다시 시작해야 합니다.</li>
+        <li>힌트를 사용하면 오답으로 집계되어 라운드 점수가 줄어드니, 점수를 높이려면 힌트 사용을 최소화하는 것이 좋습니다.</li>
+        <li>2단계는 저자기호 · 동일 분류번호 · 권차까지 비교해야 하는 심화 문제이므로, 1단계를 충분히 연습한 뒤 도전하는 것을 권장합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

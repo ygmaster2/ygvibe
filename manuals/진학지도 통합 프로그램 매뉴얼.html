@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>진학지도 통합 프로그램 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>진학지도 통합 프로그램</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>고3 진학지도(대입 상담) 업무를 위해 만든 통합 시스템입니다. 매달 모의고사 성적을 붙여넣으면 반별 성적표와 학생별 누적표가 자동으로 만들어지고, 내신 · 설문조사(정보) · 학생 사진 · 대학 정보 · 수시 지원 현황 · 상담일지까지 한 스프레드시트에서 관리합니다. 진학부 교사는 구글 시트 메뉴에서 데이터를 업로드하고, 담임 · 교과 교사는 스마트폰이나 PC로 웹앱에 접속해 반별 · 과목별 성적과 학생별 성적 추이, 상담 기록을 바로 조회합니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+
+    <h3>데이터 관리 (구글 시트 메뉴 "데이터 설정", 진학부 담당)</h3>
+    <ul>
+      <li><b>모의고사 붙여넣기 확인</b> : 3 · 5 · 6 · 7 · 9 · 10 · 11월 모의고사 원본 성적표를 시트에 붙여넣으면 반별 성적표와 학생별 누적표가 자동 생성되고, 국/수/영/탐구1/탐구2 등급 중 좋은 3개 · 2개를 자동 합산(3개합/2개합)</li>
+      <li><b>내신석차연명부 업로드</b> : 엑셀 파일로 학년 · 반 · 번호 · 이름 · 전학년 내신을 업로드하면 기존 모든 월별 성적표의 내신 항목이 자동 갱신됨</li>
+      <li><b>학생 정보 업로드</b> : 설문조사 결과(연락처, 희망학과, 특별전형 등)는 "정보" 시트에 직접 붙여넣고, 학생 사진은 "이름(번호)" 형식 파일명으로 여러 장을 한 번에 업로드하면 자동으로 학생과 매칭됨</li>
+      <li><b>대학 정보 업로드</b> : 대학별 안내 PDF · 이미지 파일을 업로드해 누적 보관(기존 파일은 삭제되지 않음)</li>
+      <li><b>월별 데이터 삭제 / 조회 캐시 초기화</b> : 잘못 입력한 월의 데이터를 삭제하거나, 웹앱에 옛 데이터가 남아있을 때 캐시를 새로고침</li>
+    </ul>
+
+    <h3>웹앱 조회 (담임 · 교과 교사, 비밀번호 로그인)</h3>
+    <ul>
+      <li><b>담임용 조회</b> : 반 전체 성적표, 이름 검색, 학생 클릭 시 사진 · 최근 내신 · 3개합/2개합 · 학년별 내신 · 연락처와 함께 국/수/영/탐구1/탐구2 등급 변화 그래프(월별 추이)를 확인</li>
+      <li><b>교과용 조회</b> : 선택과목(화작/언매, 확통/미적/기하, 사회 · 과학탐구 등)별 응시자 명단과 등급, 응시 인원 · 비율 · 등급 분포 분석 확인</li>
+      <li><b>간단 통합 조회</b> : 이름 · 내신 · 생일월 등 간단한 키워드로 학생을 즉시 검색</li>
+      <li><b>수시 지원 현황</b> : 학번 · 지역 · 대학 · 전형 · 학과 등 조건으로 지원 현황(1단계/면접/최종 발표, 수능최저 충족, 합불) 조회, 진학부 계정은 직접 수정 가능</li>
+      <li><b>반 명렬표</b> : 학급 명단에 담임이 커스텀 항목(제목 · 체크박스 · 메모)을 붙여 관리(서류 제출 체크 등에 활용)</li>
+      <li><b>상담일지</b> : 학생별 상담 일자 · 항목 · 내용을 기록 · 수정 · 삭제</li>
+      <li><b>대학 정보 보기</b> : 업로드된 대학 안내 PDF · 이미지를 목록에서 선택해 열람</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+
+    <h3>진학부 (데이터 관리)</h3>
+    <ol>
+      <li>매달 모의고사 성적표를 해당 월 시트에 붙여넣은 뒤 "데이터 설정 &gt; 모의고사 붙여넣기 확인"을 실행합니다.</li>
+      <li>새 내신석차연명부가 나오면 "내신석차연명부 업로드"로 엑셀 파일을 올려 전체 내신을 갱신합니다.</li>
+      <li>학생 설문조사 결과는 "정보" 시트에 직접 붙여넣고, 학생 사진은 "학생 정보 업로드 &gt; 학생 사진 업로드"로 "이름(번호).jpg" 형식 파일들을 한 번에 올립니다.</li>
+      <li>대학 안내 자료는 "대학 정보 업로드"로 PDF · 이미지를 추가합니다.</li>
+      <li>데이터를 잘못 올렸다면 "월별 데이터 삭제"로 해당 월을 지우고, 웹앱에 옛 데이터가 보이면 "조회 캐시 초기화"를 실행합니다.</li>
+    </ol>
+
+    <h3>담임 · 교과 교사 (웹앱 조회)</h3>
+    <ol>
+      <li>배포된 웹앱 주소로 접속해 비밀번호를 입력합니다.</li>
+      <li>담임 조회는 월과 반을 선택해 반 전체 성적표를 보거나, 학생 이름을 검색해 개인별 성적 추이 · 사진 · 연락처 · 상담 기록을 확인합니다.</li>
+      <li>교과 조회는 담당 선택과목을 골라 해당 과목 응시자 명단과 등급 분포를 확인합니다.</li>
+      <li>수시 지원 현황 메뉴에서 조건을 입력해 지원 결과를 조회하고(진학부 계정은 수정 가능), 상담일지 메뉴에서 학생별 상담 내용을 기록합니다.</li>
+      <li>대학 정보 메뉴에서 업로드된 대학 안내 자료를 열람합니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>(서버 로직)와 여러 개의 업로드 다이얼로그 · 웹앱 화면 html 파일(메인 웹앱 화면 포함)로 이루어져 있습니다. 원본 성적 데이터는 시트에 그대로 쌓이고, "학생별 누적표" 시트가 모든 월의 성적을 세로로 모아둔 핵심 데이터베이스 역할을 합니다. 반복 조회 속도를 높이기 위해 캐시와 버전 관리 시스템을 사용하며, 데이터가 바뀔 때마다 캐시가 자동으로 무효화됩니다. 원자료 · 정보 · 사진 · 명렬표 · 상담일지 시트는 자동으로 숨김 처리되어 스프레드시트 화면이 복잡해지지 않도록 관리됩니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>모의고사 데이터는 3 · 5 · 6 · 7 · 9 · 10 · 11월만 처리되며, 정해진 열 순서(학년 · 반 · 번호 · 이름 및 과목별 선택/점수/등급)를 지켜 붙여넣어야 합니다.</li>
+        <li>학생 사진 파일명은 반드시 "이름(번호).jpg" 또는 동명이인의 경우 "이름(학번4자리).jpg" 형식을 지켜야 자동으로 매칭됩니다.</li>
+        <li>설문조사 결과는 별도 업로드 다이얼로그가 아니라 "정보" 시트에 직접 붙여넣는 방식으로 처리해야 합니다.</li>
+        <li>웹앱에서 데이터가 갱신되지 않은 것처럼 보이면 "조회 캐시 초기화"를 실행해야 최신 데이터가 반영됩니다.</li>
+        <li>수시 지원 현황 수정 등 일부 기능은 진학부 담당자 권한(별도 관리자 비밀번호)이 있어야 가능합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

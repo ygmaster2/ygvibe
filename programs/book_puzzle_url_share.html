@@ -1,0 +1,465 @@
+
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+#app{font-family:'Nanum Gothic',sans-serif;background:#EEEAE2;min-height:100vh;color:#3A3228;}
+.screen{display:none;}.screen.active{display:block;}
+.cw{max-width:500px;margin:0 auto;padding:2rem 1.2rem;}
+.l-h1{font-size:26px;font-weight:700;color:#2C2518;margin-bottom:4px;}
+.l-sub{font-size:14px;color:#6B5F52;margin-bottom:8px;}
+.sn{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#2E8B2E;font-weight:700;margin-bottom:20px;}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:22px;}
+.bcard{background:#fff;border:1px solid #DDD5C5;border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .15s;}
+.bcard:hover{border-color:#aaa;}
+.bcov{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;}
+.bcov-ph{width:100%;aspect-ratio:3/4;background:#EDE8DF;display:flex;align-items:center;justify-content:center;color:#B5A898;font-size:28px;}
+.bmeta{padding:8px 9px 10px;}
+.bmt{font-size:13px;font-weight:700;color:#2C2518;line-height:1.3;}
+.bma{font-size:11px;color:#8C7E70;margin-top:2px;}
+.empty{grid-column:1/-1;text-align:center;padding:2.5rem 1rem;color:#8C7E70;font-size:13px;}
+.empty i{font-size:34px;display:block;margin-bottom:8px;color:#C4B8A8;}
+.ldiv{height:1px;background:#DDD5C5;margin:0 0 14px;}
+.atog{font-size:13px;color:#8C7E70;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:14px;}
+.atog:hover{color:#5A4E42;}
+.abox{background:#fff;border-radius:10px;border:1px solid #DDD5C5;padding:1.2rem;}
+.abox h3{font-size:15px;font-weight:700;color:#2C2518;margin-bottom:12px;}
+.fg{margin-bottom:12px;}
+.fg label{font-size:12px;color:#6B5F52;display:block;margin-bottom:4px;}
+.fg input[type=text],.fg textarea{width:100%;font-size:13px;font-family:'Nanum Gothic',sans-serif;border:1px solid #DDD5C5;border-radius:6px;padding:8px 11px;background:#FAFAF7;color:#2C2518;outline:none;}
+.fg input[type=text]:focus,.fg textarea:focus{border-color:#8C7E70;background:#fff;}
+.fg textarea{height:68px;resize:none;}
+.aprev{width:52px;height:72px;object-fit:cover;border-radius:5px;margin-top:7px;display:none;border:1px solid #DDD5C5;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;font-size:13px;font-family:'Nanum Gothic',sans-serif;font-weight:700;border-radius:6px;cursor:pointer;border:1px solid #C4B8A8;background:#fff;color:#3A3228;transition:background .12s;}
+.btn:hover{background:#F0EBE2;}
+.btn-g{background:#5A7A3A;color:#fff;border-color:#4A6830;}.btn-g:hover{background:#4A6830;}
+.btn-b{background:#2A6DB5;color:#fff;border-color:#1F5490;}.btn-b:hover{background:#1F5490;}
+.btn-share{background:#7A5A9A;color:#fff;border-color:#5A3A7A;width:100%;justify-content:center;margin-top:8px;}.btn-share:hover{background:#5A3A7A;}
+.btn-d{color:#8C4A2A;border-color:#DDD5C5;background:#FAF6F0;font-size:12px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:'Nanum Gothic',sans-serif;font-weight:700;border:1px solid #DDD5C5;}
+.btn-d:hover{background:#F5EDE0;}
+.rh{font-size:12px;font-weight:700;color:#6B5F52;margin:14px 0 6px;}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border-radius:6px;background:#F5F0E8;margin-bottom:5px;font-size:12px;border:1px solid #E8E0D2;}
+.rrow img{width:26px;height:26px;border-radius:4px;object-fit:cover;margin-right:7px;}
+.share-box{background:#F0EBF8;border:1px solid #C8A8E8;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:12px;color:#5A3A7A;word-break:break-all;line-height:1.5;}
+.share-box b{display:block;margin-bottom:4px;font-size:13px;}
+#puzzle-screen,#result-screen{background:#EEEAE2;}
+.pw{max-width:500px;margin:0 auto;padding:1.4rem 1.2rem 1rem;}
+.ptop{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.bbk{display:inline-flex;align-items:center;gap:4px;padding:6px 13px;font-size:13px;font-family:'Nanum Gothic',sans-serif;font-weight:700;border-radius:6px;cursor:pointer;border:1px solid #C4B8A8;background:#fff;color:#3A3228;}
+.bbk:hover{background:#F0EBE2;}
+.pbn{font-size:15px;font-weight:700;color:#2C2518;}
+.pgw{height:8px;background:#DDD5C5;border-radius:4px;margin-bottom:12px;overflow:hidden;}
+.pgf{height:100%;background:#5A9A5A;border-radius:4px;transition:width .35s;}
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.sbox{background:#fff;border:1px solid #DDD5C5;border-radius:8px;padding:10px;text-align:center;}
+.slbl{font-size:11px;color:#8C7E70;margin-bottom:3px;}
+.sval{font-size:24px;font-weight:700;color:#2C2518;letter-spacing:.5px;}
+.sval.red{color:#E04040;}
+.pgrid-outer{width:100%;margin-bottom:8px;}
+.pgrid{display:grid;margin:0 auto;}
+.pp{cursor:pointer;overflow:hidden;position:relative;border:3px solid transparent;transition:border-color .1s,transform .1s;background:#1a1a2e;}
+.pp.sel{border-color:#5A9A5A;transform:scale(1.04);}
+.pp.done{border:none !important;cursor:default;transform:none !important;}
+.hint{font-size:11px;color:#A89888;text-align:center;margin-bottom:12px;}
+.pbot{display:flex;align-items:center;gap:10px;margin-top:4px;}
+.ptw{flex-shrink:0;text-align:center;}
+.pthumb{width:58px;height:80px;border-radius:6px;border:1.5px solid #C4B8A8;background:#EDE8DF;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.pthumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.plbl{font-size:11px;color:#8C7E70;margin-top:3px;}
+.pbtns{display:flex;gap:8px;flex:1;}
+.pbtns .btn{flex:1;justify-content:center;padding:11px 8px;font-size:13px;}
+.rescard{background:#E8F5E0;border:1px solid #B8D88A;border-radius:10px;padding:14px 16px;margin:12px 0;}
+.resbadge{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.resico{width:28px;height:28px;border-radius:50%;background:#5A7A3A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0;}
+.reslbl{font-size:15px;font-weight:700;color:#2C2518;}
+.resstats{font-size:12px;color:#5A7A3A;font-weight:700;margin-bottom:12px;}
+.rbt{font-size:15px;font-weight:700;color:#2C2518;margin-bottom:2px;}
+.rba{font-size:13px;color:#6B5F52;margin-bottom:6px;}
+.rbd{font-size:13px;color:#5A4E42;line-height:1.65;margin-bottom:14px;}
+</style>
+
+<div id="app">
+  <h2 class="sr-only">신간 도서 퍼즐</h2>
+  <div id="list-screen" class="screen active">
+    <div class="cw">
+      <p class="l-h1">신간 도서 퍼즐</p>
+      <p class="l-sub">읽고 싶은 책을 골라 표지 퍼즐을 맞춰보세요!</p>
+      <div class="sn"><i class="ti ti-check" aria-hidden="true"></i> 책 목록이 브라우저에 저장되어 있습니다 — 새로고침해도 유지돼요</div>
+      <div id="book-grid" class="bgrid"></div>
+      <div class="ldiv"></div>
+      <div class="atog" onclick="toggleAdmin()">
+        <i class="ti ti-settings" style="font-size:14px;" aria-hidden="true"></i> 관리자 메뉴 (책 추가/삭제)
+        <i class="ti ti-chevron-down" id="achev" style="font-size:13px;" aria-hidden="true"></i>
+      </div>
+      <div id="abox" class="abox" style="display:none;">
+        <h3>책 등록하기</h3>
+        <div class="fg"><label>책 제목 *</label><input type="text" id="it" placeholder="예: 어린 왕자" /></div>
+        <div class="fg"><label>저자</label><input type="text" id="ia" placeholder="예: 생텍쥐페리 글 / 홍길동 그림" /></div>
+        <div class="fg"><label>책 소개</label><textarea id="id" placeholder="완성 시 표시될 책 소개 문구를 입력하세요"></textarea></div>
+        <div class="fg">
+          <label>표지 이미지 *</label>
+          <button class="btn" style="font-size:12px;padding:5px 12px;" onclick="document.getElementById('ii').click()"><i class="ti ti-upload" aria-hidden="true"></i> 이미지 선택</button>
+          <input type="file" id="ii" accept="image/*" style="display:none;" onchange="onImg(this)" />
+          <img id="ip" class="aprev" alt="미리보기" />
+        </div>
+        <button class="btn btn-g" id="add-btn" onclick="addBook()"><i class="ti ti-plus" aria-hidden="true"></i> 책 추가</button>
+        <div id="rl"></div>
+        <div class="ldiv" style="margin-top:14px;"></div>
+        <button class="btn btn-share" onclick="genShareLink()"><i class="ti ti-share" aria-hidden="true"></i> 공유 링크 생성</button>
+        <div id="share-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="puzzle-screen" class="screen">
+    <div class="pw">
+      <div class="ptop">
+        <button class="bbk" onclick="goList()"><i class="ti ti-chevron-left" aria-hidden="true"></i> 목록으로</button>
+        <span class="pbn" id="ptit"></span>
+      </div>
+      <div class="pgw"><div class="pgf" id="pgf" style="width:0%"></div></div>
+      <div class="srow">
+        <div class="sbox"><div class="slbl">이동 횟수</div><div class="sval" id="smov">0</div></div>
+        <div class="sbox"><div class="slbl">남은 시간</div><div class="sval" id="stim">01:10</div></div>
+      </div>
+      <div class="pgrid-outer" id="po"><div id="pgrid" class="pgrid"></div></div>
+      <p class="hint">조각을 탭해서 선택 → 다른 조각을 탭해서 교체</p>
+      <div class="pbot">
+        <div class="ptw">
+          <div class="pthumb" id="pthumb"><i class="ti ti-photo" style="font-size:20px;color:#C4B8A8;" aria-hidden="true"></i></div>
+          <div class="plbl">미리보기</div>
+        </div>
+        <div class="pbtns">
+          <button class="btn btn-b" onclick="doShuffle()"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i> 섞기</button>
+          <button class="btn" onclick="doSolution()"><i class="ti ti-eye" aria-hidden="true"></i> 정답 보기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="result-screen" class="screen">
+    <div class="pw">
+      <div class="ptop">
+        <button class="bbk" onclick="goList()"><i class="ti ti-chevron-left" aria-hidden="true"></i> 목록으로</button>
+        <span class="pbn" id="resbn"></span>
+      </div>
+      <div class="pgw"><div class="pgf" id="rpgf" style="width:100%"></div></div>
+      <div class="srow">
+        <div class="sbox"><div class="slbl">이동 횟수</div><div class="sval" id="rsmov">0</div></div>
+        <div class="sbox"><div class="slbl">남은 시간</div><div class="sval" id="rstim">00:00</div></div>
+      </div>
+      <div class="pgrid-outer" id="ro"><div id="rgrid" class="pgrid"></div></div>
+      <div class="rescard">
+        <div class="resbadge">
+          <div class="resico" id="resico"><i class="ti ti-check" aria-hidden="true"></i></div>
+          <div class="reslbl" id="reslbl">퍼즐 완성!</div>
+        </div>
+        <div class="resstats" id="resstats"></div>
+        <div class="rbt" id="rbt"></div>
+        <div class="rba" id="rba"></div>
+        <div class="rbd" id="rbd"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" onclick="goList()"><i class="ti ti-arrow-right" aria-hidden="true"></i> 다른 책 풀기</button>
+        </div>
+      </div>
+      <div class="pbot">
+        <div class="ptw">
+          <div class="pthumb" id="rpthumb"><i class="ti ti-photo" style="font-size:20px;color:#C4B8A8;" aria-hidden="true"></i></div>
+          <div class="plbl">미리보기</div>
+        </div>
+        <div class="pbtns">
+          <button class="btn btn-b" onclick="doRetry()"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i> 섞기</button>
+          <button class="btn" style="opacity:.4;pointer-events:none;"><i class="ti ti-eye" aria-hidden="true"></i> 정답 보기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const G=4, TL=70;
+let books=[], cur=null, cidx=-1;
+let pieces=[], sel=null, moves=0, tmr=null, secs=TL;
+let idat=null, solved=false;
+const N=G*G;
+let imgW=0, imgH=0;
+
+/* 이미지 압축 */
+function compressImage(dataUrl){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      const MAX=400;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      const c=document.createElement('canvas');
+      c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve({data:c.toDataURL('image/jpeg',0.6),w,h});
+    };
+    img.src=dataUrl;
+  });
+}
+
+/* localStorage 저장/불러오기 */
+function load(){
+  try{
+    // URL 파라미터에 데이터가 있으면 그걸 우선 사용 (공유 링크로 접근한 경우)
+    const params=new URLSearchParams(window.location.search);
+    const shared=params.get('d');
+    if(shared){
+      const decoded=JSON.parse(decodeURIComponent(atob(shared)));
+      books=decoded;
+      // 로컬에도 저장
+      localStorage.setItem('bpzl_final',JSON.stringify(books));
+      // URL 파라미터 제거 (깔끔하게)
+      window.history.replaceState({},'',window.location.pathname);
+    } else {
+      books=JSON.parse(localStorage.getItem('bpzl_final')||'[]');
+    }
+  }catch{books=[];}
+  renderList();
+}
+
+function save(){
+  try{localStorage.setItem('bpzl_final',JSON.stringify(books));}
+  catch{alert('저장 공간이 부족합니다.');}
+}
+
+/* 공유 링크 생성 */
+function genShareLink(){
+  if(!books.length){alert('등록된 책이 없어요. 먼저 책을 추가해 주세요.');return;}
+  try{
+    const encoded=btoa(encodeURIComponent(JSON.stringify(books)));
+    const url=window.location.href.split('?')[0]+'?d='+encoded;
+    const el=document.getElementById('share-result');
+    el.innerHTML=`<div class="share-box"><b>📋 아래 링크를 복사해서 공유하세요!</b>${url}</div>`;
+    // 클립보드 복사 시도
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(url).then(()=>{
+        el.querySelector('.share-box b').textContent='✅ 클립보드에 복사됐어요!';
+      }).catch(()=>{});
+    }
+  }catch(e){alert('링크 생성에 실패했습니다.');}
+}
+
+function renderList(){
+  document.getElementById('book-grid').innerHTML=books.length
+    ?books.map((b,i)=>`
+      <div class="bcard" onclick="startPuzzle(${i})">
+        ${b.img?`<img class="bcov" src="${b.img}" alt="${b.title}" />`:`<div class="bcov-ph"><i class="ti ti-book" aria-hidden="true"></i></div>`}
+        <div class="bmeta"><div class="bmt">${b.title}</div>${b.author?`<div class="bma">${b.author}</div>`:''}</div>
+      </div>`).join('')
+    :`<div class="empty"><i class="ti ti-books" aria-hidden="true"></i>아직 등록된 책이 없어요.<br>아래 관리자 메뉴에서 책을 추가해 주세요.</div>`;
+  document.getElementById('rl').innerHTML=books.length
+    ?`<div class="rh">등록된 책 목록</div>`+books.map((b,i)=>`
+      <div class="rrow">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;">
+          ${b.img?`<img src="${b.img}" alt="" />`:''}
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.title}</span>
+          ${b.author?`<span style="color:#8C7E70;flex-shrink:0;margin-left:4px;">${b.author}</span>`:''}
+        </div>
+        <button class="btn-d" onclick="delBook(${i},event)"><i class="ti ti-trash" aria-hidden="true"></i> 삭제</button>
+      </div>`).join(''):'';
+}
+
+function toggleAdmin(){
+  const p=document.getElementById('abox'),ch=document.getElementById('achev');
+  const o=p.style.display!=='none';
+  p.style.display=o?'none':'block';
+  ch.className=o?'ti ti-chevron-down':'ti ti-chevron-up';
+}
+
+function onImg(inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    idat=e.target.result;
+    const pv=document.getElementById('ip');pv.src=idat;pv.style.display='block';
+    const tmp=new Image();
+    tmp.onload=()=>{imgW=tmp.naturalWidth;imgH=tmp.naturalHeight;};
+    tmp.src=idat;
+  };
+  r.readAsDataURL(f);
+}
+
+async function addBook(){
+  const t=document.getElementById('it').value.trim();
+  if(!t){alert('책 제목을 입력해 주세요.');return;}
+  if(!idat){alert('표지 이미지를 선택해 주세요.');return;}
+  const btn=document.getElementById('add-btn');
+  btn.textContent='저장 중...';btn.disabled=true;
+  try{
+    const {data,w,h}=await compressImage(idat);
+    books.push({title:t,author:document.getElementById('ia').value.trim(),desc:document.getElementById('id').value.trim(),img:data,iw:w,ih:h});
+    save();
+    ['it','ia','id'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ii').value='';
+    document.getElementById('ip').style.display='none';
+    idat=null;imgW=0;imgH=0;
+    renderList();
+  }catch(e){alert('오류가 발생했습니다. 다시 시도해 주세요.');}
+  btn.innerHTML='<i class="ti ti-plus"></i> 책 추가';btn.disabled=false;
+}
+
+function delBook(i,e){
+  e.stopPropagation();
+  if(!confirm('이 책을 삭제할까요?'))return;
+  books.splice(i,1);save();renderList();
+}
+
+function calcDims(outerID){
+  const outer=document.getElementById(outerID);
+  const w=outer?outer.clientWidth:360;
+  const gridW=Math.min(w,480);
+  const cell=Math.floor((gridW-(G-1)*3)/G);
+  const iw=cur.iw||1,ih=cur.ih||1;
+  const ratio=ih/iw;
+  const totalW=cell*G+(G-1)*3;
+  const totalH=Math.round(totalW*ratio);
+  const cellH=Math.floor((totalH-(G-1)*3)/G);
+  return {cell,cellH,totalW,totalH};
+}
+
+function startPuzzle(i){
+  cur=books[i];cidx=i;moves=0;secs=TL;sel=null;solved=false;
+  document.getElementById('ptit').textContent=cur.title;
+  document.getElementById('smov').textContent='0';
+  const tv=document.getElementById('stim');tv.textContent='01:10';tv.classList.remove('red');
+  document.getElementById('pgf').style.width='0%';
+  setThumb('pthumb',cur.img);
+  showScreen('puzzle-screen');
+  loadImgSize(cur.img,cur.iw,cur.ih,(w,h)=>{
+    cur.iw=w;cur.ih=h;
+    pieces=Array.from({length:N},(_,i)=>i);
+    shuf(pieces);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      drawGrid('pgrid','po',pieces,true);
+      startTimer();
+    }));
+  });
+}
+
+function loadImgSize(src,cw,ch,cb){
+  if(cw&&ch){cb(cw,ch);return;}
+  const tmp=new Image();
+  tmp.onload=()=>cb(tmp.naturalWidth,tmp.naturalHeight);
+  tmp.src=src;
+}
+
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+function updProg(){
+  const c=pieces.filter((v,i)=>v===i).length;
+  document.getElementById('pgf').style.width=Math.round(c/N*100)+'%';
+}
+
+function drawGrid(gridID,outerID,arr,clickable){
+  const {cell,cellH,totalW,totalH}=calcDims(outerID);
+  const g=document.getElementById(gridID);
+  g.style.cssText=`display:grid;grid-template-columns:repeat(${G},${cell}px);grid-template-rows:repeat(${G},${cellH}px);gap:3px;width:${totalW}px;margin:0 auto;`;
+  g.innerHTML='';
+  arr.forEach((pi,pos)=>{
+    const div=document.createElement('div');
+    div.className='pp'+(clickable&&sel===pos?' sel':'')+(clickable?'':' done');
+    div.style.width=cell+'px';div.style.height=cellH+'px';
+    div.style.position='relative';div.style.overflow='hidden';
+    if(cur.img){
+      const col=pi%G,row=Math.floor(pi/G);
+      const im=document.createElement('img');
+      im.src=cur.img;
+      im.style.position='absolute';
+      im.style.width=totalW+'px';im.style.height=totalH+'px';
+      im.style.left=(-(col*(cell+3)))+'px';im.style.top=(-(row*(cellH+3)))+'px';
+      im.alt='';div.appendChild(im);
+    }else{
+      div.style.background=`hsl(${pi*22},45%,68%)`;
+      div.style.display='flex';div.style.alignItems='center';div.style.justifyContent='center';
+      div.style.fontSize='13px';div.style.fontWeight='700';
+      div.textContent=pi+1;
+    }
+    if(clickable) div.onclick=()=>onPick(pos);
+    g.appendChild(div);
+  });
+  if(clickable) updProg();
+}
+
+function onPick(pos){
+  if(solved)return;
+  if(sel===null){sel=pos;}
+  else if(sel===pos){sel=null;}
+  else{
+    [pieces[sel],pieces[pos]]=[pieces[pos],pieces[sel]];
+    moves++;document.getElementById('smov').textContent=moves;
+    sel=null;drawGrid('pgrid','po',pieces,true);checkWin();return;
+  }
+  drawGrid('pgrid','po',pieces,true);
+}
+
+function checkWin(){
+  if(pieces.every((v,i)=>v===i)){solved=true;clearInterval(tmr);showResult('win');}
+}
+function doSolution(){clearInterval(tmr);solved=true;showResult('sol');}
+
+function showResult(type){
+  clearInterval(tmr);
+  const used=TL-secs;
+  const mu=Math.floor(used/60).toString().padStart(2,'0'),su=(used%60).toString().padStart(2,'0');
+  const ml=Math.floor(secs/60).toString().padStart(2,'0'),sl=(secs%60).toString().padStart(2,'0');
+  document.getElementById('resbn').textContent=cur.title;
+  document.getElementById('rsmov').textContent=moves;
+  const rtv=document.getElementById('rstim');
+  rtv.textContent=ml+':'+sl;rtv.classList.toggle('red',secs<=10);
+  document.getElementById('rpgf').style.width='100%';
+  const ico=document.getElementById('resico'),lbl=document.getElementById('reslbl'),st=document.getElementById('resstats');
+  if(type==='win'){
+    ico.innerHTML=`<i class="ti ti-check" aria-hidden="true"></i>`;ico.style.background='#5A7A3A';
+    lbl.textContent='퍼즐 완성!';st.textContent=`${mu}:${su} · ${moves}번 이동 · 남은 시간 ${ml}:${sl}`;
+  }else if(type==='to'){
+    ico.innerHTML=`<i class="ti ti-clock-x" aria-hidden="true"></i>`;ico.style.background='#8C4A2A';
+    lbl.textContent='시간 초과!';st.textContent=`${mu}:${su} 경과 · ${moves}번 이동`;
+  }else{
+    ico.innerHTML=`<i class="ti ti-eye" aria-hidden="true"></i>`;ico.style.background='#5A7A3A';
+    lbl.textContent='정답 보기';st.textContent=`${mu}:${su} 경과 · ${moves}번 이동`;
+  }
+  document.getElementById('rbt').textContent=cur.title||'';
+  document.getElementById('rba').textContent=cur.author||'';
+  document.getElementById('rbd').textContent=cur.desc||'';
+  setThumb('rpthumb',cur.img);
+  showScreen('result-screen');
+  const sol=Array.from({length:N},(_,i)=>i);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{drawGrid('rgrid','ro',sol,false);}));
+}
+
+function setThumb(id,img){
+  const el=document.getElementById(id);
+  el.innerHTML=img?`<img src="${img}" alt="" />`:`<i class="ti ti-photo" style="font-size:20px;color:#C4B8A8;" aria-hidden="true"></i>`;
+}
+
+function startTimer(){
+  clearInterval(tmr);updTime();
+  tmr=setInterval(()=>{secs--;updTime();if(secs<=0){clearInterval(tmr);if(!solved){solved=true;showResult('to');}}},1000);
+}
+
+function updTime(){
+  const m=Math.floor(secs/60).toString().padStart(2,'0'),s=(secs%60).toString().padStart(2,'0');
+  const el=document.getElementById('stim');
+  el.textContent=m+':'+s;el.classList.toggle('red',secs<=10);
+}
+
+function doShuffle(){
+  shuf(pieces);moves=0;secs=TL;sel=null;solved=false;
+  document.getElementById('smov').textContent='0';
+  const tv=document.getElementById('stim');tv.textContent='01:10';tv.classList.remove('red');
+  clearInterval(tmr);startTimer();drawGrid('pgrid','po',pieces,true);
+}
+
+function doRetry(){startPuzzle(cidx);}
+function goList(){clearInterval(tmr);showScreen('list-screen');}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+load();
+</script>

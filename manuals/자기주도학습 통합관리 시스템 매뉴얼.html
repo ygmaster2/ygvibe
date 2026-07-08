@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자기주도학습 통합관리 시스템 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>자기주도학습 통합관리 시스템</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>등교 전 이른 아침 자율학습("자투리"), 방과 후 야간자율학습, 일과 중 특정 학습실("웅지실") 이용까지 시간대별 자율학습 출결을 하나의 시스템으로 통합 관리합니다. 학생은 학번 입력과 위치 인증만으로 출석이 자동 기록되고 도착 시각에 따라 점수가 매겨지며, 교사는 실시간 좌석 배치도와 순위표로 현황을 파악하고 좌석 재배정 · 월별 출석부 생성 등 관리 업무를 처리합니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+
+    <h3>학생 출석 (로그인 없이 이용)</h3>
+    <ul>
+      <li>시간대에 따라 자동으로 자투리(06:00~08:40)/야간자습(17:01~21:30) 출석으로 분류 처리 (08:55~16:40 웅지실 시간대는 학생이 직접 등록할 수 없고 담당 교사가 처리)</li>
+      <li>학번 4자리만 입력하면 출석 제출, 제출 시 GPS 위치를 확인해 지정된 장소(반경 30m) 안에서만 출석 인정</li>
+      <li>같은 기기(브라우저)로 이미 출석한 학번이 있으면 다른 학번으로 재사용이 제한되어 대리 출석을 방지</li>
+      <li>로그인 없이도 "자투리 최근 3일 입실 상위 15명"과 "전일 야간자습 미출결 현황"을 공개 게시판 형태로 확인 가능</li>
+    </ul>
+
+    <h3>좌석 관리</h3>
+    <ul>
+      <li>폐쇄석 36개, 개방석 24개 등 총 60개 고정 좌석에 학생을 배정, 일부 특별 좌석은 채점 기준이 다르게 적용됨</li>
+      <li>좌석 이동은 정해진 시트 위치(당월 출석부 수정 시트의 학번 · 새 좌석 · 실행 체크박스)로만 처리하도록 강제되어 데이터가 꼬이지 않도록 관리</li>
+    </ul>
+
+    <h3>점수 · 로그 · 출석부 관리 (교사/관리자)</h3>
+    <ul>
+      <li>도착 시각이 이를수록 높은 점수(최대 4점) 자동 부여, 지각 · 미출석은 감점 없이 0점 처리</li>
+      <li>"자투리 출석부 생성" 시트에서 월을 선택하고 체크박스를 누르면 해당 월 출석부가 자동 생성/삭제됨</li>
+      <li>"자투리 당월 출석부 수정" 시트에서 이번 달 명단과 좌석을 수정하면 실제 출석부에 자동 반영, 학번 변경(전학 · 정정) 시 과거 점수와 로그도 함께 이관됨</li>
+      <li>모든 입실 · 취소 기록이 로그 시트에 남고, 관리자는 웹앱에서 실시간 좌석 배치도를 보며 수동으로 입실 · 취소 · 시각 수정 가능</li>
+      <li>"현재월 총점 재계산" 등 관리자 메뉴로 데이터 정합성 복구 가능</li>
+      <li>웅지실(일과 중) 명렬표 · 시간표는 엑셀 파일로 업로드해 반영</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+
+    <h3>학생</h3>
+    <ol>
+      <li>자율학습 시간에 배정된 좌석에 앉아 화면에서 학번 4자리를 입력하고 제출합니다.</li>
+      <li>위치 인증 요청이 뜨면 허용합니다. (지정된 장소 밖이면 출석이 거부됨)</li>
+      <li>제출이 완료되면 도착 시각에 따라 점수가 자동으로 기록됩니다.</li>
+      <li>화면에 표시되는 최근 입실 순위나 미출결 현황을 참고할 수 있습니다.</li>
+    </ol>
+
+    <h3>교사(관리자, 웹앱)</h3>
+    <ol>
+      <li>관리자 탭에서 아이디/비밀번호를 입력하고 자투리학습/일과 중 웅지실/야간자기주도학습 중 로그인할 모듈을 선택합니다.</li>
+      <li>실시간 좌석 배치도에서 학생별 입실 여부를 확인하고, 필요하면 수동으로 입실 등록 · 취소 · 시각 수정을 합니다.</li>
+      <li>누적 출결 현황에서 학생별 좌석 · 총점 · 최근 입실 기록을 조회합니다.</li>
+      <li>로그인 후 화면 상단 버튼으로 다른 모듈(웅지실/야간자습 등)로 전환할 수 있습니다.</li>
+    </ol>
+
+    <h3>교사(관리자, 구글 시트)</h3>
+    <ol>
+      <li>구글 시트 상단 "⚙️ 관리자 메뉴"에서 월별 출석부를 생성/삭제하거나 전체 시트 구조를 점검합니다.</li>
+      <li>"자투리 당월 출석부 수정" 시트에서 좌석 배정이나 학번을 수정하고, 지정된 위치(학번 · 새 좌석 · 실행 체크박스)로만 좌석 이동을 처리합니다.</li>
+      <li>데이터가 꼬인 것 같으면 "현재월 총점 재계산" 메뉴로 점수를 다시 계산합니다.</li>
+      <li>웅지실 명렬표 · 시간표는 엑셀 업로드 메뉴로 반영합니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, 자투리 · 야간자습을 처리하는 서버 스크립트, 일과 중 웅지실을 처리하는 별도 서버 스크립트, 전체 기능을 담은 단일 웹앱 화면(index.html), 엑셀 업로드용 다이얼로그 화면으로 이루어져 있습니다. 실제 출결 원본은 로그 시트와 월별 일별점수 시트에 쌓이고, 좌석 · 명단은 "자투리 출석부 생성"과 "자투리 당월 출석부 수정" 시트에서 관리합니다. 반복 조회 속도를 위해 통계 결과를 짧게 캐싱하며, 학번이 바뀐 학생의 과거 기록을 이어주는 ID 매핑 장치도 포함되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>출석 인증은 지정된 위치(반경 30m) 안에서만 되므로, 다른 장소에서는 출석이 거부됩니다.</li>
+        <li>좌석 이동은 반드시 "자투리 당월 출석부 수정" 시트의 지정된 위치(학번 · 새 좌석 · 실행 체크박스)로만 처리해야 하며, 시트에서 행을 임의로 옮기면 시스템이 이를 감지해 반영을 거부합니다.</li>
+        <li>로그인 없이도 최근 입실 순위와 미출결 현황이 이름 · 학번과 함께 공개적으로 노출되므로, 게시 위치나 대상 범위에 유의할 필요가 있습니다.</li>
+        <li>관리자 비밀번호는 코드에 고정되어 있으므로, 변경하려면 코드를 직접 수정해야 합니다.</li>
+        <li>일과 중(08:55~16:40) 웅지실 출결은 학생이 직접 등록할 수 없고 담당 교사가 처리해야 합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>
