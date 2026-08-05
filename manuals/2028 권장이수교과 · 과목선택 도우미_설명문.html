@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2028 권장이수교과 · 과목선택 도우미 설명문</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .badge {
+    display: inline-block; font-size: 12px; color: var(--accent);
+    background: #E8F1FA; padding: 4px 10px; border-radius: 100px; margin-bottom: 10px;
+  }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <span class="badge">설명문</span>
+  <div class="title-block">
+    <h1>2028 권장이수교과 · 과목선택 도우미</h1>
+    <p>프로그램 설명문</p>
+  </div>
+
+  <section>
+    <h2>무엇을 하는 프로그램인가요?</h2>
+    <p>학생이 본인 학년의 교육과정 편제표를 확인하면서 희망 대학·학과의 핵심·권장과목을 편제표 위에 색으로 표시해주고, 실제로 선택할 과목을 클릭해 고르면 필수 이수학점 충족 여부까지 자동으로 확인해주는 과목선택 도우미 웹앱입니다.</p>
+  </section>
+
+  <section>
+    <h2>왜 만들었나요?</h2>
+    <p>2028학년도 대입을 앞두고 학생들이 대학별로 다른 핵심·권장과목을 일일이 찾아보며 본교 편제표와 맞춰보기 어렵고, 사회·과학 필수 이수학점을 스스로 계산하기 번거로운 문제를 해결하기 위해 만들었습니다. 희망 진로만 선택하면 관련 과목이 편제표 위에 바로 표시되어 과목 선택 상담이 쉬워집니다.</p>
+  </section>
+
+  <section>
+    <h2>어떤 방식으로 동작하나요?</h2>
+    <p>구글 스프레드시트의 2025·2026 탭에서 학년별 교육과정 편제표를, 2028 핵심권장과목 탭에서 대학별 핵심·권장과목과 비고를 앱이 직접 읽어옵니다. 학생이 희망 대학·학과를 고르면 대학 공고문의 과목명을 본교 편제표 과목명과 자동으로 맞춰 핵심과목·권장과목을 편제표에 표시하고, 학생이 직접 클릭해 선택한 과목을 기준으로 사회·과학 필수 이수학점과 대학별 필수 확인사항을 계산합니다.</p>
+  </section>
+
+  <section>
+    <h2>누가, 어떻게 사용하나요?</h2>
+    <p>학생이 웹앱 링크에 접속해 학년을 선택하고, 희망 진로와 이수할 과목을 직접 골라 확인하는 용도로 사용합니다. 별도의 관리자 화면은 없으며, 교사는 원본 스프레드시트의 편제표·핵심권장과목 자료를 관리합니다. 자세한 사용 순서는 같은 폴더의 매뉴얼 문서를 참고하세요.</p>
+  </section>
+</main>
+
+</body>
+</html>

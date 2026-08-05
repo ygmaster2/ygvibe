@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2028 권장이수교과 · 과목선택 도우미 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>2028 권장이수교과 · 과목선택 도우미</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>2028학년도 대입을 준비하는 학생이 본인 학년의 교육과정 편제표를 확인하고, 희망 대학·학과를 선택하면 그 학과의 핵심·권장과목이 편제표에 색으로 표시되는 웹앱입니다. 학생이 실제로 이수할 과목을 편제표에서 직접 클릭해 선택하면 사회·과학 필수 이수학점 충족 여부와 대학별 필수 확인사항이 자동으로 계산됩니다. 별도 업로드 없이 지정된 구글 스프레드시트의 2025 탭, 2026 탭, 2028 핵심권장과목 탭을 앱이 직접 읽어옵니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>학년(입학연도) 선택 : 1학년(2026학년도 입학생) / 2학년(2025학년도 입학생)</li>
+      <li>2학년 입학생은 편제표 확인에 앞서 "2학년 때 신청한 과목"을 먼저 선택하는 단계를 거침</li>
+      <li>희망 대학 → 계열/단과대 → 모집단위 순으로 선택하면 편제표에 핵심과목(진한 색)·권장과목(옅은 색)이 자동으로 표시되고, 우측 패널에 대학 비고와 필수 확인사항이 표시됨 (건너뛰기 가능)</li>
+      <li>편제표의 [택N] 선택군 과목을 클릭해 실제 이수할 과목을 직접 선택(파란색 표시), 그룹별 선택 개수 제한이 자동 적용되며 정해진 수만큼 고르면 "[완료]" 표시</li>
+      <li>필수 이수 학점 점검 패널 : 사회(8학점)·과학(10학점) 학점을 학교지정 + 선택 과목 기준으로 자동 계산해 충족 여부 표시</li>
+      <li>"선택 결과 클립보드에 복사"로 학기별 선택 과목 목록을 텍스트로 만들어 카카오톡·메모장 등에 붙여넣기 가능</li>
+      <li>"초기화"로 선택한 과목 전체를 다시 고를 수 있고, "뒤로가기"로 이전 단계로 이동 가능</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>웹앱 링크에 접속해 본인의 현재 학년(1학년/2학년)을 선택합니다.</li>
+      <li>2학년(2025학년도 입학생)이라면 편제표에서 2학년 때 신청한 과목을 클릭해 선택한 뒤 "고2 수강과목 선택 완료"(또는 건너뛰기)를 누릅니다.</li>
+      <li>희망 대학 → 계열/단과대 → 모집단위를 차례로 선택하면 핵심·권장과목과 대학 비고를 확인할 수 있습니다. 희망 진로가 아직 없다면 "희망진로선택 건너뛰기"를 누릅니다.</li>
+      <li>"선택 완료"(또는 건너뛰기)를 누르면 편제표 화면으로 이동합니다. [택N]으로 표시된 선택군에서 정해진 개수만큼 과목을 클릭해 선택합니다.</li>
+      <li>화면 하단 "필수 이수 학점 점검"에서 사회·과학 학점 충족 여부를, 희망 진로를 선택했다면 "대학별 필수 확인사항"도 함께 확인합니다.</li>
+      <li>선택이 끝나면 "선택 결과 클립보드에 복사"를 눌러 결과를 복사하고 원하는 곳에 붙여넣어 보관합니다.</li>
+      <li>다시 선택하고 싶으면 "초기화"를, 이전 단계로 돌아가려면 "뒤로가기"를 누릅니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>가 서버 로직을 담당합니다. <code>doGet</code>이 <code>Index.html</code>을 렌더링하고, <code>getInitialData</code>가 코드에 지정된 스프레드시트(<code>SOURCE_SPREADSHEET_ID</code>)의 2025·2026 탭(학교지정 과목과 배경색으로 구분된 [택N] 선택군을 파싱)과 2028 핵심권장과목 탭(병합 셀을 포함한 대학별 핵심·권장과목·비고)을 읽어 JSON으로 변환합니다. 자료가 커서 <code>CacheService</code>에 60초간 나누어 캐시합니다(<code>putLargeCache_</code>/<code>getLargeCache_</code>). <code>Index.html</code>은 편제표 그리드·희망진로 선택 패널·정보 패널을 포함한 단일 화면으로, 대학 공고문의 과목명 표기 차이를 본교 편제표 과목과 맞추기 위한 정규화·별칭 매핑(<code>ALIASES</code>, <code>SUBJECT_GROUPS</code>) 로직을 포함합니다. 학생이 선택한 과목은 서버에 저장되지 않고 브라우저 메모리(<code>USER_SELECTED_SUBJECTS</code>)에만 유지됩니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>학생이 선택한 과목은 저장되지 않고 새로고침하면 사라지므로, 반드시 "선택 결과 클립보드에 복사"로 결과를 따로 저장해야 합니다.</li>
+        <li>스프레드시트 ID가 코드에 고정되어 있어 다른 스프레드시트를 사용하려면 코드 수정이 필요하며, 2025·2026·2028 핵심권장과목 3개 탭이 정확한 이름으로 모두 있어야 합니다.</li>
+        <li>편제표의 학생선택 영역은 셀 배경색으로 [택N] 그룹을 구분하므로, 스프레드시트 서식(배경색)이 깨지면 과목 그룹이 잘못 인식될 수 있습니다.</li>
+        <li>스프레드시트 자료를 수정해도 60초 캐시 때문에 즉시 반영되지 않을 수 있습니다. Apps Script 편집기에서 <code>clearAppDataCache</code> 함수를 실행하면 즉시 비울 수 있습니다.</li>
+        <li>1학년(2026학년도 입학생)은 아직 3학년 학기 과목을 선택할 수 없도록 편제표에서 잠겨 있습니다.</li>
+        <li>'연극'처럼 별도로 지정된 과목을 제외하면, 동일 과목이 여러 선택군에 나타나도 한 번만 선택된 것으로 처리됩니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

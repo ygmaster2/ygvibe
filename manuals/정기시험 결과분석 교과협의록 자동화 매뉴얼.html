@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정기시험 결과분석 교과협의록 자동화 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>정기시험 결과분석 교과협의록 자동화</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>정기시험 후 작성해야 하는 "결과분석 및 활용방안 교과협의록"을 구글 스프레드시트에 자료를 입력·업로드하는 것만으로 정해진 한글(HWPX) 양식에 자동으로 채워 넣어주는 프로그램입니다. 기본자료 탭에서 최대 3개 과목을 동시에 작업할 수 있고, 교사별로 "개인 작업 사본"을 따로 만들어 여러 사람이 동시에 사용해도 자료가 섞이지 않도록 되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>기본자료 탭에 3개 과목 블록이 나란히 배치되어 최대 3과목을 한 번에 작업</li>
+      <li>과목별 학년·학기·차수·예상평균 입력, 추정분할/고정분할 방식 선택</li>
+      <li>단계별 체크박스를 누르면 팝업창이 열려 자료를 입력·업로드: <b>0.</b> 이원목적분류표(나이스 엑셀) 업로드, <b>1.</b> 평가 결과 개요(응시자·최고점·최하점·평균) 입력, <b>2.</b> 성취수준별 분포 분석(급간별 인원 입력, 분할점수 자동 계산), <b>3.</b> 문항 분석-난이도별 정답률(나이스 문항분석표 엑셀 업로드, 예상 난이도와 실제 정답률 편차 자동 산출), <b>4.</b> 분석 및 발전 방향(입력 자료를 바탕으로 문장 초안 자동 생성, 직접 수정 가능)</li>
+      <li>HWPX 양식 파일을 한 번 업로드해두면 이후 재사용</li>
+      <li>"완료 & 다운로드" 체크박스로 최대 3과목 자료를 하나의 HWPX 교과협의록 파일로 자동 생성, 구글 드라이브에 저장 후 다운로드 링크 제공</li>
+      <li>"데이터 삭제" 체크박스로 과목별 입력 자료를 초기화</li>
+      <li>"개인 작업 사본 만들기"로 사용자 이름이 들어간 복사본을 만들어 원본 파일 보호</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>원본 스프레드시트에서 메뉴 "설정&사본만들기" → "최초 설정 / 권한 승인"을 실행합니다. (최초 1회, 권한 승인 포함)</li>
+      <li>"개인 작업 사본 만들기"를 눌러 본인 이름이 들어간 사본을 열고, 이후 작업은 이 사본에서 진행합니다. (원본에는 입력하지 않음)</li>
+      <li>기본자료 탭 상단 체크박스로 HWPX 양식 파일을 업로드합니다. (최초 1회)</li>
+      <li>각 과목 블록에 과목명·학년·학기·차수·예상평균을 입력하고, 추정분할 또는 고정분할 중 하나를 선택합니다.</li>
+      <li>0~4번 체크박스를 순서대로 눌러 이원목적분류표, 평가 결과 개요, 성취수준별 분포, 문항 분석, 분석 및 발전 방향 자료를 차례로 입력합니다.</li>
+      <li>모든 과목 입력이 끝나면 "완료 & 다운로드" 체크박스를 눌러 HWPX 파일을 생성하고, 안내되는 링크로 다운로드합니다.</li>
+      <li>내용을 다시 입력해야 하면 해당 과목의 "데이터 삭제" 체크박스로 초기화한 뒤 다시 진행합니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code> 한 파일이 서버 로직 전체를 담당합니다. 기본자료 시트의 화면 구성과 체크박스 클릭 처리(<code>setupBasicSheet_</code>, <code>handleEdit</code>), 나이스 엑셀 파일 해석(<code>convertExcelToValues_</code> - Drive API 변환 없이 xlsx 내부 XML을 직접 읽어 처리), 단계별 입력 자료 저장, HWPX 템플릿 압축 해제 후 내부 section XML의 표 셀을 문자열 치환 방식으로 채우고 다시 압축해 새 파일로 저장하는 로직(<code>createHwpxFile_</code>, <code>applyHwpxReplacements_</code> 등)으로 이루어져 있습니다. 파일 업로드, 평가 결과 개요, 성취수준별 분포, 분석 및 발전 방향 입력 등 각 단계의 팝업 화면은 별도의 다이얼로그 HTML로 구현되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>HWPX 양식 파일을 먼저 업로드해야 "완료 & 다운로드"로 최종 문서를 만들 수 있습니다.</li>
+        <li>여러 교사가 원본 시트에서 동시에 입력하면 자료가 섞일 수 있으므로, 반드시 "개인 작업 사본"을 만들어 각자 작업해야 합니다.</li>
+        <li>1학년은 고정분할을 사용할 수 없고 추정분할만 선택할 수 있습니다.</li>
+        <li>다운로드 전 0~4단계 자료가 모두 입력되어 있어야 하며, 한 HWPX 파일에 함께 넣을 과목들은 차수와 학기가 모두 같아야 합니다.</li>
+        <li>업로드 파일은 .xlsx 또는 .csv만 지원하며, .xls 파일은 엑셀에서 .xlsx로 다시 저장한 뒤 업로드해야 합니다.</li>
+        <li>문항 번호는 300번 이하, 정답 선택지는 1~5번까지만 인식됩니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

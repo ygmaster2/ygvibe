@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전문대 수시 검색기 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+  .role-tag {
+    display: inline-block; font-size: 11px; font-weight: 700; color: #fff;
+    border-radius: 4px; padding: 1px 7px; margin-right: 6px; vertical-align: middle;
+  }
+  .role-tag.admin { background: #4f46e5; }
+  .role-tag.student { background: #0369a1; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>전문대 수시 검색기</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>전국 전문대학의 수시모집 정보(모집시기·학과·전형구분·전형명칭·학생부/면접 비율·경쟁률·합격평균·합격최저 등)를 학생이 조건별로 검색할 수 있는 웹 시스템입니다. 학생이 로그인하면 본인의 내신 성적을 대학별 산출규칙에 따라 자동으로 환산해, 각 전형의 합격최저와 비교한 진단(상향·소신·적정·안전·하향)까지 함께 보여줍니다. 관리자(교사)는 전문대 원자료 엑셀, 모집요강 PDF, 학생 내신 성적, 대학별 내신산출규칙을 업로드·관리합니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+
+    <h3><span class="role-tag student">학생</span>수시 정보 검색·내신 진단</h3>
+    <ul>
+      <li>학번(고유 ID)과 초기 비밀번호(학번 5자리)로 로그인, 최초 로그인 시 새 비밀번호로 변경</li>
+      <li>지역·모집시기·대학명·전형구분·전형명칭·학과명·면접여부·진단 결과로 전문대 자료 검색, 대학명·학과명 등 직접 검색어 입력도 지원</li>
+      <li>로그인하면 본인 내신 성적이 대학별 산출규칙에 따라 자동 계산되어, 검색 결과 표에 학과별 환산내신·최저등급과의 차이·진단(상향/소신/적정/안전/하향) 뱃지로 표시됨</li>
+      <li>환산내신 숫자를 클릭하면 해당 대학의 산출방식과 본인 성적표 중 실제로 반영된 과목이 무엇인지 상세 팝업으로 확인 가능</li>
+      <li>최근 2개 학년도(전년도/현재) 자료를 나란히 비교하며, 신설·모집중단 학과와 내신산출방식이 바뀐 경우 별도 표시</li>
+      <li>대학명을 클릭하면 해당 대학의 수시모집요강 PDF를 새 창으로 열람</li>
+    </ul>
+
+    <h3><span class="role-tag admin">관리자</span>자료 관리</h3>
+    <ul>
+      <li>전문대 자료 엑셀 업로드 : 커트라인·현정원·전형요소별·면접자료 파일을 한 번에 여러 개 선택하면 파일명과 내용으로 자동 분류되어 저장됨(경쟁률·커트라인 기준 학년도, 모집정원·전형요소 기준 학년도를 각각 지정)</li>
+      <li>모집요강 PDF 보관 : 학년도·지역·대학명과 함께 PDF를 업로드하면 Google Drive에 저장되고 학생 화면의 대학명 링크와 자동 연결됨</li>
+      <li>1~8반 통합 내신 업로드 : 학급별 성적표 엑셀을 업로드하면 전체 학생 계정과 성적이 갱신되고 대학별 내신이 자동 재계산됨</li>
+      <li>내신 산출규칙 업로드 : 대학별 산출방식(우수 N개 학기, 지정 학기 가중, 상위 N과목, 전체 과목 등)을 엑셀 양식으로 일괄 등록·수정</li>
+      <li>전체 재계산 버튼으로 모든 학생의 대학별 환산내신을 한 번에 다시 계산</li>
+      <li>상담 학생 선택 시 해당 학생 기준으로 검색 결과 화면에 진단이 표시되어 학생 상담에 활용 가능</li>
+      <li>계산 현황(학생 수·규칙 수·저장 결과 건수·최근 계산 시각), 규칙 DB 연결 검증(정상/미연결/중복) 확인</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+
+    <h3><span class="role-tag student">학생</span></h3>
+    <ol>
+      <li>로그인 화면에서 학번을 입력하고, 처음 로그인이면 비밀번호에 학번 5자리를 입력합니다.</li>
+      <li>안내에 따라 문자와 숫자를 포함한 8자 이상의 새 비밀번호로 변경합니다.</li>
+      <li>상단 필터(모집시기·지역·대학명·전형구분·전형명칭·학과명·면접·진단)를 선택하고 "조회"를 누릅니다.</li>
+      <li>결과 표의 환산내신 값을 클릭하면 대학 산출방식과 본인 성적 중 반영된 과목을 자세히 볼 수 있습니다.</li>
+      <li>대학명을 클릭하면 해당 대학의 수시모집요강 PDF가 새 창으로 열립니다.</li>
+    </ol>
+
+    <h3><span class="role-tag admin">관리자</span></h3>
+    <ol>
+      <li>관리자 아이디·비밀번호로 로그인합니다.</li>
+      <li>"📁 전문대 자료 엑셀 업로드"에서 경쟁률·커트라인 기준 학년도와 모집정원 기준 학년도를 입력한 뒤 관련 엑셀 파일들을 한 번에 선택합니다.</li>
+      <li>"📄 모집요강 PDF 보관"에서 학년도·지역·대학명을 입력하고 PDF를 업로드합니다.</li>
+      <li>"📊 1~8반 내신 업로드"에서 학급별 통합 성적표 엑셀을 업로드하면 전체 학생의 대학별 내신이 자동 계산됩니다.</li>
+      <li>산출방식을 바꾸거나 새 대학을 추가할 때는 "🧮 내신 산출규칙 업로드"에서 양식을 내려받아 채운 뒤 업로드합니다.</li>
+      <li>자료를 여러 번 수정한 뒤에는 "🔄 전체 재계산"으로 모든 학생 결과를 최신 상태로 맞춥니다.</li>
+      <li>학생 상담 시 "상담 학생" 목록에서 학생을 선택하면 그 학생 기준으로 진단이 표시됩니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 프로젝트로 구성되며, <code>code.gs</code>(서버 로직)와 로그인·검색·관리자 업로드 화면을 모두 담은 <code>index.html</code>(단일 웹앱 페이지, xlsx.js로 엑셀을 브라우저에서 직접 해석) 두 파일이 중심입니다. 시트 구성은 전문대 수시 자료(<code>전문대연도별</code>, 학년도별 누적), 학생 성적(<code>성적마스터</code>), 학생 계정(<code>학생계정</code>), 로그인 세션(<code>보안세션</code>), 대학별 산출규칙(<code>내신산출규칙</code>), 계산 결과(<code>학생별산출결과</code>), 규칙 연결 검증(<code>규칙연결검증</code>·<code>규칙DB검증</code>), 모집요강 PDF 목록(<code>모집요강관리</code>)으로 나뉩니다. 학생 로그인 시 <code>executeLogin</code>이 인증하고, 검색은 <code>getSearchOptions</code>·<code>searchAdmissions</code>가 캐시된 자료를 필터링하며, 학생별 환산내신은 <code>getStudentAnalysis</code>·<code>calculateRuleForScores_</code>가 산출규칙에 따라 계산합니다. 약 80명 동시 접속에 대응하기 위해(코드 내 v15.1/15.2 표시 구간) 서명 기반 세션 토큰, 계정·검색·학생별 결과 캐시(CacheService), 자동 재시도 로직이 추가되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>학생 로그인 초기 비밀번호는 학번 5자리이며, 최초 로그인 시 반드시 새 비밀번호(문자+숫자 8자 이상)로 변경해야 합니다.</li>
+        <li>비밀번호를 5회 이상 틀리면 약 10분간 로그인이 제한됩니다.</li>
+        <li>업로드하는 엑셀 파일은 정해진 서식(지역·대학명·모집시기·학과명 등 열 이름)을 따라야 자동 분류·인식이 정상적으로 됩니다.</li>
+        <li>대학별 산출규칙에 오류(규칙ID 누락·중복, 지원하지 않는 산출방식 등)가 있으면 해당 대학 자료가 계산에서 제외되므로, 업로드 후 계산 현황에서 오류 건수를 확인해야 합니다.</li>
+        <li>자료를 수정한 뒤에는 검색·학생별 결과가 캐시되어 있어 즉시 반영되지 않을 수 있으므로, 관리자는 "전체 재계산"을 실행해야 합니다.</li>
+        <li>모집요강 PDF는 Google Drive에 저장되며, 등록되지 않은 대학은 Drive에서 이름이 비슷한 PDF를 자동으로 찾아 연결을 시도합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

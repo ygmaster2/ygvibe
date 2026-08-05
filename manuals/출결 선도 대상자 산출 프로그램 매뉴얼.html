@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출결 선도 대상자 산출 프로그램 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>출결 선도 대상자 산출 프로그램</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>학급별 출결 엑셀 파일을 업로드하면 3학년 학생의 미인정 결석·지각·조퇴·결과 누계를 자동으로 집계하고, 누계 기준에 따라 선도위원회에 회부할 대상자를 자동으로 산출해주는 프로그램입니다. 이미 선도위원회 심의를 거쳐 실제 징계까지 받은 학생은 같은 근태 단계에서 다시 대상자로 잡히지 않고, 다음 단계로 근태 횟수가 올라갔을 때만 재산출되도록 설계되어 있어 중복 심의를 방지합니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>여러 학급의 출결 엑셀 파일을 한 번에 업로드해 자동으로 데이터 취합</li>
+      <li>업로드한 파일의 조회기간을 인식해 "MMDD~MMDD" 형태의 기간 탭 자동 생성</li>
+      <li>미인정 합계 5회 단위로 6단계 징계 수위(교내봉사 → 사회봉사 → 특별교육 → 출석정지1 → 출석정지2 → 출석정지 초과) 자동 판정</li>
+      <li>이미 처리(실제 징계 완료)된 근태 구간은 재산출하지 않고, 새로 상승한 단계만 대상자로 산출</li>
+      <li>재산출 시 예상징계 = 지난 실제 징계 단계 + 새로 상승한 단계 수로 자동 계산</li>
+      <li>'학생부 징계' 탭에 3학년 대상 학생 행을 자동으로 노란색 강조 표시</li>
+      <li>'선도 제외 대상자' 탭에 등록된 학번은 산출에서 자동 제외</li>
+      <li>전체 기간 누적 현황을 관리하는 '누계' 탭 자동 갱신</li>
+      <li>최근 기간·최근 선도 대상자 탭만 보이도록 자동으로 탭 숨김/정리</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+
+    <h3>새 기간 자료 업로드</h3>
+    <ol>
+      <li>스프레드시트 상단 메뉴에서 "자료 생성" → "엑셀 업로드 후 선도 대상자 만들기"를 클릭합니다.</li>
+      <li>업로드 창이 뜨면 같은 조회 기간의 학급별 출결 엑셀 파일들을 한 번에 선택합니다.</li>
+      <li>"업로드 후 탭 만들기"를 클릭하면 파일을 읽어 처리를 시작합니다.</li>
+      <li>완료되면 해당 기간 이름의 탭과 "선도 대상자(기간)" 탭이 자동으로 생성됩니다.</li>
+    </ol>
+
+    <h3>선도위원회 처분 결과 반영</h3>
+    <ol>
+      <li>선도위원회에서 실제 징계가 결정되면 '학생부 징계' 탭에 회차·대상학생(예: 홍길동(3학년 2반))·사유(근태로 시작)·징계 내용을 기록합니다.</li>
+      <li>이 기록은 다음 산출 때 자동으로 반영되어, 같은 근태 단계에서는 다시 대상자로 잡히지 않습니다.</li>
+    </ol>
+
+    <h3>재계산이 필요할 때</h3>
+    <ol>
+      <li>엑셀을 다시 업로드하지 않고 "자료 생성" → "현재 기간 기준 다시 생성"을 클릭합니다.</li>
+      <li>가장 최근 기간 탭을 기준으로 선도 대상자와 누계를 다시 계산합니다.</li>
+    </ol>
+
+    <h3>대상자 제외</h3>
+    <ol>
+      <li>'선도 제외 대상자' 탭에 학번·이름·사유를 입력해두면 해당 학생은 이후 산출에서 제외됩니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p><code>code.gs</code>는 스프레드시트에 바인딩된 Google Apps Script로, 메뉴 생성(<code>onOpen</code>), 학생부 징계 탭 자동 강조(<code>onEdit</code>), 엑셀 업로드·구글시트 변환 및 데이터 추출(<code>uploadAndGeneratePeriodSheet</code>, <code>uploadExcelAndConvertToSheet_</code>), 선도 대상자 산출 및 중복 방지 로직(<code>generateDisciplinarySheet_</code>, <code>buildAttendanceProcessingHistory_</code>, <code>calculateDisciplinaryJudgementWithHistory_</code>), 누계 탭 갱신(<code>updateSummarySheet_</code>), 시트 서식·표시/숨김·순서 정리 함수로 구성되어 있습니다. <code>UploadDialog.html</code>은 여러 엑셀 파일을 선택해 base64로 변환한 뒤 <code>google.script.run</code>으로 서버 함수를 호출하는 업로드 모달 창입니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>3학년 학생만 대상으로 산출됩니다. '학생부 징계' 탭의 대상학생 표기는 반드시 "이름(3학년 O반)" 형식을 따라야 정확히 인식됩니다.</li>
+        <li>업로드하는 엑셀 파일은 정해진 서식(조회기간, 학급 정보, 학번·이름·출결 열 위치)을 따라야 데이터가 정상적으로 인식됩니다.</li>
+        <li>업로드 처리 중 Google Drive에 "_엑셀임시변환" 폴더가 임시로 생성되며, 변환용 임시 시트는 처리 후 자동 삭제됩니다.</li>
+        <li>'학생부 징계' 탭에 실제 처분 결과를 정확히 기록해야 다음 산출 때 중복 없이 올바르게 반영됩니다.</li>
+        <li>"차감기록" 시트는 더 이상 쓰이지 않는 이전 버전 시트로, 실행할 때마다 자동으로 삭제됩니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

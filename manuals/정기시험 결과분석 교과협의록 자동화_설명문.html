@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정기시험 결과분석 교과협의록 자동화 설명문</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .badge {
+    display: inline-block; font-size: 12px; color: var(--accent);
+    background: #E8F1FA; padding: 4px 10px; border-radius: 100px; margin-bottom: 10px;
+  }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <span class="badge">설명문</span>
+  <div class="title-block">
+    <h1>정기시험 결과분석 교과협의록 자동화</h1>
+    <p>프로그램 설명문</p>
+  </div>
+
+  <section>
+    <h2>무엇을 하는 프로그램인가요?</h2>
+    <p>정기시험 후 작성해야 하는 "결과분석 및 활용방안 교과협의록"을 구글 스프레드시트에 자료를 입력·업로드하는 것만으로 한글(HWPX) 문서로 자동 완성해주는 프로그램입니다.</p>
+  </section>
+
+  <section>
+    <h2>왜 만들었나요?</h2>
+    <p>매 시험마다 성취수준별 분포, 문항별 정답률, 분석 및 발전 방향 등을 손으로 표에 옮겨 적고 한글 문서를 새로 만드는 반복 작업을 줄이기 위해 만들었습니다. 나이스에서 내려받은 엑셀 자료를 그대로 업로드하면 계산과 문서 작성까지 자동으로 처리됩니다.</p>
+  </section>
+
+  <section>
+    <h2>어떤 방식으로 동작하나요?</h2>
+    <p>과목별로 시험 결과와 나이스 엑셀 자료(이원목적분류표, 문항분석표)를 입력·업로드하면, 성취수준별 인원·비율과 예상 난이도 대비 실제 정답률 차이가 큰 문항을 자동으로 계산합니다. 분석 및 발전 방향 문장도 입력된 수치를 바탕으로 초안이 자동 생성되며 필요하면 직접 수정할 수 있습니다. 모든 입력이 끝나면 미리 등록해 둔 HWPX 양식 파일의 표를 찾아 값을 채워 새 HWPX 문서를 만들어줍니다.</p>
+  </section>
+
+  <section>
+    <h2>누가, 어떻게 사용하나요?</h2>
+    <p>정기시험 후 교과협의록을 작성하는 교사가 사용합니다. 여러 교사가 동시에 쓸 수 있도록 각자 "개인 작업 사본"을 만들어 작업하고, 완료되면 다운로드 링크로 최종 HWPX 파일을 받습니다. 자세한 사용 순서는 같은 폴더의 매뉴얼 문서를 참고하세요.</p>
+  </section>
+</main>
+
+</body>
+</html>

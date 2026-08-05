@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전문대 수시 검색기 설명문</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .badge {
+    display: inline-block; font-size: 12px; color: var(--accent);
+    background: #E8F1FA; padding: 4px 10px; border-radius: 100px; margin-bottom: 10px;
+  }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <span class="badge">설명문</span>
+  <div class="title-block">
+    <h1>전문대 수시 검색기</h1>
+    <p>프로그램 설명문</p>
+  </div>
+
+  <section>
+    <h2>무엇을 하는 프로그램인가요?</h2>
+    <p>전국 전문대학의 수시모집 정보를 학생이 조건별로 검색하고, 로그인한 학생 본인의 내신 성적을 대학별 산출방식에 맞춰 자동으로 환산해 합격 가능성을 상향·소신·적정·안전·하향으로 진단해주는 웹 시스템입니다.</p>
+  </section>
+
+  <section>
+    <h2>왜 만들었나요?</h2>
+    <p>전문대 진학을 준비하는 학생들이 대학마다 서로 다른 내신 산출방식을 일일이 확인하며 자기 등급을 계산하기 어렵고, 교사도 학생마다 대학별 환산등급을 손으로 계산해 상담하기 번거로운 문제를 해결하기 위해 만들었습니다. 자료와 산출규칙을 한 번 등록해두면 이후 모든 학생의 환산내신과 진단이 자동으로 갱신됩니다.</p>
+  </section>
+
+  <section>
+    <h2>어떤 방식으로 동작하나요?</h2>
+    <p>관리자가 전문대 커트라인·현정원·전형요소 등 원자료 엑셀과 대학별 내신산출규칙(우수 학기 반영, 지정 학기 가중, 상위 과목 반영 등)을 등록하고, 학생 내신 성적표 엑셀을 업로드하면, 각 학생의 성적이 대학별 규칙에 따라 자동으로 환산등급으로 계산되어 저장됩니다. 학생이 로그인해 검색하면 조건에 맞는 전형과 함께 본인의 환산내신, 그 전형의 합격최저와의 차이, 진단 결과가 함께 표시됩니다.</p>
+  </section>
+
+  <section>
+    <h2>누가, 어떻게 사용하나요?</h2>
+    <p>학생은 학번으로 로그인해 조건을 검색하고 본인의 진단 결과를 확인하는 용도로 사용합니다. 관리자(교사)는 전문대 자료·모집요강 PDF·학생 성적·산출규칙을 등록하고 관리하며, 학생 상담 시 특정 학생을 선택해 상담 자료로 활용합니다. 자세한 사용 순서는 같은 폴더의 매뉴얼 문서를 참고하세요.</p>
+  </section>
+</main>
+
+</body>
+</html>

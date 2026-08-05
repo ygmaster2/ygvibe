@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출결 선도 대상자 산출 프로그램 설명문</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .badge {
+    display: inline-block; font-size: 12px; color: var(--accent);
+    background: #E8F1FA; padding: 4px 10px; border-radius: 100px; margin-bottom: 10px;
+  }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <span class="badge">설명문</span>
+  <div class="title-block">
+    <h1>출결 선도 대상자 산출 프로그램</h1>
+    <p>프로그램 설명문</p>
+  </div>
+
+  <section>
+    <h2>무엇을 하는 프로그램인가요?</h2>
+    <p>3학년 학생의 미인정 결석·지각·조퇴·결과 횟수를 학급별 출결 엑셀 파일로 업로드하면, 정해진 기준(5회 단위)에 따라 선도위원회에 회부해야 할 학생을 자동으로 골라주는 구글 스프레드시트 프로그램입니다.</p>
+  </section>
+
+  <section>
+    <h2>왜 만들었나요?</h2>
+    <p>매 기간마다 반별 출결 자료를 하나하나 확인하며 선도 대상자를 골라내던 수작업을 줄이기 위해 만들었습니다. 특히 한 번 심의를 거쳐 이미 징계를 받은 학생이 같은 근태 구간으로 다시 대상자에 오르는 중복 문제를 막고, 다음 기준 구간에 진입했을 때만 다시 대상자로 올리도록 자동화했습니다.</p>
+  </section>
+
+  <section>
+    <h2>어떤 방식으로 동작하나요?</h2>
+    <p>학급별 출결 엑셀을 업로드하면 학생별 미인정 합계를 계산해 6단계(교내봉사~출석정지 초과) 중 해당 단계를 판정합니다. 이때 '학생부 징계' 탭에 기록된 과거 처분 이력을 함께 확인해서, 이미 처리된 단계까지는 다시 대상자로 올리지 않고 새로 올라간 단계만 대상자로 뽑습니다. 예상 징계 수위는 지난번 실제로 받은 징계 단계에 새로 상승한 단계 수를 더해서 계산합니다.</p>
+  </section>
+
+  <section>
+    <h2>누가, 어떻게 사용하나요?</h2>
+    <p>학생 생활지도 업무 담당 교사가 스프레드시트 메뉴의 "자료 생성"에서 엑셀을 업로드하거나, 학생부 징계 기록이 바뀐 뒤 재계산 메뉴를 눌러 사용합니다. 자세한 사용 순서는 같은 폴더의 매뉴얼 문서를 참고하세요.</p>
+  </section>
+</main>
+
+</body>
+</html>
