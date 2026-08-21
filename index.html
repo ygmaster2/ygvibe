@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YG 바이브 코딩 누리집</title>
+<meta name="description" content="양곡고등학교 선생님들이 직접 만든 업무·학습 프로그램 모음">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1F4E78">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="YG 코딩">
+<meta name="mobile-web-app-capable" content="yes">
 <script>
   // 테마 깜빡임 방지: 기본값은 다크모드, 사용자가 라이트모드를 선택한 적 있으면 그걸 따름
   if (localStorage.getItem("theme") !== "light") {
@@ -68,10 +76,17 @@
     flex-wrap: wrap;
   }
   .stats span b { color: #fff; font-size: 16px; }
-  .theme-toggle {
+  .header-actions {
     position: absolute;
     top: 24px;
     right: 32px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .hbtn {
     background: rgba(255,255,255,0.12);
     border: 1px solid rgba(255,255,255,0.3);
     color: #fff;
@@ -80,8 +95,28 @@
     font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
   }
-  .theme-toggle:hover { background: rgba(255,255,255,0.22); }
+  .hbtn:hover { background: rgba(255,255,255,0.22); }
+  .hbtn.primary { background: rgba(255,255,255,0.92); border-color: #fff; color: var(--navy-dark); }
+  .hbtn.primary:hover { background: #fff; }
+  #install-hint {
+    position: absolute;
+    top: 64px;
+    right: 32px;
+    max-width: 300px;
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+    z-index: 5;
+  }
+  #install-hint b { color: var(--navy); }
 
   /* 본문 폭을 넓혀 한 줄에 카드가 4개까지 들어가도록 함 */
   main { max-width: 1360px; margin: 0 auto; padding: 32px; }
@@ -210,7 +245,17 @@
   @media (max-width: 640px) {
     header { padding: 32px 20px 28px; }
     header h1 { font-size: 22px; }
-    .theme-toggle { top: 16px; right: 20px; }
+    /* 좁은 화면에서는 버튼을 제목 위에 나란히 배치 (제목과 겹치지 않도록) */
+    .header-actions {
+      position: static;
+      justify-content: flex-start;
+      margin-bottom: 16px;
+    }
+    #install-hint {
+      position: static;
+      max-width: none;
+      margin: 0 0 16px;
+    }
     main { padding: 22px 16px; }
     .toolbar input { width: 100%; }
   }
@@ -219,7 +264,11 @@
 <body>
 
 <header>
-  <button id="theme-toggle" class="theme-toggle" type="button">🌙 다크모드</button>
+  <div class="header-actions">
+    <button id="install-btn" class="hbtn primary" type="button" hidden>⬇️ 앱 설치</button>
+    <button id="theme-toggle" class="hbtn" type="button">🌙 다크모드</button>
+  </div>
+  <div id="install-hint" hidden></div>
   <h1>YG 바이브 코딩 누리집</h1>
   <p>선생님들이 바이브 코딩으로 만든 프로그램을 한 곳에 모았습니다.</p>
   <div class="stats">
@@ -472,6 +521,74 @@
     updateToggleLabel();
   });
   updateToggleLabel();
+
+  // ── 앱 설치(PWA) ───────────────────────────────────────────
+  const installBtn = document.getElementById("install-btn");
+  const installHint = document.getElementById("install-hint");
+  let deferredPrompt = null;
+
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  function showHint(html) {
+    installHint.innerHTML = html;
+    installHint.hidden = false;
+  }
+
+  // 크롬·엣지 계열: 설치 조건이 갖춰지면 브라우저가 이 이벤트를 보냄
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isStandalone) installBtn.hidden = false;
+  });
+
+  // 아이폰·아이패드는 설치 버튼을 지원하지 않아 직접 안내
+  if (isIOS && !isStandalone) {
+    installBtn.hidden = false;
+    installBtn.textContent = "📲 홈 화면에 추가";
+  }
+
+  installBtn.addEventListener("click", async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.hidden = true;
+      return;
+    }
+    if (!installHint.hidden) { installHint.hidden = true; return; }
+    showHint(
+      isIOS
+        ? `<b>홈 화면에 추가하는 방법</b><br>
+           사파리 아래쪽 <b>공유 버튼(⬆️)</b>을 누른 뒤,
+           목록에서 <b>"홈 화면에 추가"</b>를 선택하세요.
+           그러면 앱처럼 아이콘이 생깁니다.`
+        : `<b>설치하는 방법</b><br>
+           주소창 오른쪽 끝의 <b>설치 아이콘</b>을 누르거나,
+           브라우저 메뉴(⋮)에서 <b>"앱 설치"</b> 또는 <b>"바로가기 만들기"</b>를 선택하세요.`
+    );
+  });
+
+  installHint.addEventListener("click", () => { installHint.hidden = true; });
+
+  window.addEventListener("appinstalled", () => {
+    installBtn.hidden = true;
+    installHint.hidden = true;
+    deferredPrompt = null;
+  });
+
+  // 서비스 워커 등록 (설치와 빠른 실행을 위해)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {
+        // 로컬 파일(file://)로 열면 등록되지 않지만 화면 동작에는 문제 없음
+      });
+    });
+  }
 </script>
 
 </body>
