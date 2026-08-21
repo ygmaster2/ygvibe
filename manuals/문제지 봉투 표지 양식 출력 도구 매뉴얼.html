@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문제지 봉투 표지 양식 출력 도구 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
+  section h3:first-of-type { margin-top: 0; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>문제지 봉투 표지 양식 출력 도구</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>정기시험 문제지 봉투에 붙이는 표지(라벨)를 학년도·학기·차수·과목·평가 일시·출제 교사·감독교사 유의사항과 함께 자동으로 만들어 바로 인쇄할 수 있는 도구입니다. 서버나 별도 설치 없이 브라우저에서 여는 단일 HTML 파일로 동작하며, PWA로 설치해 앱처럼 사용할 수도 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li>시험 기본 정보 입력 : 학년도, 학기, 차수, 과목명, 학년, 출제 교사, 평가 월·일·교시 (평가 구분은 "정기시험"으로 고정)</li>
+      <li>최대 16개 교실의 이름과 인원을 입력하면 입력한 교실 수만큼 라벨이 자동 생성됨</li>
+      <li>A4 용지 한 장을 절반(148.5mm씩)으로 나눠 교실별 라벨을 자동 배치하고, 절취선을 표시</li>
+      <li>라벨에는 시험명 제목, 과목명, 평가 교실·인원, 평가 일시, 출제 교사, 감독교사 유의사항(문제지 봉인 확인, 학생 앞 개봉, 결시자 카드 포함 매수 확인, 여분 회수 등 4개 고정 문구)이 자동으로 채워짐</li>
+      <li>입력값을 바꾸면 하단 미리보기가 즉시 갱신됨</li>
+      <li>"인쇄하기" 버튼으로 바로 인쇄 (인쇄 시 입력 화면과 버튼은 자동으로 숨겨짐)</li>
+      <li>PWA 설치 지원 : 우측 상단 "앱 설치하기" 버튼으로 PC·모바일에 앱처럼 설치 가능</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>파일을 웹브라우저로 열거나 배포된 링크로 접속합니다.</li>
+      <li>상단 입력란에 학년도·학기·차수·과목명·학년·출제 교사·평가 월/일/교시를 입력합니다.</li>
+      <li>"세부 정보" 영역에서 시험을 치르는 교실명과 인원을 순서대로 입력합니다. (최대 16개, 입력한 교실만 라벨이 생성됩니다)</li>
+      <li>화면 하단 미리보기에서 교실별 라벨이 A4 절반 크기로 올바르게 생성되는지 확인합니다.</li>
+      <li>"인쇄하기"를 눌러 인쇄합니다. 프린터 인쇄 설정에서 여백은 "없음", 배율은 "실제 크기(100%)"로 맞추는 것을 권장합니다.</li>
+      <li>필요하면 "앱 설치하기" 버튼으로 PWA 설치를 진행해 다음부터 더 빠르게 접속할 수 있습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>순수 HTML·CSS·자바스크립트로 작성된 단일 파일 웹 도구로, 서버나 백엔드가 없습니다. Tailwind CDN으로 화면을 꾸미고, 입력 영역과 출력(<code>print-area</code>) 영역으로 구성됩니다. 교실 입력칸 16개는 자바스크립트로 동적 생성되며, 입력 이벤트가 발생할 때마다 <code>updateLabels</code> 함수가 실행되어 값이 채워진 교실만 골라 라벨 HTML을 실시간으로 다시 그립니다. 라벨은 A4 한 장을 절반(148.5mm)씩 나눠 배치하고, <code>@media print</code> 스타일로 인쇄 시 여백과 절취선을 조정합니다. PWA 설치를 위한 manifest와 서비스워커는 별도 파일 없이 data URL·Blob으로 인라인 처리해 하나의 HTML 파일 안에 모두 포함되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>인쇄 시 브라우저 인쇄 설정에서 여백을 "없음"으로, 배율을 "실제 크기(100%)"로 맞춰야 A4 절반 크기(148.5mm)에 정확히 맞습니다.</li>
+        <li>교실명 또는 인원 중 하나라도 입력한 행만 라벨이 생성되므로, 빈 칸으로 남긴 교실은 출력되지 않습니다.</li>
+        <li>교실은 최대 16개까지만 입력할 수 있습니다.</li>
+        <li>입력한 정보는 저장되지 않아 새로고침하거나 창을 닫으면 모두 사라지므로, 시험마다 다시 입력해야 합니다.</li>
+        <li>PWA로 설치한 뒤 파일 내용을 수정해도 기존 설치본에는 자동으로 반영되지 않을 수 있습니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>
