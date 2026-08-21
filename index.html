@@ -440,7 +440,9 @@
 
   async function loadPrograms() {
     try {
-      const res = await fetch("programs.csv");
+      // 주소 뒤에 시각을 붙이고 캐시를 끄면, 깃허브 페이지가 예전 CSV를 물고 있어도
+      // 항상 최신 목록을 불러옵니다. (새 프로그램을 등록했는데 안 보이는 문제 방지)
+      const res = await fetch("programs.csv?t=" + Date.now(), { cache: "no-store" });
       if (!res.ok) throw new Error("fetch failed: " + res.status);
       const buffer = await res.arrayBuffer();
       const text = decodeBestEffort(buffer);
