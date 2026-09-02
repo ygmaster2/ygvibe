@@ -1,0 +1,148 @@
+<!--
+  [사용법]
+  1. 이 파일을 복사해서 "프로그램명_업데이트.html"로 이름을 바꾸고, update 폴더 안에 넣으세요.
+  2. 아래 [ ] 표시된 부분을 실제 내용으로 바꾸세요. 항목(.item)은 필요한 만큼 복사/삭제하면 됩니다.
+  3. programs.csv에서 해당 프로그램 행의 마지막 3칸을 채우면 대시보드에 자동으로 연결됩니다.
+     - 업데이트일: 오늘 날짜 (예: 2026-09-02)
+     - 업데이트내용: 카드/목록에 짧게 보여줄 한 줄 요약 (쉼표로 여러 개 나열 가능)
+     - 업데이트파일명: 이 파일의 최종 파일명 (예: 문제지 봉투 표지 양식 출력 도구_업데이트.html)
+  4. 저장하면 대시보드 카드에 빨간 "🆕 업데이트" 뱃지가 붙고, 헤더 오른쪽 "최근 업데이트" 목록에도 나타납니다.
+     (뱃지는 기간이 지나도 사라지지 않으니, 정말 최근에 바뀐 내용일 때만 날짜를 갱신하세요.)
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[프로그램명] 업데이트 안내</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Noto Sans KR', sans-serif;
+        background: #f3f4f6;
+        margin: 0;
+        padding: 24px 16px;
+        color: #1f2937;
+        line-height: 1.6;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .topbar { max-width: 640px; margin: 0 auto 10px; font-size: 12.5px; }
+    .topbar a { color: #4b5563; text-decoration: none; }
+    .topbar a:hover { text-decoration: underline; }
+    .header {
+        background: #2563eb;
+        color: white;
+        padding: 28px 24px;
+        border-radius: 16px 16px 0 0;
+    }
+    .header .tag {
+        display: inline-block;
+        background: rgba(255,255,255,0.2);
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .header h1 {
+        margin: 0;
+        font-size: 1.4rem;
+    }
+    .header p {
+        margin: 8px 0 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        padding: 8px 24px 24px;
+    }
+    .item {
+        border-top: 1px solid #f0f0f0;
+        padding: 20px 0;
+    }
+    .item:first-child { border-top: none; }
+    .item-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 8px;
+    }
+    .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .icon.blue { background: #dbeafe; }
+    .icon.amber { background: #fef3c7; }
+    .icon.green { background: #dcfce7; }
+    .item-desc {
+        font-size: 0.92rem;
+        color: #4b5563;
+        margin: 0 0 4px 38px;
+    }
+    .item-desc + .item-desc { margin-top: 4px; }
+    .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 6px;
+        margin-left: 38px;
+        margin-top: 6px;
+    }
+    .badge.before { background: #fee2e2; color: #b91c1c; }
+    .badge.after { background: #dcfce7; color: #15803d; }
+    .footer-note {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 16px;
+    }
+</style>
+</head>
+<body>
+    <div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+    <div class="wrap">
+        <div class="header">
+            <span class="tag">UPDATE</span>
+            <h1>📂 [프로그램명], 이렇게 바뀌었습니다</h1>
+            <p>[한 줄 안내. 예: 기존에 쓰시던 화면 그대로, 아래 N가지가 추가/개선됐습니다.]</p>
+        </div>
+
+        <div class="card">
+            <!-- 아이콘 색상은 blue / amber / green 중 골라 쓰면 됩니다. 항목은 필요한 만큼 복사하세요. -->
+            <div class="item">
+                <p class="item-title"><span class="icon blue">✂️</span> [바뀐 점 제목 1]</p>
+                <p class="item-desc">[무엇이 왜 바뀌었는지 설명]</p>
+                <!-- 이전/이후 비교가 필요할 때만 아래 두 줄을 사용하세요. 필요 없으면 지워도 됩니다. -->
+                <span class="badge before">이전: [이전 상태]</span><br>
+                <span class="badge after">이후: [바뀐 상태]</span>
+            </div>
+
+            <div class="item">
+                <p class="item-title"><span class="icon amber">🖨️</span> [바뀐 점 제목 2]</p>
+                <p class="item-desc">[설명 문단 1]</p>
+                <p class="item-desc">[설명 문단 2 (선택)]</p>
+            </div>
+
+            <div class="item">
+                <p class="item-title"><span class="icon green">🔍</span> [바뀐 점 제목 3]</p>
+                <p class="item-desc">[설명]</p>
+            </div>
+        </div>
+        <p class="footer-note">사용 중 궁금한 점이나 이상한 부분이 있으면 편하게 말씀해주세요 🙂</p>
+    </div>
+</body>
+</html>

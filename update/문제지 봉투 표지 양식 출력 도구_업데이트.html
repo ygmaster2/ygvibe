@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문제지 봉투 출력 도구 업데이트 안내</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Noto Sans KR', sans-serif;
+        background: #f3f4f6;
+        margin: 0;
+        padding: 24px 16px;
+        color: #1f2937;
+        line-height: 1.6;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .header {
+        background: #2563eb;
+        color: white;
+        padding: 28px 24px;
+        border-radius: 16px 16px 0 0;
+    }
+    .header .tag {
+        display: inline-block;
+        background: rgba(255,255,255,0.2);
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .header h1 {
+        margin: 0;
+        font-size: 1.4rem;
+    }
+    .header p {
+        margin: 8px 0 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        padding: 8px 24px 24px;
+    }
+    .item {
+        border-top: 1px solid #f0f0f0;
+        padding: 20px 0;
+    }
+    .item:first-child { border-top: none; }
+    .item-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 8px;
+    }
+    .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .icon.blue { background: #dbeafe; }
+    .icon.amber { background: #fef3c7; }
+    .icon.green { background: #dcfce7; }
+    .item-desc {
+        font-size: 0.92rem;
+        color: #4b5563;
+        margin: 0 0 4px 38px;
+    }
+    .item-desc + .item-desc { margin-top: 4px; }
+    .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 6px;
+        margin-left: 38px;
+        margin-top: 6px;
+    }
+    .badge.before { background: #fee2e2; color: #b91c1c; }
+    .badge.after { background: #dcfce7; color: #15803d; }
+    .footer-note {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 16px;
+    }
+</style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="header">
+            <span class="tag">UPDATE</span>
+            <h1>📂 문제지 봉투 출력 도구, 이렇게 바뀌었습니다</h1>
+            <p>기존에 쓰시던 화면 그대로, 아래 3가지가 추가/개선됐습니다.</p>
+        </div>
+
+        <div class="card">
+            <div class="item">
+                <p class="item-title"><span class="icon blue">✂️</span> 절취선이 정확히 페이지 가운데로</p>
+                <p class="item-desc">인쇄했을 때 페이지마다 절취선(가운데 점선) 위치가 조금씩 달라지던 문제를 구조적으로 고쳤습니다.</p>
+                <span class="badge before">이전: 페이지마다 위치가 미세하게 어긋남</span><br>
+                <span class="badge after">이후: 모든 페이지 정확히 절반 지점 고정</span>
+            </div>
+
+            <div class="item">
+                <p class="item-title"><span class="icon amber">🖨️</span> 프린터 여백 보정 기능 추가</p>
+                <p class="item-desc">일부 프린터는 1페이지와 2페이지 이후의 상단 여백이 다르게 인쇄되는데, 이걸 직접 보정할 수 있는 칸이 생겼습니다.</p>
+                <p class="item-desc">평소엔 제목만 보이고, 클릭하면 펼쳐져서 mm 단위로 조절할 수 있습니다. (우리 프린터 기준값은 이미 기본으로 입력해뒀습니다.)</p>
+            </div>
+
+            <div class="item">
+                <p class="item-title"><span class="icon green">🔍</span> 과목명으로 기본정보 자동 입력</p>
+                <p class="item-desc">이제 화면 위쪽에 <b>"✏️ 직접 입력" / "🔍 과목명으로 가져오기"</b> 탭이 생겼습니다.</p>
+                <p class="item-desc"><b>가져오기</b> 탭에서 과목명을 몇 글자만 치면 학년도·학기·차수·학년·평가월·평가일·평가교시·과목명이 자동으로 채워집니다.</p>
+                <p class="item-desc">단, <b>출제 교사</b>와 <b>교실별 인원(세부 정보)</b>은 이전과 똑같이 직접 입력하셔야 합니다.</p>
+                <p class="item-desc">자료가 없거나 원하는 과목이 검색되지 않으면, 언제든 "✏️ 직접 입력" 탭으로 이전처럼 사용하시면 됩니다.</p>
+            </div>
+        </div>
+        <p class="footer-note">사용 중 궁금한 점이나 이상한 부분이 있으면 편하게 말씀해주세요 🙂</p>
+    </div>
+</body>
+</html>

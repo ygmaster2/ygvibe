@@ -64,7 +64,15 @@
     background: linear-gradient(135deg, #1F4E78, #163a5c);
     color: #fff;
     padding: 44px 32px 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
   }
+  .header-main { flex: 1 1 320px; min-width: 0; }
+  /* 헤더 버튼(다크모드·설치)과 겹치지 않도록 위쪽을 비워둠 */
+  .header-side { flex: 0 1 320px; min-width: 260px; margin-top: 44px; }
   header h1 { margin: 0 0 8px; font-size: 28px; }
   header p { margin: 0; color: #cfe0ee; font-size: 14px; }
   .stats {
@@ -117,6 +125,34 @@
     z-index: 5;
   }
   #install-hint b { color: var(--navy); }
+
+  /* ── 새 버전 안내 띠 ──────────────────────────────── */
+  #update-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--btn-bg);
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+  }
+  #update-banner button {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    border: none;
+    border-radius: 100px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  #update-banner .refresh { background: rgba(255,255,255,0.92); color: var(--navy-dark); }
+  #update-banner .refresh:hover { background: #fff; }
+  #update-banner .dismiss { background: rgba(255,255,255,0.16); color: #fff; padding: 6px 10px; }
+  #update-banner .dismiss:hover { background: rgba(255,255,255,0.28); }
 
   /* 본문 폭을 넓혀 한 줄에 카드가 4개까지 들어가도록 함 */
   main { max-width: 1360px; margin: 0 auto; padding: 32px; }
@@ -175,6 +211,7 @@
     gap: 20px;
   }
   .card {
+    position: relative;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -185,7 +222,86 @@
     transition: box-shadow .15s ease, transform .15s ease;
   }
   .card:hover { box-shadow: 0 6px 18px var(--card-shadow); transform: translateY(-2px); }
-  .card h3 { margin: 0 0 10px; font-size: 16.5px; line-height: 1.4; color: var(--navy); }
+  .card h3 { margin: 0 0 10px; font-size: 16.5px; line-height: 1.4; color: var(--navy); padding-right: 60px; }
+
+  /* 최근 업데이트된 카드에 붙는 뱃지 (일정 기간 지나면 자동으로 사라짐) */
+  .update-badge {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: #E4572E;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 100px;
+    white-space: nowrap;
+    letter-spacing: .2px;
+    text-decoration: none;
+  }
+  a.update-badge:hover { background: #C9481F; }
+  html[data-theme="dark"] .update-badge { background: #FF7A50; color: #1D1200; }
+  html[data-theme="dark"] a.update-badge:hover { background: #FF9670; }
+
+  /* ── 최근 업데이트 상시 섹션 (헤더 오른쪽 여백에 배치) ───────── */
+  .recent-updates {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .recent-updates .ru-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .recent-updates ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .recent-updates li a {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    text-decoration: none;
+    color: #fff;
+    font-size: 12.5px;
+    line-height: 1.5;
+    flex-wrap: wrap;
+    cursor: pointer;
+    padding: 5px 6px;
+    margin: -5px -6px;
+    border-radius: 6px;
+    transition: background .12s ease;
+  }
+  .recent-updates li a:hover { background: rgba(255,255,255,0.14); }
+  .recent-updates .ru-date {
+    flex: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 11.5px;
+    min-width: 34px;
+  }
+  /* 프로그램명은 링크처럼 밑줄을 항상 보여줘서 "여기 누르면 된다"는 걸 바로 알 수 있게 함 */
+  .recent-updates .ru-name {
+    font-weight: 700;
+    color: #fff;
+    text-decoration: underline;
+    text-decoration-color: rgba(255,255,255,0.35);
+    text-underline-offset: 2px;
+  }
+  .recent-updates li a:hover .ru-name { text-decoration-color: #fff; }
+  .recent-updates .ru-note {
+    color: rgba(255,255,255,0.7);
+    flex-basis: 100%;
+    margin-left: 42px;
+    font-size: 11.5px;
+  }
+  .recent-updates .ru-arrow { flex: none; color: rgba(255,255,255,0.6); margin-left: auto; font-size: 11.5px; }
 
   /* 설명은 기본 2줄까지만 보이고, 더보기로 펼침 */
   .card .desc {
@@ -243,7 +359,7 @@
     padding: 30px;
   }
   @media (max-width: 640px) {
-    header { padding: 32px 20px 28px; }
+    header { padding: 32px 20px 28px; flex-direction: column; }
     header h1 { font-size: 22px; }
     /* 좁은 화면에서는 버튼을 제목 위에 나란히 배치 (제목과 겹치지 않도록) */
     .header-actions {
@@ -256,6 +372,8 @@
       max-width: none;
       margin: 0 0 16px;
     }
+    /* 좁은 화면에서는 오른쪽 여백이 없으니, 최근 업데이트가 본문 위쪽에 자연스럽게 쌓임 */
+    .header-side { margin-top: 18px; flex-basis: auto; min-width: 0; width: 100%; }
     main { padding: 22px 16px; }
     .toolbar input { width: 100%; }
   }
@@ -263,18 +381,32 @@
 </head>
 <body>
 
+<div id="update-banner" hidden role="status">
+  <span>🔄 누리집에 새 버전이 있습니다.</span>
+  <button type="button" class="refresh" id="update-refresh-btn">지금 새로고침</button>
+  <button type="button" class="dismiss" id="update-dismiss-btn" aria-label="닫기">✕</button>
+</div>
+
 <header>
   <div class="header-actions">
     <button id="install-btn" class="hbtn primary" type="button" hidden>⬇️ 앱 설치</button>
     <button id="theme-toggle" class="hbtn" type="button">🌙 다크모드</button>
   </div>
   <div id="install-hint" hidden></div>
-  <h1>YG 바이브 코딩 누리집</h1>
-  <p>선생님들이 바이브 코딩으로 만든 프로그램을 한 곳에 모았습니다.</p>
-  <div class="stats">
-    <span>등록된 프로그램 <b id="stat-count">0</b>개</span>
-    <span>업무용 <b id="stat-work">0</b>개</span>
-    <span>학습용 <b id="stat-study">0</b>개</span>
+  <div class="header-main">
+    <h1>YG 바이브 코딩 누리집</h1>
+    <p>선생님들이 바이브 코딩으로 만든 프로그램을 한 곳에 모았습니다.</p>
+    <div class="stats">
+      <span>등록된 프로그램 <b id="stat-count">0</b>개</span>
+      <span>업무용 <b id="stat-work">0</b>개</span>
+      <span>학습용 <b id="stat-study">0</b>개</span>
+    </div>
+  </div>
+  <div class="header-side">
+    <div id="recent-updates" class="recent-updates" hidden>
+      <div class="ru-title">🆕 최근 업데이트 <span style="font-weight:400; color:rgba(255,255,255,.65);">· 프로그램명을 누르면 자세히 볼 수 있어요</span></div>
+      <ul id="ru-list"></ul>
+    </div>
   </div>
 </header>
 
@@ -298,13 +430,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   // 카드 데이터는 같은 폴더의 programs.csv 에서 읽어옵니다.
-  // CSV 열 구성: ID, 구분(업무/학습), 프로그램명, 뱃지, 제작교사, 설명, 바로가기유형, 바로가기값, 매뉴얼파일명
+  // CSV 열 구성: ID, 구분(업무/학습), 프로그램명, 뱃지, 제작교사, 설명, 바로가기유형, 바로가기값, 매뉴얼파일명, 업데이트일, 업데이트내용, 업데이트파일명
   // (뱃지·제작교사는 자료 관리용으로만 보관하고 화면에는 표시하지 않습니다)
+  // 업데이트일(YYYY-MM-DD)을 적어두면 ①카드에 빨간 뱃지가 붙고(기간 제한 없이 계속 유지),
+  // ②헤더 오른쪽 "최근 업데이트" 목록에도 최신순으로 노출됩니다. 비워두면 아무 표시도 되지 않습니다.
+  // 업데이트파일명(선택): 이번 업데이트를 자세히 정리한 안내 페이지를 update 폴더 안에 넣고
+  // 그 파일명을 적으면, 뱃지와 "최근 업데이트" 목록이 매뉴얼 대신 그 페이지로 연결됩니다.
+
+  const RECENT_UPDATES_MAX = 5;   // 상단 목록에 보여줄 최대 개수
 
   const grid = document.getElementById("grid");
   const empty = document.getElementById("empty");
   const searchInput = document.getElementById("search");
   const tabsEl = document.getElementById("tabs");
+  const recentUpdatesEl = document.getElementById("recent-updates");
+  const ruList = document.getElementById("ru-list");
 
   let programs = [];
   let currentCat = "업무";
@@ -313,6 +453,30 @@
     return String(str).replace(/[&<>"']/g, ch => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     })[ch]);
+  }
+
+  function parseUpdateDate(val) {
+    if (val === null || val === undefined || val === "") return null;
+    // CSV를 읽는 XLSX 라이브러리가 "2026-09-02" 같은 날짜 형식 글자를
+    // 엑셀 일련번호(숫자, 예: 46267)로 자동 변환해버리는 경우가 있어 함께 처리합니다.
+    if (typeof val === "number") {
+      const utcDays = val - 25569; // 1970-01-01 기준 보정값
+      const d = new Date(utcDays * 86400 * 1000);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const s = val.toString().trim();
+    if (!s) return null;
+    const d = new Date(s + "T00:00:00");
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function daysSince(date) {
+    const ms = Date.now() - date.getTime();
+    return Math.floor(ms / (1000 * 60 * 60 * 24));
+  }
+
+  function formatMD(date) {
+    return `${date.getMonth() + 1}/${date.getDate()}`;
   }
 
   function visibleList() {
@@ -341,7 +505,14 @@
     list.forEach(p => {
       const card = document.createElement("div");
       card.className = "card";
+      const badgeLabel = `🆕 업데이트 ${formatMD(p.updatedAt || new Date())}`;
+      const badgeHtml = !p.recentlyUpdated ? "" : (
+        p.updateDoc
+          ? `<a class="update-badge" href="${escapeHtml(p.updateDoc)}" target="yg_update_view">${badgeLabel}</a>`
+          : `<span class="update-badge">${badgeLabel}</span>`
+      );
       card.innerHTML = `
+        ${badgeHtml}
         <h3>${escapeHtml(p.name)}</h3>
         <p class="desc">${escapeHtml(p.description)}</p>
         <div class="actions">
@@ -377,6 +548,30 @@
     tabsEl.querySelector('[data-cnt="업무"]').textContent = work;
     tabsEl.querySelector('[data-cnt="학습"]').textContent = study;
     tabsEl.querySelector('[data-cnt="전체"]').textContent = programs.length;
+  }
+
+  function renderRecentUpdates() {
+    const items = programs
+      .filter(p => p.updatedAt)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, RECENT_UPDATES_MAX);
+
+    if (items.length === 0) {
+      recentUpdatesEl.hidden = true;
+      return;
+    }
+
+    ruList.innerHTML = items.map(p => `
+      <li>
+        <a href="${escapeHtml(p.updateDoc || p.manual)}" target="yg_update_view">
+          <span class="ru-date">${formatMD(p.updatedAt)}</span>
+          <span class="ru-name">${escapeHtml(p.name)}</span>
+          ${p.updateNote ? `<span class="ru-note">- ${escapeHtml(p.updateNote)}</span>` : ""}
+          <span class="ru-arrow">자세히 ›</span>
+        </a>
+      </li>
+    `).join("");
+    recentUpdatesEl.hidden = false;
   }
 
   tabsEl.addEventListener("click", (e) => {
@@ -450,6 +645,7 @@
           ? (shortcutValue || "#")
           : (shortcutValue ? "programs/" + shortcutValue : "#");
         const category = (r["구분"] || "").toString().trim();
+        const updatedAt = parseUpdateDate(r["업데이트일"]);
         return {
           id: (r["ID"] || "").toString().trim(),
           category,                       // 업무 / 학습 (탭 구분에 사용)
@@ -459,10 +655,18 @@
           description: r["설명"] || "",
           shortcut,
           manual: r["매뉴얼파일명"] ? ("manuals/" + r["매뉴얼파일명"]) : "#",
+          updatedAt,
+          updateNote: (r["업데이트내용"] || "").toString().trim(),
+          // 업데이트파일명(선택): 이번에 뭐가 바뀌었는지 따로 정리한 안내 페이지가 있으면 그리로,
+          // 없으면 기존 매뉴얼로 연결합니다.
+          updateDoc: r["업데이트파일명"] ? ("update/" + r["업데이트파일명"]) : "",
+          // 기간 제한 없이 계속 뱃지를 붙이되, 아직 오지 않은 미래 날짜만 안전하게 걸러냅니다.
+          recentlyUpdated: !!updatedAt && daysSince(updatedAt) >= 0,
         };
       });
 
     updateCounts();
+    renderRecentUpdates();
 
     if (programs.length === 0) {
       const noteBase = `${rows.length}개 행을 읽었지만, "프로그램명" 열에 값이 있는 행을 찾지 못했습니다.<br>
@@ -581,14 +785,55 @@
     deferredPrompt = null;
   });
 
-  // 서비스 워커 등록 (설치와 빠른 실행을 위해)
+  // ── 서비스 워커 등록 + 새 버전 안내 ──────────────────────────
+  const updateBanner = document.getElementById("update-banner");
+  const updateRefreshBtn = document.getElementById("update-refresh-btn");
+  const updateDismissBtn = document.getElementById("update-dismiss-btn");
+  let swRefreshing = false;
+
+  function showUpdateBanner(registration) {
+    updateBanner.hidden = false;
+    updateRefreshBtn.onclick = () => {
+      // 대기 중인 새 서비스 워커에게 "지금 넘어가도 된다"는 신호를 보냄
+      if (registration.waiting) registration.waiting.postMessage("SKIP_WAITING");
+    };
+  }
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {
+      navigator.serviceWorker.register("sw.js").then((registration) => {
+        // 예전에 열어둔 채 새 버전이 조용히 설치되어 대기 중이던 경우
+        if (registration.waiting && navigator.serviceWorker.controller) {
+          showUpdateBanner(registration);
+        }
+        // 지금 이 화면을 보는 동안 새 버전이 새로 감지된 경우
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              showUpdateBanner(registration);
+            }
+          });
+        });
+        // 앱을 오래 켜두는 경우를 위해, 화면이 다시 보일 때마다 새 버전이 있는지 확인
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") registration.update().catch(() => {});
+        });
+      }).catch(() => {
         // 로컬 파일(file://)로 열면 등록되지 않지만 화면 동작에는 문제 없음
+      });
+
+      // "지금 새로고침"을 눌러 새 서비스 워커가 실제로 넘겨받으면 화면을 다시 불러옴
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (swRefreshing) return;
+        swRefreshing = true;
+        window.location.reload();
       });
     });
   }
+
+  updateDismissBtn.addEventListener("click", () => { updateBanner.hidden = true; });
 </script>
 
 </body>
