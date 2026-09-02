@@ -1,20 +1,23 @@
 <!--
   [사용법]
-  1. 이 파일을 복사해서 "프로그램명_업데이트.html"로 이름을 바꾸고, update 폴더 안에 넣으세요.
-  2. 아래 [ ] 표시된 부분을 실제 내용으로 바꾸세요. 항목(.item)은 필요한 만큼 복사/삭제하면 됩니다.
-  3. programs.csv에서 해당 프로그램 행의 마지막 3칸을 채우면 대시보드에 자동으로 연결됩니다.
-     - 업데이트일: 오늘 날짜 (예: 2026-09-02)
-     - 업데이트내용: 카드/목록에 짧게 보여줄 한 줄 요약 (쉼표로 여러 개 나열 가능)
-     - 업데이트파일명: 이 파일의 최종 파일명 (예: 문제지 봉투 표지 양식 출력 도구_업데이트.html)
-  4. 저장하면 대시보드 카드에 빨간 "🆕 업데이트" 뱃지가 붙고, 헤더 오른쪽 "최근 업데이트" 목록에도 나타납니다.
-     (뱃지는 기간이 지나도 사라지지 않으니, 정말 최근에 바뀐 내용일 때만 날짜를 갱신하세요.)
+  1. 처음 만들 때: 이 파일을 복사해서 "프로그램명_업데이트.html"로 이름을 바꾸고, update 폴더 안에 넣으세요.
+  2. [ ] 표시된 부분을 실제 내용으로 바꾸세요. .entry 안의 .item(바뀐 점 하나하나)은 필요한 만큼 복사/삭제하면 됩니다.
+  3. 나중에 같은 프로그램을 또 업데이트할 때는 새 파일을 만들지 말고, 이 파일의 .entry 블록 전체를
+     복사해서 맨 위(page-header 바로 아래)에 붙여넣고 새 날짜/내용으로 바꾸세요.
+     → 이렇게 하면 한 파일 안에 업데이트 이력이 최신순으로 계속 쌓입니다.
+  4. programs.csv에서 해당 프로그램 행의 마지막 3칸을 채우면 대시보드에 자동으로 연결됩니다.
+     - 업데이트일: 이번 업데이트 날짜 (예: 2026-09-02) → 새로 업데이트할 때마다 이 날짜만 최신으로 갱신
+     - 업데이트내용: 카드/목록에 짧게 보여줄 한 줄 요약 (이번 업데이트 기준으로 갱신)
+     - 업데이트파일명: 이 파일의 파일명 (예: 문제지 봉투 표지 양식 출력 도구_업데이트.html) → 한 번 정하면 계속 동일
+  5. 저장하면 대시보드 카드에 빨간 "🆕 업데이트" 뱃지가 14일간 붙고, 헤더 오른쪽 "최근 업데이트" 목록에는
+     기간 제한 없이 계속 남습니다.
 -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>[프로그램명] 업데이트 안내</title>
+<title>[프로그램명] 업데이트 기록</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
     * { box-sizing: border-box; }
@@ -30,13 +33,14 @@
     .topbar { max-width: 640px; margin: 0 auto 10px; font-size: 12.5px; }
     .topbar a { color: #4b5563; text-decoration: none; }
     .topbar a:hover { text-decoration: underline; }
-    .header {
+    .page-header {
         background: #2563eb;
         color: white;
         padding: 28px 24px;
-        border-radius: 16px 16px 0 0;
+        border-radius: 16px;
+        margin-bottom: 20px;
     }
-    .header .tag {
+    .page-header .tag {
         display: inline-block;
         background: rgba(255,255,255,0.2);
         font-size: 0.8rem;
@@ -45,20 +49,25 @@
         border-radius: 999px;
         margin-bottom: 10px;
     }
-    .header h1 {
-        margin: 0;
-        font-size: 1.4rem;
-    }
-    .header p {
-        margin: 8px 0 0;
-        font-size: 0.9rem;
-        opacity: 0.9;
+    .page-header h1 { margin: 0; font-size: 1.4rem; }
+    .page-header p { margin: 8px 0 0; font-size: 0.9rem; opacity: 0.9; }
+
+    /* 업데이트할 때마다 이 entry 블록을 통째로 복사해서 맨 위에 하나씩 추가하면 됩니다 */
+    .entry { margin-bottom: 22px; }
+    .entry-date {
+        display: inline-block;
+        background: #1f2937;
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 8px 8px 0 0;
+        margin-left: 8px;
     }
     .card {
         background: white;
         border: 1px solid #e5e7eb;
-        border-top: none;
-        border-radius: 0 0 16px 16px;
+        border-radius: 0 16px 16px 16px;
         padding: 8px 24px 24px;
     }
     .item {
@@ -115,33 +124,39 @@
 <body>
     <div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
     <div class="wrap">
-        <div class="header">
-            <span class="tag">UPDATE</span>
-            <h1>📂 [프로그램명], 이렇게 바뀌었습니다</h1>
-            <p>[한 줄 안내. 예: 기존에 쓰시던 화면 그대로, 아래 N가지가 추가/개선됐습니다.]</p>
+        <div class="page-header">
+            <span class="tag">UPDATE LOG</span>
+            <h1>📂 [프로그램명], 이렇게 바뀌어왔습니다</h1>
+            <p>최신 업데이트가 맨 위에 오도록 정리했습니다.</p>
         </div>
 
-        <div class="card">
-            <!-- 아이콘 색상은 blue / amber / green 중 골라 쓰면 됩니다. 항목은 필요한 만큼 복사하세요. -->
-            <div class="item">
-                <p class="item-title"><span class="icon blue">✂️</span> [바뀐 점 제목 1]</p>
-                <p class="item-desc">[무엇이 왜 바뀌었는지 설명]</p>
-                <!-- 이전/이후 비교가 필요할 때만 아래 두 줄을 사용하세요. 필요 없으면 지워도 됩니다. -->
-                <span class="badge before">이전: [이전 상태]</span><br>
-                <span class="badge after">이후: [바뀐 상태]</span>
-            </div>
+        <!-- ↓↓↓ 새 업데이트가 생기면 이 entry 블록을 통째로 복사해서 바로 위(page-header 아래)에 붙여넣으세요 ↓↓↓ -->
+        <div class="entry">
+            <span class="entry-date">📅 [YYYY-MM-DD]</span>
+            <div class="card">
+                <!-- 아이콘 색상은 blue / amber / green 중 골라 쓰면 됩니다. 항목은 필요한 만큼 복사하세요. -->
+                <div class="item">
+                    <p class="item-title"><span class="icon blue">✂️</span> [바뀐 점 제목 1]</p>
+                    <p class="item-desc">[무엇이 왜 바뀌었는지 설명]</p>
+                    <!-- 이전/이후 비교가 필요할 때만 아래 두 줄을 사용하세요. 필요 없으면 지워도 됩니다. -->
+                    <span class="badge before">이전: [이전 상태]</span><br>
+                    <span class="badge after">이후: [바뀐 상태]</span>
+                </div>
 
-            <div class="item">
-                <p class="item-title"><span class="icon amber">🖨️</span> [바뀐 점 제목 2]</p>
-                <p class="item-desc">[설명 문단 1]</p>
-                <p class="item-desc">[설명 문단 2 (선택)]</p>
-            </div>
+                <div class="item">
+                    <p class="item-title"><span class="icon amber">🖨️</span> [바뀐 점 제목 2]</p>
+                    <p class="item-desc">[설명 문단 1]</p>
+                    <p class="item-desc">[설명 문단 2 (선택)]</p>
+                </div>
 
-            <div class="item">
-                <p class="item-title"><span class="icon green">🔍</span> [바뀐 점 제목 3]</p>
-                <p class="item-desc">[설명]</p>
+                <div class="item">
+                    <p class="item-title"><span class="icon green">🔍</span> [바뀐 점 제목 3]</p>
+                    <p class="item-desc">[설명]</p>
+                </div>
             </div>
         </div>
+        <!-- ↑↑↑ 새 entry는 여기 위에 추가, 아래로는 예전 기록들이 계속 쌓입니다 ↑↑↑ -->
+
         <p class="footer-note">사용 중 궁금한 점이나 이상한 부분이 있으면 편하게 말씀해주세요 🙂</p>
     </div>
 </body>
