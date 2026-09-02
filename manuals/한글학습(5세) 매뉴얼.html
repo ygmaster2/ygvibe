@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한글학습(5세) 매뉴얼</title>
+<style>
+  :root {
+    --navy: #1F4E78;
+    --accent: #2E75B6;
+    --bg: #F4F6F9;
+    --text: #2A2E33;
+    --muted: #6B7280;
+    --border: #E3E7ED;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--navy); color: #fff; padding: 14px 32px; font-size: 13px; }
+  .topbar a { color: #cfe0ee; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 32px 80px; }
+  .title-block h1 { margin: 0 0 6px; font-size: 26px; color: var(--navy); }
+  .title-block p { margin: 0; color: var(--muted); font-size: 14px; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; color: var(--navy); border-bottom: 2px solid var(--navy); padding-bottom: 8px; margin-bottom: 14px; }
+  section p, section li { font-size: 14px; line-height: 1.75; }
+  section ul, section ol { padding-left: 22px; }
+  code { background: #EEF1F4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .note { background: #FFF8E6; border: 1px solid #F0DFA8; border-radius: 8px; padding: 14px 18px; font-size: 13.5px; }
+  .note li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 대시보드로 돌아가기</a></div>
+
+<main>
+  <div class="title-block">
+    <h1>한글학습(5세)</h1>
+    <p>사용 매뉴얼</p>
+  </div>
+
+  <section>
+    <h2>1. 개요</h2>
+    <p>만 5세 유아를 대상으로 한글 자음 · 모음부터 글자 만들기, 쓰기 연습까지 단계별로 익힐 수 있도록 만든 웹 기반 한글 학습 놀이입니다. 화면 상단의 "🎈 신나는 한글 놀이터"라는 제목처럼, 딱딱한 학습지 형식이 아니라 카드를 가운데 칸으로 옮기며 놀이처럼 한글을 익히도록 구성되어 있습니다.</p>
+  </section>
+
+  <section>
+    <h2>2. 주요 기능</h2>
+    <ul>
+      <li><b>4단계 학습</b> : 화면 상단 탭으로 "1단계: 자음 → 2단계: 모음 → 3단계: 글자만들기 → 4단계: 쓰기" 순서로 이동하며 학습할 수 있습니다.</li>
+      <li><b>1단계(자음)</b> : ㄱ~ㅎ 기본 자음과 ㄲ · ㄸ · ㅃ · ㅆ · ㅉ 쌍자음까지 총 19개 카드가 화면 아래에 나열되고, 안내 문구("카드를 가운데로 움직여보세요!")에 따라 카드를 화면 가운데의 점선 칸으로 옮기며 자음을 하나씩 익힙니다.</li>
+      <li><b>2단계(모음)</b> : 같은 방식으로 기본 모음 카드를 가운데 칸으로 옮기며 익히는 단계입니다.</li>
+      <li><b>3단계(글자만들기)</b> : 앞서 익힌 자음과 모음을 조합해 하나의 글자를 만들어보는 단계입니다.</li>
+      <li><b>4단계(쓰기)</b> : 완성한 글자를 직접 써보는 쓰기 연습 단계입니다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. 사용 방법</h2>
+    <ol>
+      <li>배포된 웹앱 링크에 접속하면 "1단계: 자음" 화면이 기본으로 열립니다.</li>
+      <li>화면 아래에 나열된 자음 카드 중 하나를 화면 가운데의 점선 표시된 칸으로 옮깁니다.</li>
+      <li>모든 자음을 충분히 살펴본 뒤, 상단 탭에서 "2단계: 모음"을 눌러 다음 단계로 이동합니다.</li>
+      <li>같은 방식으로 모음 카드를 가운데 칸으로 옮기며 익힙니다.</li>
+      <li>"3단계: 글자만들기" 탭에서 자음과 모음을 조합해 글자를 만들어봅니다.</li>
+      <li>"4단계: 쓰기" 탭에서 완성한 글자를 따라 써보며 마무리합니다.</li>
+      <li>유아 혼자 진행하기 어려운 구간(카드 옮기기, 탭 이동 등)은 보호자 · 교사가 함께 안내해 주는 것이 좋습니다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. 코드 구조</h2>
+    <p>Google Apps Script 웹앱(<code>doGet</code>으로 서비스되는 HTML 페이지)으로 구성되어 있으며, 화면 상단의 단계 탭 버튼으로 자음 · 모음 · 글자만들기 · 쓰기 4개의 학습 화면을 전환하는 구조입니다. 카드 UI와 가운데 칸으로의 이동 동작은 클라이언트 측 JavaScript로 처리되며, 별도의 로그인이나 데이터 저장 없이 접속한 브라우저 안에서만 진행됩니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 주의사항</h2>
+    <div class="note">
+      <ul>
+        <li>만 5세 유아 대상 프로그램이므로, 처음에는 보호자나 교사가 화면 조작(카드 옮기기, 단계 탭 전환)을 함께 도와주는 것을 권장합니다.</li>
+        <li>진행 상황이나 결과가 별도로 저장되지 않으므로, 다시 접속하면 항상 1단계부터 시작됩니다.</li>
+        <li>반드시 "액세스 권한: 모든 사용자"로 배포된 웹앱 링크로 접속해야 정상 작동합니다.</li>
+        <li>태블릿 · PC 등 화면 크기가 작은 기기에서는 카드와 가운데 칸의 간격이 좁아 조작이 어려울 수 있어, 가능하면 화면이 넓은 기기 사용을 권장합니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</body>
+</html>
