@@ -72,7 +72,7 @@
   }
   .header-main { flex: 1 1 320px; min-width: 0; }
   /* 헤더 버튼(다크모드·설치)과 겹치지 않도록 위쪽을 비워둠 */
-  .header-side { flex: 0 1 320px; min-width: 260px; margin-top: 44px; }
+  .header-side { flex: 0 1 480px; min-width: 340px; margin-top: 44px; }
   header h1 { margin: 0 0 8px; font-size: 28px; }
   header p { margin: 0; color: #cfe0ee; font-size: 14px; }
   .stats {
@@ -244,14 +244,32 @@
   html[data-theme="dark"] a.update-badge:hover { background: #FF9670; }
 
   /* ── 최근 업데이트 상시 섹션 (헤더 오른쪽 여백에 배치) ───────── */
+  @keyframes ruPulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(228,87,46,0.15), 0 4px 14px rgba(0,0,0,0.25); }
+    50% { box-shadow: 0 0 0 7px rgba(228,87,46,0.28), 0 4px 14px rgba(0,0,0,0.25); }
+  }
   .recent-updates {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.13);
+    border: 2px solid rgba(228,87,46,0.6);
     border-radius: 10px;
     padding: 14px 16px;
+    box-shadow: 0 0 0 3px rgba(228,87,46,0.15), 0 4px 14px rgba(0,0,0,0.25);
+    animation: ruPulse 1.6s ease-in-out 2;
+  }
+  .recent-updates .ru-tag {
+    display: inline-block;
+    background: #E4572E;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    padding: 2px 7px;
+    border-radius: 100px;
+    margin-right: 6px;
+    vertical-align: 1px;
   }
   .recent-updates .ru-title {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
     color: #fff;
     margin-bottom: 8px;
@@ -262,17 +280,32 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
+  /* 항목이 몇 개든 한 줄 높이는 고정 - 늘어나면 안쪽에서만 스크롤되고 헤더 자체는 늘어나지 않음 */
+  .recent-updates.ru-expanded ul {
+    max-height: 138px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    /* 스크롤바를 얇게 - Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.35) transparent;
+  }
+  /* 스크롤바를 얇게 - Chrome/Edge */
+  .recent-updates.ru-expanded ul::-webkit-scrollbar { width: 6px; }
+  .recent-updates.ru-expanded ul::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 100px; }
+  .recent-updates.ru-expanded ul::-webkit-scrollbar-track { background: transparent; }
   .recent-updates li a {
     display: flex;
     align-items: baseline;
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
     text-decoration: none;
     color: #fff;
     font-size: 12.5px;
     line-height: 1.5;
-    flex-wrap: wrap;
     cursor: pointer;
     padding: 5px 6px;
     margin: -5px -6px;
@@ -286,8 +319,15 @@
     font-size: 11.5px;
     min-width: 34px;
   }
-  /* 프로그램명은 링크처럼 밑줄을 항상 보여줘서 "여기 누르면 된다"는 걸 바로 알 수 있게 함 */
+  /* 프로그램명은 링크처럼 밑줄을 항상 보여줘서 "여기 누르면 된다"는 걸 바로 알 수 있게 함.
+     내용이 길면(이름도 포함) 한 줄 안에서 말줄임표로 잘림 - 가로 스크롤이 생기지 않도록 */
   .recent-updates .ru-name {
+    flex: 1 1 auto;
+    min-width: 30px;
+    max-width: max-content;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 700;
     color: #fff;
     text-decoration: underline;
@@ -297,11 +337,29 @@
   .recent-updates li a:hover .ru-name { text-decoration-color: #fff; }
   .recent-updates .ru-note {
     color: rgba(255,255,255,0.7);
-    flex-basis: 100%;
-    margin-left: 42px;
     font-size: 11.5px;
+    flex: 2 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .recent-updates .ru-arrow { flex: none; color: rgba(255,255,255,0.6); margin-left: auto; font-size: 11.5px; }
+  .recent-updates .ru-arrow { flex: none; color: rgba(255,255,255,0.6); margin-left: 6px; font-size: 11.5px; }
+  .recent-updates li.ru-hidden { display: none; }
+  .recent-updates.ru-expanded li.ru-hidden { display: block; }
+  .ru-toggle {
+    display: block;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.75);
+    font-size: 11.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 6px 6px 0;
+    margin-top: 2px;
+  }
+  .ru-toggle:hover { color: #fff; text-decoration: underline; }
 
   /* 설명은 기본 2줄까지만 보이고, 더보기로 펼침 */
   .card .desc {
@@ -404,8 +462,9 @@
   </div>
   <div class="header-side">
     <div id="recent-updates" class="recent-updates" hidden>
-      <div class="ru-title">🆕 최근 업데이트 <span style="font-weight:400; color:rgba(255,255,255,.65);">· 프로그램명을 누르면 자세히 볼 수 있어요</span></div>
+      <div class="ru-title"><span class="ru-tag">NEW</span>최근 업데이트 <span style="font-weight:400; color:rgba(255,255,255,.65);">· 프로그램명을 누르면 자세히 볼 수 있어요</span></div>
       <ul id="ru-list"></ul>
+      <button type="button" id="ru-toggle" class="ru-toggle" hidden></button>
     </div>
   </div>
 </header>
@@ -437,7 +496,7 @@
   // 업데이트파일명(선택): 이번 업데이트를 자세히 정리한 안내 페이지를 update 폴더 안에 넣고
   // 그 파일명을 적으면, 뱃지와 "최근 업데이트" 목록이 매뉴얼 대신 그 페이지로 연결됩니다.
 
-  const RECENT_UPDATES_MAX = 5;   // 상단 목록에 보여줄 최대 개수
+  const RECENT_UPDATES_COLLAPSED = 3;   // 기본으로 보여줄 개수 (나머지는 "더보기"로 펼침)
 
   const grid = document.getElementById("grid");
   const empty = document.getElementById("empty");
@@ -445,6 +504,14 @@
   const tabsEl = document.getElementById("tabs");
   const recentUpdatesEl = document.getElementById("recent-updates");
   const ruList = document.getElementById("ru-list");
+  const ruToggleBtn = document.getElementById("ru-toggle");
+
+  ruToggleBtn.addEventListener("click", () => {
+    const expanded = ruToggleBtn.dataset.expanded === "true";
+    recentUpdatesEl.classList.toggle("ru-expanded", !expanded);
+    ruToggleBtn.dataset.expanded = String(!expanded);
+    ruToggleBtn.textContent = !expanded ? "접기" : `더보기 (+${ruToggleBtn.dataset.hiddenCount})`;
+  });
 
   let programs = [];
   let currentCat = "업무";
@@ -553,16 +620,15 @@
   function renderRecentUpdates() {
     const items = programs
       .filter(p => p.updatedAt)
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .slice(0, RECENT_UPDATES_MAX);
+      .sort((a, b) => b.updatedAt - a.updatedAt);
 
     if (items.length === 0) {
       recentUpdatesEl.hidden = true;
       return;
     }
 
-    ruList.innerHTML = items.map(p => `
-      <li>
+    ruList.innerHTML = items.map((p, i) => `
+      <li class="${i >= RECENT_UPDATES_COLLAPSED ? "ru-hidden" : ""}">
         <a href="${escapeHtml(p.updateDoc || p.manual)}" target="yg_update_view">
           <span class="ru-date">${formatMD(p.updatedAt)}</span>
           <span class="ru-name">${escapeHtml(p.name)}</span>
@@ -571,6 +637,17 @@
         </a>
       </li>
     `).join("");
+
+    const hiddenCount = items.length - RECENT_UPDATES_COLLAPSED;
+    recentUpdatesEl.classList.remove("ru-expanded");
+    if (hiddenCount > 0) {
+      ruToggleBtn.hidden = false;
+      ruToggleBtn.dataset.expanded = "false";
+      ruToggleBtn.dataset.hiddenCount = hiddenCount;
+      ruToggleBtn.textContent = `더보기 (+${hiddenCount})`;
+    } else {
+      ruToggleBtn.hidden = true;
+    }
     recentUpdatesEl.hidden = false;
   }
 
